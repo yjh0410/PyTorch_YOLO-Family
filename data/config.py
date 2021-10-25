@@ -1,7 +1,7 @@
 # config.py
 
 yolo_cfg = {
-    'img_size': 640,
+    'train_size': 640,
     'val_size': 640,
     # for multi-scale trick
     'random_size_range': [10, 20],

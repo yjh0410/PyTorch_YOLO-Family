@@ -35,6 +35,7 @@ class COCODataset(Dataset):
     """
     def __init__(self, 
                  data_dir=None, 
+                 image_set='train2017',
                  json_file='instances_train2017.json',
                  img_size=640,
                  transform=None, 
@@ -50,6 +51,7 @@ class COCODataset(Dataset):
             debug (bool): if True, only one data id is selected from the dataset
         """
         self.data_dir = data_dir
+        self.image_set = image_set
         self.json_file = json_file
         self.coco = COCO(os.path.join(self.data_dir, 'annotations', self.json_file))
         self.ids = self.coco.getImgIds()
@@ -77,7 +79,7 @@ class COCODataset(Dataset):
         annotations = self.coco.loadAnns(anno_ids)
 
         # load image and preprocess
-        img_file = os.path.join(self.data_dir, self.name,
+        img_file = os.path.join(self.data_dir, self.image_set,
                                 '{:012}'.format(index) + '.jpg')
         img = cv2.imread(img_file)
         
@@ -133,7 +135,8 @@ class COCODataset(Dataset):
             img_lists.append(img_i)
             tg_lists.append(target_i)
 
-        mosaic_img = np.zeros([self.img_size*2, self.img_size*2, img_i.shape[2]], dtype=np.uint8)
+        mean = np.array([v*255 for v in self.transform.mean])
+        mosaic_img = np.ones([self.img_size*2, self.img_size*2, img_i.shape[2]], dtype=np.uint8) * mean
         # mosaic center
         yc, xc = [int(random.uniform(-x, 2*self.img_size + x)) for x in [-self.img_size // 2, -self.img_size // 2]]
         # yc = xc = self.img_size
@@ -214,10 +217,10 @@ class COCODataset(Dataset):
                 target = np.array(target)
 
         # augment
-        if not self.mosaic:
-            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
-        else:
+        if self.mosaic:
             img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
+        else:
+            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
         
         target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
 
@@ -226,7 +229,7 @@ class COCODataset(Dataset):
 
     def pull_image(self, index):
         id_ = self.ids[index]
-        img_file = os.path.join(self.data_dir, self.name,
+        img_file = os.path.join(self.data_dir, self.image_set,
                                 '{:012}'.format(id_) + '.jpg')
         img = cv2.imread(img_file)
 
@@ -274,24 +277,36 @@ if __name__ == "__main__":
     dataset = COCODataset(
                 data_dir='/mnt/share/ssd2/dataset/COCO/',
                 img_size=img_size,
+                image_set='train2017',
                 transform=ValTransforms(img_size),
                 color_augment=ColorTransforms(img_size),
                 mosaic=False)
     
+    np.random.seed(0)
+    class_colors = [(np.random.randint(255),
+                     np.random.randint(255),
+                     np.random.randint(255)) for _ in range(80)]
     print('Data length: ', len(dataset))
     for i in range(1000):
-        image, target, h, w = dataset.pull_item(i)
+        image, target, _, _, _, _ = dataset.pull_item(i)
         image = image.permute(1, 2, 0).numpy()[:, :, (2, 1, 0)]
         image = ((image * std + mean)*255).astype(np.uint8)
         image = image.copy()
 
         for box in target:
-            xmin, ymin, xmax, ymax, _ = box
-            xmin *= img_size
-            ymin *= img_size
-            xmax *= img_size
-            ymax *= img_size
-            image = cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0,0,255), 2)
+            x1, y1, x2, y2, cls_id = box
+            cls_id = int(cls_id.item())
+            color = class_colors[cls_id]
+            # class name
+            label = coco_class_labels[coco_class_index[cls_id]]
+            # bbox
+            x1 *= img_size
+            y1 *= img_size
+            x2 *= img_size
+            y2 *= img_size
+            image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0,0,255), 2)
+            # put the test on the bbox
+            cv2.putText(image, label, (int(x1), int(y1 - 5)), 0, 0.5, color, 1, lineType=cv2.LINE_AA)
         cv2.imshow('gt', image)
         # cv2.imwrite(str(i)+'.jpg', img)
         cv2.waitKey(0)

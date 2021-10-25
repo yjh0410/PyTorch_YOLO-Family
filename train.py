@@ -5,7 +5,6 @@ import random
 import argparse
 import time
 import cv2
-import math
 import numpy as np
 
 import torch
@@ -72,6 +71,8 @@ def parse_args():
                         help='coco, widerface, crowdhuman')
     
     # train trick
+    parser.add_argument('--no_warmup', action='store_true', default=False,
+                        help='do not use warmup')
     parser.add_argument('-ms', '--multi_scale', action='store_true', default=False,
                         help='use multi-scale trick')      
     parser.add_argument('--mosaic', action='store_true', default=False,
@@ -153,7 +154,7 @@ def train():
                         mosaic=args.mosaic)
 
         evaluator = VOCAPIEvaluator(
-                        data_root=data_dir,
+                        data_dir=data_dir,
                         img_size=val_size,
                         device=device,
                         transform=ValTransforms(val_size))
@@ -165,7 +166,7 @@ def train():
                     data_dir=data_dir,
                     img_size=train_size,
                     transform=TrainTransforms(train_size),
-                    base_transform=ColorTransforms(train_size),
+                    color_augment=ColorTransforms(train_size),
                     mosaic=args.mosaic)
 
         evaluator = COCOAPIEvaluator(
@@ -184,7 +185,7 @@ def train():
     print("----------------------------------------------------------")
 
     # build model
-    anchor_size = cfg['anchor_size']
+    anchor_size = None if args.version == 'yolov1' else cfg['anchor_size']
     net = yolo_net(device=device, 
                    img_size=train_size, 
                    num_classes=num_classes, 
@@ -255,7 +256,7 @@ def train():
     batch_size = args.batch_size
     max_epoch = cfg['max_epoch']
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
-
+    warmup = not args.no_warmup
     best_map = -100.
 
     t0 = time.time()
@@ -279,13 +280,14 @@ def train():
         for iter_i, (images, targets) in enumerate(dataloader):
             # warmup
             ni = iter_i+epoch*epoch_size
-            if epoch < args.wp_epoch:
+            if epoch < args.wp_epoch and warmup:
                 nw = args.wp_epoch * epoch_size
                 tmp_lr = base_lr * pow(ni / nw, 4)
                 set_lr(optimizer, tmp_lr)
 
-            elif epoch == args.wp_epoch and iter_i == 0:
+            elif epoch == args.wp_epoch and iter_i == 0 and warmup:
                 # warmup is over
+                warmup = False
                 tmp_lr = base_lr
                 set_lr(optimizer, tmp_lr)
 
@@ -318,10 +320,10 @@ def train():
 
             # to device
             images = images.to(device)
-            targets = targets.float().to(device)
+            targets = targets.to(device)
 
             # forward
-            obj_loss, cls_loss, reg_loss, total_loss = model(images, target=targets)
+            obj_loss, cls_loss, reg_loss, total_loss = model(images, targets=targets)
 
             loss_dict = dict(obj_loss=obj_loss,
                              cls_loss=cls_loss,

@@ -3,31 +3,19 @@ import torch.nn as nn
 
 
 class Conv(nn.Module):
-    def __init__(self, in_ch, out_ch, k=1, p=0, s=1, d=1, g=1, act=True, bias=False):
+    def __init__(self, c1, c2, k=1, p=0, s=1, d=1, g=1, act=True, bias=False):
         super(Conv, self).__init__()
         if act:
             self.convs = nn.Sequential(
-                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
-                nn.BatchNorm2d(out_ch),
+                nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
+                nn.BatchNorm2d(c2),
                 nn.LeakyReLU(0.1, inplace=True)
             )
         else:
             self.convs = nn.Sequential(
-                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
-                nn.BatchNorm2d(out_ch)
+                nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
+                nn.BatchNorm2d(c2)
             )
-        self.initialize_weights()
-        
-    def initialize_weights(self):
-        for m in self.convs.modules():
-            t = type(m)
-            if t is nn.Conv2d:
-                pass  # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif t is nn.BatchNorm2d:
-                m.eps = 1e-3
-                m.momentum = 0.03
-            elif t in [nn.LeakyReLU, nn.ReLU, nn.ReLU6]:
-                m.inplace = True
 
     def forward(self, x):
         return self.convs(x)
@@ -136,8 +124,8 @@ class DilatedEncoder(nn.Module):
     def __init__(self, c1, c2, act=True, dilation_list=[2, 4, 6, 8]):
         super(DilatedEncoder, self).__init__()
         self.projector = nn.Sequential(
-            Conv(c1, c2, k=1, act=None),
-            Conv(c2, c2, k=3, p=1, act=None)
+            Conv(c1, c2, k=1, act=False),
+            Conv(c2, c2, k=3, p=1, act=False)
         )
         encoders = []
         for d in dilation_list:

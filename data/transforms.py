@@ -74,7 +74,7 @@ class Normalize(object):
 class Resize(object):
     def __init__(self, size=640, mean=None):
         self.size = size
-        self.mean = np.array(mean)
+        self.mean = np.array([v*255 for v in mean])
 
     def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
         h0, w0, _ = image.shape
@@ -98,7 +98,7 @@ class Resize(object):
             image = cv2.resize(image, (self.size, int(r * self.size))).astype(np.float32)
             # zero padding
             h, w, _ = image.shape
-            image_ = np.zeros([w, w, 3]) * self.mean
+            image_ = np.ones([w, w, 3]) * self.mean
             dh = w - h
             top = dh // 2
             image_[top:top+h, :, :] = image
@@ -112,9 +112,9 @@ class Resize(object):
             scale =  1.
 
         if boxes is not None:
-            boxes_ = boxes * scale + offset
+            boxes = boxes * scale + offset
         
-        return image_, boxes_, labels, scale, offset
+        return image_, boxes, labels, scale, offset
 
 
 class ToAbsoluteCoords(object):
@@ -253,9 +253,10 @@ class RandomSampleCrop(object):
         height, width, _ = image.shape
         while True:
             # randomly choose a mode
-            mode = random.choice(self.sample_options)
+            sample_id = np.random.randint(len(self.sample_options))
+            mode = self.sample_options[sample_id]
             if mode is None:
-                return image, boxes, labels
+                return image, boxes, labels, scale, offset
 
             min_iou, max_iou = mode
             if min_iou is None:
@@ -378,14 +379,14 @@ class PhotometricDistort(object):
 
     def __call__(self, image, boxes, labels, scale=None, offset=None):
         im = image.copy()
-        im, boxes, labels = self.rand_brightness(im, boxes, labels)
+        im, boxes, labels, scale, offset = self.rand_brightness(im, boxes, labels, scale, offset)
         if random.randint(2):
             distort = Compose(self.pd[:-1])
         else:
             distort = Compose(self.pd[1:])
-        im, boxes, labels = distort(im, boxes, labels)
+        im, boxes, labels, scale, offset = distort(im, boxes, labels, scale, offset)
         return im, boxes, labels, scale, offset
-        # return self.rand_light_noise(im, boxes, labels)
+        # return self.rand_light_noise(im, boxes, labels, scale, offset)
 
 
 class ToTensor(object):
@@ -451,5 +452,5 @@ class ColorTransforms(object):
             ToTensor()
         ])
 
-    def __call__(self, image, boxes, labels, scale, offset):
+    def __call__(self, image, boxes, labels, scale=None, offset=None):
         return self.augment(image, boxes, labels, scale, offset)

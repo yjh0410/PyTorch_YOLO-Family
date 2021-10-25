@@ -2,22 +2,31 @@ import numpy as np
 import torch
 import torch.nn as nn
 from utils.modules import Conv, DilatedEncoder
-from backbone import darknet19
+from backbone.darknet19 import darknet19
 from utils import box_ops
 from utils import loss
 
 class YOLOv2(nn.Module):
-    def __init__(self, device, img_size=None, num_classes=20, trainable=False, conf_thresh=0.001, nms_thresh=0.6, anchor_size=None, hr=False):
+    def __init__(self, 
+                 device, 
+                 img_size=None, 
+                 num_classes=20, 
+                 trainable=False, 
+                 conf_thresh=0.001, 
+                 nms_thresh=0.6, 
+                 anchor_size=None,
+                 center_sample=False):
         super(YOLOv2, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
+        self.stride = [32]
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        self.center_sample = center_sample
         self.anchor_size = torch.tensor(anchor_size)
         self.num_anchors = len(anchor_size)
-        self.stride = [0]
         self.grid_xy, self.anchor_wh = self.create_grid(img_size)
 
         # backbone
@@ -139,6 +148,24 @@ class YOLOv2(nn.Module):
         return bboxes, scores, cls_inds
 
 
+    def decode_bbox(self, reg_pred):
+        """reg_pred: [B, N, KA, 4]"""
+        B = reg_pred.size(0)
+        # txtytwth -> xywh, and normalize
+        if self.center_sample:
+            xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
+        else:
+            xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
+        wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
+        xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
+        # xywh -> x1y1x2y2
+        x1y1_pred = xywh_pred[..., :2] - xywh_pred[..., 2:] / 2
+        x2y2_pred = xywh_pred[..., :2] + xywh_pred[..., 2:] / 2
+        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1)
+
+        return box_pred
+
+
     def forward(self, x, targets=None):
         B = x.size(0)
         KA = self.num_anchors
@@ -159,19 +186,13 @@ class YOLOv2(nn.Module):
         reg_pred = self.reg_pred(reg_feat)
 
         # [B, KA*1, H, W] -> [B, H, W, KA*1] -> [B, H*W*KA, 1]
-        obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
+        obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
         # [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
         cls_pred =cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
         # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
-        # txtytwth -> xywh, and normalize
-        xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
-        wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
-        xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
-        # xywh -> x1y1x2y2
-        x1y1_pred = xywh_pred[..., :2] - xywh_pred[..., 2:] / 2
-        x2y2_pred = xywh_pred[..., :2] + xywh_pred[..., 2:] / 2
-        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1)
+        # [B, HW, KA, 4] -> [B, HW*KA, 4]
+        box_pred = self.decode_bbox(reg_pred)
 
         # train
         if self.trainable:

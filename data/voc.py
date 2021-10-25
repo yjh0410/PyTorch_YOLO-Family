@@ -150,7 +150,8 @@ class VOCDetection(data.Dataset):
             img_lists.append(img_i)
             tg_lists.append(target_i)
 
-        mosaic_img = np.zeros([self.img_size*2, self.img_size*2, img_i.shape[2]], dtype=np.uint8)
+        mean = np.array([v*255 for v in self.transform.mean])
+        mosaic_img = np.ones([self.img_size*2, self.img_size*2, img_i.shape[2]], dtype=np.uint8) * mean
         # mosaic center
         yc, xc = [int(random.uniform(-x, 2*self.img_size + x)) for x in [-self.img_size // 2, -self.img_size // 2]]
         # yc = xc = self.img_size
@@ -231,10 +232,10 @@ class VOCDetection(data.Dataset):
                 target = np.array(target)
 
         # augment
-        if not self.mosaic:
-            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
-        else:
+        if self.mosaic:
             img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
+        else:
+            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
             
         target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
 
@@ -288,22 +289,32 @@ if __name__ == "__main__":
                 img_size=img_size,
                 transform=ValTransforms(img_size),
                 color_augment=ColorTransforms(img_size),
-                mosaic=False)
+                mosaic=True)
     
+    np.random.seed(0)
+    class_colors = [(np.random.randint(255),
+                     np.random.randint(255),
+                     np.random.randint(255)) for _ in range(20)]
     print('Data length: ', len(dataset))
     for i in range(1000):
-        image, target, h, w = dataset.pull_item(i)
+        image, target, _, _, _, _ = dataset.pull_item(i)
         image = image.permute(1, 2, 0).numpy()[:, :, (2, 1, 0)]
         image = ((image * std + mean)*255).astype(np.uint8)
         image = image.copy()
 
         for box in target:
-            xmin, ymin, xmax, ymax, _ = box
-            xmin *= img_size
-            ymin *= img_size
-            xmax *= img_size
-            ymax *= img_size
-            image = cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0,0,255), 2)
+            x1, y1, x2, y2, cls_id = box
+            cls_id = int(cls_id)
+            color = class_colors[cls_id]
+            # class name
+            label = VOC_CLASSES[cls_id]
+            x1 *= img_size
+            y1 *= img_size
+            x2 *= img_size
+            y2 *= img_size
+            image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0,0,255), 2)
+            # put the test on the bbox
+            cv2.putText(image, label, (int(x1), int(y1 - 5)), 0, 0.5, color, 1, lineType=cv2.LINE_AA)
         cv2.imshow('gt', image)
         # cv2.imwrite(str(i)+'.jpg', img)
         cv2.waitKey(0)

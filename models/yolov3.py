@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone import darknet53
-from utils import Conv, UpSample, SPP, ConvBlocks
+from backbone.darknet53 import darknet53
+from utils.modules import Conv, UpSample, SPP, ConvBlocks
 from utils import box_ops
 from utils import loss
 
@@ -16,16 +16,18 @@ class YOLOv3(nn.Module):
                  trainable=False, 
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
-                 anchor_size=None):
+                 anchor_size=None,
+                 center_sample=False):
 
         super(YOLOv3, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
+        self.stride = [8, 16, 32]
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.stride = [8, 16, 32]
+        self.center_sample = center_sample
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
@@ -210,7 +212,10 @@ class YOLOv3(nn.Module):
             # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
             reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
             # txtytwth -> xywh
-            xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+            if self.center_sample:
+                xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+            else:
+                xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
             wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
             xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1).view(B, -1, 4)
             # xywh -> x1y1x2y2

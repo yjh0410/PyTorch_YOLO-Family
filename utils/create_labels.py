@@ -62,19 +62,19 @@ def set_anchors(anchor_size):
     return anchor_boxes
 
 
-def gt_creator(img_size, strides, label_lists, anchor_size, center_sample=False):
+def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=False):
     """creator gt"""
     # prepare
     batch_size = len(label_lists)
     img_h = img_w = img_size
     num_scale = len(strides)
     gt_tensor = []
-    KA = len(anchor_size) // num_scale
+    KA = len(anchor_size) // num_scale if anchor_size is not None else 1
 
     for s in strides:
         fmp_h, fmp_w = img_h // s, img_w // s
         # [B, H, W, KA, obj+cls+box+pos]
-        gt_tensor.append(np.zeros([batch_size, fmp_h, fmp_w, KA, 1+1+4+1]))
+        gt_tensor.append(np.zeros([batch_size, fmp_h, fmp_w, KA, 1+1+4]))
         
     # generate gt datas  
     for bi in range(batch_size):
@@ -93,33 +93,45 @@ def gt_creator(img_size, strides, label_lists, anchor_size, center_sample=False)
                 # print('A dirty data !!!')
                 continue    
 
-            # compute the IoU
-            anchor_boxes = set_anchors(anchor_size)
-            gt_box = np.array([[0, 0, bw, bh]])
-            iou = compute_iou(anchor_boxes, gt_box)
+            if anchor_size is not None:
+                # use anchor box
+                # compute the IoU
+                anchor_boxes = set_anchors(anchor_size)
+                gt_box = np.array([[0, 0, bw, bh]])
+                iou = compute_iou(anchor_boxes, gt_box)
 
-            # We assign the anchor box with highest IoU score.
-            index = np.argmax(iou)
-            # s_indx, ab_ind = index // num_scale, index % num_scale
-            s_indx = index // KA
-            ab_ind = index - s_indx * KA
-            # get the corresponding stride
-            s = strides[s_indx]
-            # compute the gride cell
-            xc_s = xc / s
-            yc_s = yc / s
-            grid_x = int(xc_s)
-            grid_y = int(yc_s)
+                # We assign the anchor box with highest IoU score.
+                index = np.argmax(iou)
+                # s_indx, ab_ind = index // num_scale, index % num_scale
+                s_indx = index // KA
+                ab_ind = index - s_indx * KA
+                # get the corresponding stride
+                s = strides[s_indx]
+                # compute the gride cell
+                xc_s = xc / s
+                yc_s = yc / s
+                grid_x = int(xc_s)
+                grid_y = int(yc_s)
+            else:
+                # no anchor box
+                s_indx = 0
+                ab_ind = 0
+                # compute the gride cell
+                s = strides[s_indx]
+                xc_s = xc / s
+                yc_s = yc / s
+                grid_x = int(xc_s)
+                grid_y = int(yc_s)
 
             if center_sample:
-                for j in range(grid_y-1, grid_y+2):
-                    for i in range(grid_x-1, grid_x+2):
-                        if (j >= 0 and j < gt_tensor[s_indx].shape[0]) and (i >= 0 and i < gt_tensor[s_indx].shape[1]):
+                for j in range(grid_y, grid_y+1):
+                    for i in range(grid_x, grid_x+1):
+                        if (j >= 0 and j < gt_tensor[s_indx].shape[1]) and (i >= 0 and i < gt_tensor[s_indx].shape[2]):
                             gt_tensor[s_indx][bi, j, i, ab_ind, 0] = 1.0
                             gt_tensor[s_indx][bi, j, i, ab_ind, 1] = cls_id
-                            gt_tensor[s_indx][bi, j, i, ab_ind, 2:-1] = np.array([x1, y1, x2, y2])
+                            gt_tensor[s_indx][bi, j, i, ab_ind, 2:] = np.array([x1, y1, x2, y2])
             else:
-                if (j >= 0 and j < gt_tensor[s_indx].shape[0]) and (i >= 0 and i < gt_tensor[s_indx].shape[1]):
+                if (grid_y >= 0 and grid_y < gt_tensor[s_indx].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[s_indx].shape[2]):
                     gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 0] = 1.0
                     gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 1] = cls_id
                     gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 2:] = np.array([x1, y1, x2, y2])

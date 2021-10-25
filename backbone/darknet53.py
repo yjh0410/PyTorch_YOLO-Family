@@ -73,17 +73,13 @@ class DarkNet_53(nn.Module):
         # self.fc = nn.Linear(1024, num_classes)
 
     def forward(self, x, targets=None):
-        x = self.layer_1(x)
-        x = self.layer_2(x)
-        C_3 = self.layer_3(x)
-        C_4 = self.layer_4(C_3)
-        C_5 = self.layer_5(C_4)
+        c1 = self.layer_1(x)
+        c2 = self.layer_2(c1)
+        c3 = self.layer_3(c2)
+        c4 = self.layer_4(c3)
+        c5 = self.layer_5(c4)
 
-        # x = self.avgpool(x)
-        # x = x.view(x.size(0), -1)
-        # x = self.fc(x)
-
-        return C_3, C_4, C_5
+        return c3, c4, c5
 
 
 def darknet53(pretrained=False, **kwargs):

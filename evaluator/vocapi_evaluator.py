@@ -21,14 +21,14 @@ else:
 class VOCAPIEvaluator():
     """ VOC AP Evaluation class """
     def __init__(self, 
-                 data_root, 
+                 data_dir, 
                  img_size, 
                  device, 
                  transform, 
                  set_type='test', 
                  year='2007', 
                  display=False):
-        self.data_root = data_root
+        self.data_dir = data_dir
         self.img_size = img_size
         self.device = device
         self.transform = transform
@@ -38,17 +38,16 @@ class VOCAPIEvaluator():
         self.display = display
 
         # path
-        self.devkit_path = data_root + 'VOC' + year
-        self.annopath = os.path.join(data_root, 'VOC2007', 'Annotations', '%s.xml')
-        self.imgpath = os.path.join(data_root, 'VOC2007', 'JPEGImages', '%s.jpg')
-        self.imgsetpath = os.path.join(data_root, 'VOC2007', 'ImageSets', 'Main', set_type+'.txt')
+        self.devkit_path = data_dir + 'VOC' + year
+        self.annopath = os.path.join(data_dir, 'VOC2007', 'Annotations', '%s.xml')
+        self.imgpath = os.path.join(data_dir, 'VOC2007', 'JPEGImages', '%s.jpg')
+        self.imgsetpath = os.path.join(data_dir, 'VOC2007', 'ImageSets', 'Main', set_type+'.txt')
         self.output_dir = self.get_output_dir('voc_eval/', self.set_type)
 
         # dataset
-        self.dataset = VOCDetection(root=data_root, 
+        self.dataset = VOCDetection(data_dir=data_dir, 
                                     image_sets=[('2007', set_type)],
-                                    transform=transform
-                                    )
+                                    transform=transform)
 
     def evaluate(self, net):
         net.eval()

@@ -1,4 +1,3 @@
-import numpy
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -9,9 +8,9 @@ class MSEWithLogitsLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, logits, targets, gt_pos):
-        inputs = logits.sigoid()
+        inputs = logits.sigmoid()
         # mse loss
-        loss = F.mse_loss(input=logits, 
+        loss = F.mse_loss(input=inputs, 
                           target=targets,
                           reduction="none")
         pos_loss = loss * gt_pos * 5.0

@@ -20,7 +20,7 @@ class Conv_BN_LeakyReLU(nn.Module):
 
 
 class DarkNet_19(nn.Module):
-    def __init__(self, num_classes=1000):
+    def __init__(self):
         print("Initializing the darknet19 network ......")
         
         super(DarkNet_19, self).__init__()
@@ -31,21 +31,21 @@ class DarkNet_19(nn.Module):
             nn.MaxPool2d((2,2), 2),
         )
 
-        # output : stride = 4, c = 64
+        # output : stride = 2, c = 64
         self.conv_2 = nn.Sequential(
-            Conv_BN_LeakyReLU(32, 64, 3, 1),
-            nn.MaxPool2d((2,2), 2)
+            Conv_BN_LeakyReLU(32, 64, 3, 1)
         )
 
-        # output : stride = 8, c = 128
+        # output : stride = 4, c = 128
+        self.maxpool_2 = nn.MaxPool2d((2,2), 2)
         self.conv_3 = nn.Sequential(
             Conv_BN_LeakyReLU(64, 128, 3, 1),
             Conv_BN_LeakyReLU(128, 64, 1),
-            Conv_BN_LeakyReLU(64, 128, 3, 1),
-            nn.MaxPool2d((2,2), 2)
+            Conv_BN_LeakyReLU(64, 128, 3, 1)
         )
 
         # output : stride = 8, c = 256
+        self.maxpool_3 = nn.MaxPool2d((2,2), 2)
         self.conv_4 = nn.Sequential(
             Conv_BN_LeakyReLU(128, 256, 3, 1),
             Conv_BN_LeakyReLU(256, 128, 1),
@@ -72,22 +72,16 @@ class DarkNet_19(nn.Module):
             Conv_BN_LeakyReLU(512, 1024, 3, 1)
         )
 
-        # self.conv_7 = nn.Conv2d(1024, 1000, 1)
-        # self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, x):
-        x = self.conv_1(x)
-        x = self.conv_2(x)
-        x = self.conv_3(x)
-        C_4 = self.conv_4(x)
-        C_5 = self.conv_5(self.maxpool_4(C_4))
-        C_6 = self.conv_6(self.maxpool_5(C_5))
+        c1 = self.conv_1(x)
+        c1 = self.conv_2(c1)
+        c2 = self.conv_3(self.maxpool_2(c1))
+        c3 = self.conv_4(self.maxpool_2(c2))
+        c4 = self.conv_5(self.maxpool_4(c3))
+        c5 = self.conv_6(self.maxpool_5(c4))
 
-        # x = self.conv_7(C_6)
-        # x = self.avgpool(x)
-        # x = x.view(x.size(0), -1)
-        # return x
-        return C_4, C_5, C_6
+        return c5
 
 
 def darknet19(pretrained=False, **kwargs):
@@ -101,5 +95,5 @@ def darknet19(pretrained=False, **kwargs):
         print('Loading the pretrained model ...')
         path_to_dir = os.path.dirname(os.path.abspath(__file__))
         print('Loading the darknet19 ...')
-        model.load_state_dict(torch.load(path_to_dir + '/weights/darknet19.pth', map_location='cuda'), strict=False)
+        model.load_state_dict(torch.load(path_to_dir + '/weights/darknet19/darknet19.pth'), strict=False)
     return model
