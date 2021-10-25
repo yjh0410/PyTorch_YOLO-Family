@@ -136,7 +136,6 @@ def test(args,
         bboxes *= size
 
         # vis detection
-        image = image[..., ::-1].copy()  # to BGR format
         img_processed = visualize(
                             img=image,
                             bboxes=bboxes,

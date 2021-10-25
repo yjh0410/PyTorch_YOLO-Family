@@ -403,8 +403,9 @@ def train():
                         tblogger.add_scalar('val/AP50_95', evaluator.ap50_95, epoch)
                         tblogger.add_scalar('val/AP50', evaluator.ap50, epoch)
 
-            # wait for all processes to synchronize
-            dist.barrier()
+            if args.distributed:
+                # wait for all processes to synchronize
+                dist.barrier()
 
             # set train mode.
             model_eval.trainable = True

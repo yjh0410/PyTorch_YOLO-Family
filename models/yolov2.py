@@ -6,6 +6,7 @@ from backbone.darknet19 import darknet19
 from utils import box_ops
 from utils import loss
 
+
 class YOLOv2(nn.Module):
     def __init__(self, 
                  device, 
@@ -186,9 +187,9 @@ class YOLOv2(nn.Module):
         reg_pred = self.reg_pred(reg_feat)
 
         # [B, KA*1, H, W] -> [B, H, W, KA*1] -> [B, H*W*KA, 1]
-        obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
+        obj_pred = obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
         # [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
-        cls_pred =cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
+        cls_pred = cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
         # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
         reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
         # [B, HW, KA, 4] -> [B, HW*KA, 4]

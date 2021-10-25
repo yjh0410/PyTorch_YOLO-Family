@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone import cspdarknet53
+from backbone.cspdarknet53 import cspdarknet53
 from utils.modules import Conv, UpSample, BottleneckCSP, SPP
 from utils import box_ops
 from utils import loss
@@ -42,7 +42,6 @@ class YOLOv4(nn.Module):
             SPP(c5, c5, e=0.5),
             BottleneckCSP(c5, c5, n=3, shortcut=False)
         ) 
-
 
         # head
         self.head_conv_0 = Conv(c5, c5//2, k=1)  # 10
