@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from utils.modules import Conv, DilatedEncoder
-from backbone.darknet19 import darknet19
+from backbone.resnet import resnet50
 from utils import box_ops
 from utils import loss
 
@@ -29,8 +29,8 @@ class YOLOv1(nn.Module):
         self.grid_xy = self.create_grid(img_size)
 
         # backbone
-        self.backbone = darknet19(pretrained=trainable)
-        c5 = 1024
+        self.backbone = resnet50(pretrained=trainable)
+        c5 = 2048
         p5 = 512
         # neck
         self.neck = DilatedEncoder(c1=c5, c2=p5)
