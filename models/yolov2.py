@@ -141,7 +141,7 @@ class YOLOv2(nn.Module):
 
     def forward(self, x, targets=None):
         B = x.size(0)
-        Q = self.num_queries
+        KA = self.num_anchors
         C = self.num_classes
         # backbone
         x = self.backbone(x)
@@ -158,12 +158,12 @@ class YOLOv2(nn.Module):
         cls_pred = self.cls_pred(cls_feat)
         reg_pred = self.reg_pred(reg_feat)
 
-        # [B, Q*1, H, W] -> [B, H, W, Q*1] -> [B, H*W*Q, 1]
+        # [B, KA*1, H, W] -> [B, H, W, KA*1] -> [B, H*W*KA, 1]
         obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-        # [B, Q*C, H, W] -> [B, H, W, Q*C] -> [B, H*W*Q, C]
+        # [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
         cls_pred =cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-        # [B, Q*4, H, W] -> [B, H, W, Q*4] -> [B, HW, Q, 4]
-        reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, Q, 4)
+        # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
+        reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
         # txtytwth -> xywh, and normalize
         xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
         wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh

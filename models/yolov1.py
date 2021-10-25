@@ -144,7 +144,6 @@ class YOLOv1(nn.Module):
 
     def forward(self, x, targets=None):
         B = x.size(0)
-        Q = self.num_queries
         C = self.num_classes
         # backbone
         x = self.backbone(x)
