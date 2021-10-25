@@ -1,7 +1,7 @@
 # from github: https://github.com/ruinmessi/ASFF/blob/master/utils/distributed_util.py
 
 import torch
-
+import time
 
 def get_world_size():
     if not torch.distributed.is_initialized():

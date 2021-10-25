@@ -1,23 +1,33 @@
-import math
 import torch
 import torch.nn as nn
-from copy import deepcopy
 
 
 class Conv(nn.Module):
-    def __init__(self, in_ch, out_ch, k=1, p=0, s=1, d=1, g=1, act=True):
+    def __init__(self, in_ch, out_ch, k=1, p=0, s=1, d=1, g=1, act=True, bias=False):
         super(Conv, self).__init__()
         if act:
             self.convs = nn.Sequential(
-                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g),
+                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
                 nn.BatchNorm2d(out_ch),
                 nn.LeakyReLU(0.1, inplace=True)
             )
         else:
             self.convs = nn.Sequential(
-                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g),
+                nn.Conv2d(in_ch, out_ch, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
                 nn.BatchNorm2d(out_ch)
             )
+        self.initialize_weights()
+        
+    def initialize_weights(self):
+        for m in self.convs.modules():
+            t = type(m)
+            if t is nn.Conv2d:
+                pass  # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif t is nn.BatchNorm2d:
+                m.eps = 1e-3
+                m.momentum = 0.03
+            elif t in [nn.LeakyReLU, nn.ReLU, nn.ReLU6]:
+                m.inplace = True
 
     def forward(self, x):
         return self.convs(x)
@@ -32,60 +42,110 @@ class UpSample(nn.Module):
         self.align_corner = align_corner
 
     def forward(self, x):
-        return torch.nn.functional.interpolate(x, size=self.size, scale_factor=self.scale_factor, 
-                                                mode=self.mode, align_corners=self.align_corner)
+        return torch.nn.functional.interpolate(input=x, 
+                                               size=self.size, 
+                                               scale_factor=self.scale_factor, 
+                                               mode=self.mode, 
+                                               align_corners=self.align_corner
+                                               )
 
 
-class reorg_layer(nn.Module):
-    def __init__(self, stride):
-        super(reorg_layer, self).__init__()
-        self.stride = stride
+class ConvBlocks(nn.Module):
+    def __init__(self, c1, c2):
+        super().__init__()
+        c_ = c2 *2
+        self.convs = nn.Sequential(
+            Conv(c1, c2, k=1),
+            Conv(c2, c_, k=3, p=1),
+            Conv(c_, c2, k=1),
+            Conv(c2, c_, k=3, p=1),
+            Conv(c_, c2, k=1)
+        )
 
     def forward(self, x):
-        batch_size, channels, height, width = x.size()
-        _height, _width = height // self.stride, width // self.stride
-        
-        x = x.view(batch_size, channels, _height, self.stride, _width, self.stride).transpose(3, 4).contiguous()
-        x = x.view(batch_size, channels, _height * _width, self.stride * self.stride).transpose(2, 3).contiguous()
-        x = x.view(batch_size, channels, self.stride * self.stride, _height, _width).transpose(1, 2).contiguous()
-        x = x.view(batch_size, -1, _height, _width)
-
-        return x
+        return self.convs(x)
 
 
+# Spatial Pyramid Pooling
 class SPP(nn.Module):
     """
         Spatial Pyramid Pooling
     """
-    def __init__(self):
+    def __init__(self, c1, c2, e=0.5):
         super(SPP, self).__init__()
+        c_ = int(c1 * e)
+        self.cv1 = Conv(c1, c_, k=1)
+        self.cv2 = Conv(c_*4, c2, k=1)
 
     def forward(self, x):
+        x = self.cv1(x)
         x_1 = torch.nn.functional.max_pool2d(x, 5, stride=1, padding=2)
         x_2 = torch.nn.functional.max_pool2d(x, 9, stride=1, padding=4)
         x_3 = torch.nn.functional.max_pool2d(x, 13, stride=1, padding=6)
         x = torch.cat([x, x_1, x_2, x_3], dim=1)
+        x = self.cv2(x)
 
         return x
 
 
-class ModelEMA(object):
-    def __init__(self, model, decay=0.9999, updates=0):
-        # create EMA
-        self.ema = deepcopy(model).eval()
-        self.updates = updates
-        self.decay = lambda x: decay * (1 - math.exp(-x / 2000.))
-        for p in self.ema.parameters():
-            p.requires_grad_(False)
+# Copy from yolov5
+class Bottleneck(nn.Module):
+    # Standard bottleneck
+    def __init__(self, c1, c2, shortcut=True, g=1, d=1, e=0.5):  # ch_in, ch_out, shortcut, groups, expansion
+        super(Bottleneck, self).__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, k=1)
+        self.cv2 = Conv(c_, c2, k=3, p=d, g=g, d=d)
+        self.add = shortcut and c1 == c2
 
-    def update(self, model):
-        # Update EMA parameters
-        with torch.no_grad():
-            self.updates += 1
-            d = self.decay(self.updates)
+    def forward(self, x):
+        return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
-            msd = model.state_dict()
-            for k, v in self.ema.state_dict().items():
-                if v.dtype.is_floating_point:
-                    v *= d
-                    v += (1. - d) * msd[k].detach()
+
+# Copy from yolov5
+class BottleneckCSP(nn.Module):
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super(BottleneckCSP, self).__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, k=1)
+        self.cv2 = Conv(c1, c_, k=1)
+        self.cv3 = Conv(2 * c_, c2, k=1)
+        self.m = nn.Sequential(*[Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)])
+
+    def forward(self, x):
+        return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+
+
+# Dilated Encoder
+class DilatedBottleneck(nn.Module):
+    def __init__(self, c, d=1, e=0.5, act=True):
+        super(DilatedBottleneck, self).__init__()
+        c_ = int(c * e)
+        self.branch = nn.Sequential(
+            Conv(c, c_, k=1, act=act),
+            Conv(c_, c_, k=3, p=d, d=d, act=act),
+            Conv(c_, c, k=1, act=act)
+        )
+
+    def forward(self, x):
+        return x + self.branch(x)
+
+
+class DilatedEncoder(nn.Module):
+    """ DilateEncoder """
+    def __init__(self, c1, c2, act=True, dilation_list=[2, 4, 6, 8]):
+        super(DilatedEncoder, self).__init__()
+        self.projector = nn.Sequential(
+            Conv(c1, c2, k=1, act=None),
+            Conv(c2, c2, k=3, p=1, act=None)
+        )
+        encoders = []
+        for d in dilation_list:
+            encoders.append(DilatedBottleneck(c=c2, d=d, act=act))
+        self.encoders = nn.Sequential(*encoders)
+
+    def forward(self, x):
+        x = self.projector(x)
+        x = self.encoders(x)
+
+        return x

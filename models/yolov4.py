@@ -2,13 +2,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone import darknet53
-from utils import Conv, UpSample, SPP, ConvBlocks
+from backbone import cspdarknet53
+from utils.modules import Conv, UpSample, BottleneckCSP, SPP
 from utils import box_ops
 from utils import loss
 
 
-class YOLOv3(nn.Module):
+class YOLOv4(nn.Module):
     def __init__(self, 
                  device, 
                  img_size=640, 
@@ -18,7 +18,7 @@ class YOLOv3(nn.Module):
                  nms_thresh=0.60, 
                  anchor_size=None):
 
-        super(YOLOv3, self).__init__()
+        super(YOLOv4, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
@@ -31,35 +31,39 @@ class YOLOv3(nn.Module):
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # backbone
-        print('backbone: DarkNet-53 ...')
-        self.backbone = darknet53(pretrained=trainable)
+        print('backbone: CSPDarkNet ...')
+        self.backbone = cspdarknet53(pretrained=trainable)
         c3, c4, c5 = 256, 512, 1024
 
         # neck
-        self.neck = SPP(c5, c5, e=0.5)
+        self.neck = nn.Sequential(
+            SPP(c5, c5, e=0.5),
+            BottleneckCSP(c5, c5, n=3, shortcut=False)
+        ) 
+
 
         # head
-        # P3/8-small
-        self.head_convblock_0 = ConvBlocks(c5, c5//2)  # 10
-        self.head_conv_0 = Conv(c5//2, c4//2, k=1)
+        self.head_conv_0 = Conv(c5, c5//2, k=1)  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_conv_1 = Conv(c5//2, c5, k=3, p=1)
+        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
+
+        # P3/8-small
+        self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
+        self.head_upsample_1 = UpSample(scale_factor=2)
+        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=3, shortcut=False)
 
         # P4/16-medium
-        self.head_convblock_1 = ConvBlocks(c4 + c4//2, c4//2)  # 10
-        self.head_conv_2 = Conv(c4//2, c3//2, k=1)
-        self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_conv_3 = Conv(c4//2, c4, k=3, p=1)
+        self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
+        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=3, shortcut=False)
 
         # P8/32-large
-        self.head_convblock_2 = ConvBlocks(c3 + c3//2, c3//2)  # 10
-        self.head_conv_4 = Conv(c3//2, c3, k=3, p=1)
+        self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
+        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=3, shortcut=False)
 
         # det conv
         self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
         self.head_det_2 = nn.Conv2d(c4, self.num_anchors * (1 + self.num_classes + 4), 1)
         self.head_det_3 = nn.Conv2d(c5, self.num_anchors * (1 + self.num_classes + 4), 1)
-
 
         if self.trainable:
             # init bias
@@ -81,14 +85,15 @@ class YOLOv3(nn.Module):
         w, h = img_size, img_size
         for ind, s in enumerate(self.stride):
             # generate grid cells
-            fmp_w, fmp_h = w // s, h // s
-            grid_y, grid_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
-            # [H, W, 2] -> [HW, 2]
-            grid_xy = torch.stack([grid_x, grid_y], dim=-1).float().view(-1, 2)
-            # [HW, 2] -> [1, HW, 1, 2]   
-            grid_xy = grid_xy[None, :, None, :].to(self.device)
+            ws, hs = w // s, h // s
+            grid_y, grid_x = torch.meshgrid([torch.arange(hs), torch.arange(ws)])
+            grid_xy = torch.stack([grid_x, grid_y], dim=-1).float()
             # [1, HW, 1, 2]
-            anchor_wh = self.anchor_size[ind].repeat(fmp_h*fmp_w, 1, 1).unsqueeze(0).to(self.device)
+            grid_xy = grid_xy.reshape(1, hs*ws, 1, 2).to(self.device)
+
+            # generate anchor_wh tensor
+            # [1, HW, 1, 2]
+            anchor_wh = self.anchor_size[ind].repeat(hs*ws, 1, 1).unsqueeze(0).to(self.device)
 
             total_grid_xy.append(grid_xy)
             total_anchor_wh.append(anchor_wh)
@@ -102,7 +107,7 @@ class YOLOv3(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS Baseline."""
+        """"Pure Python NMS YOLOv4."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
@@ -168,39 +173,44 @@ class YOLOv3(nn.Module):
 
 
     def forward(self, x, targets=None):
-        B = x.size(0)
-        KA = self.num_anchors
-        C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
 
         # neck
         c5 = self.neck(c5)
 
+        # FPN + PAN
         # head
-        # p5/32
-        p5 = self.head_convblock_0(c5)
-        p5_up = self.head_upsample_0(self.head_conv_0(p5))
-        p5 = self.head_conv_1(p5)
-
-        # p4/16
-        p4 = self.head_convblock_1(torch.cat([c4, p5_up], dim=1))
-        p4_up = self.head_upsample_1(self.head_conv_2(p4))
-        p4 = self.head_conv_3(p4)
-
+        c6 = self.head_conv_0(c5)
+        c7 = self.head_upsample_0(c6)   # s32->s16
+        c8 = torch.cat([c7, c4], dim=1)
+        c9 = self.head_csp_0(c8)
         # P3/8
-        p3 = self.head_convblock_2(torch.cat([c3, p4_up], dim=1))
-        p3 = self.head_conv_4(p3)
+        c10 = self.head_conv_1(c9)
+        c11 = self.head_upsample_1(c10)   # s16->s8
+        c12 = torch.cat([c11, c3], dim=1)
+        c13 = self.head_csp_1(c12)  # to det
+        # p4/16
+        c14 = self.head_conv_2(c13)
+        c15 = torch.cat([c14, c10], dim=1)
+        c16 = self.head_csp_2(c15)  # to det
+        # p5/32
+        c17 = self.head_conv_3(c16)
+        c18 = torch.cat([c17, c6], dim=1)
+        c19 = self.head_csp_3(c18)  # to det
 
         # det
-        pred_s = self.head_det_1(p3)
-        pred_m = self.head_det_2(p4)
-        pred_l = self.head_det_3(p5)
+        pred_s = self.head_det_1(c13)
+        pred_m = self.head_det_2(c16)
+        pred_l = self.head_det_3(c19)
 
         preds = [pred_s, pred_m, pred_l]
         obj_pred_list = []
         cls_pred_list = []
         box_pred_list = []
+        B = x.size(0)
+        KA = self.num_anchors
+        C = self.num_classes
 
         for i, pred in enumerate(preds):
             # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
@@ -210,7 +220,7 @@ class YOLOv3(nn.Module):
             # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
             reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
             # txtytwth -> xywh
-            xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+            xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 3.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
             wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
             xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1).view(B, -1, 4)
             # xywh -> x1y1x2y2
@@ -235,7 +245,7 @@ class YOLOv3(nn.Module):
             # giou: [B, HW*KA,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
 
-            # we set giou as the target of the objectness prediction
+            # we set iou_pred as the target of the objectness prediction
             targets = torch.cat([0.5 * (giou_pred.view(B, -1, 1).clone().detach() + 1.0), targets], dim=-1)
 
             # loss
