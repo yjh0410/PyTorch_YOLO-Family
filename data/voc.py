@@ -93,7 +93,6 @@ class VOCDetection(data.Dataset):
                  img_size=640,
                  image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
                  transform=None, 
-                 color_augment=None,
                  target_transform=VOCAnnotationTransform(),
                  mosaic=False):
         self.root = data_dir
@@ -109,7 +108,6 @@ class VOCDetection(data.Dataset):
                 self.ids.append((rootpath, line.strip()))
         # augmentation
         self.transform = transform
-        self.color_augment = color_augment
         self.mosaic = mosaic
         if self.mosaic:
             print('use Mosaic Augmentation ...')
@@ -166,13 +164,6 @@ class VOCDetection(data.Dataset):
             r = self.img_size / max(h0, w0)
             if r != 1: 
                 img_i = cv2.resize(img_i, (int(w0 * r), int(h0 * r)))
-            h, w, _ = img_i.shape
-
-            # scale
-            if np.random.randint(2):
-                s = np.random.randint(50, 100) / 100.
-                img_i = cv2.resize(img_i, (int(w * s), int(h * s)))
-            
             h, w, _ = img_i.shape
 
             # place img in img4
@@ -232,10 +223,7 @@ class VOCDetection(data.Dataset):
                 target = np.array(target)
 
         # augment
-        if self.mosaic:
-            img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
-        else:
-            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
+        img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
             
         target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
 

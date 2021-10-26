@@ -39,7 +39,6 @@ class COCODataset(Dataset):
                  json_file='instances_train2017.json',
                  img_size=640,
                  transform=None, 
-                 color_augment=None,
                  mosaic=False):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -59,7 +58,6 @@ class COCODataset(Dataset):
         self.class_ids = sorted(self.coco.getCatIds())
         # augmentation
         self.transform = transform
-        self.color_augment = color_augment
         self.mosaic = mosaic
         if self.mosaic:
             print('use Mosaic Augmentation ...')
@@ -153,13 +151,6 @@ class COCODataset(Dataset):
                 img_i = cv2.resize(img_i, (int(w0 * r), int(h0 * r)))
             h, w, _ = img_i.shape
 
-            # scale
-            if np.random.randint(2):
-                s = np.random.randint(50, 100) / 100.
-                img_i = cv2.resize(img_i, (int(w * s), int(h * s)))
-
-            h, w, _ = img_i.shape
-
             # place img in img4
             if i == 0:  # top left
                 x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc  # xmin, ymin, xmax, ymax (large image)
@@ -217,10 +208,7 @@ class COCODataset(Dataset):
                 target = np.array(target)
 
         # augment
-        if self.mosaic:
-            img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
-        else:
-            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
+        img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
         
         target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
 

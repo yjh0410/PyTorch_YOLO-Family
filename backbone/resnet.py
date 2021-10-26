@@ -154,7 +154,7 @@ class ResNet(nn.Module):
 
         return x
             
-def resnet18(pretrained=False, hr_pretrained=False, **kwargs):
+def resnet18(pretrained=False, **kwargs):
     """Constructs a ResNet-18 model.
 
     Args:
@@ -163,11 +163,7 @@ def resnet18(pretrained=False, hr_pretrained=False, **kwargs):
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     if pretrained:
         # strict = False as we don't need fc layer params.
-        if hr_pretrained:
-            print('Loading the high resolution pretrained model ...')
-            model.load_state_dict(torch.load("backbone/weights/resnet18_hr_10.pth"), strict=False)
-        else:
-            model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
     return model
 
 def resnet34(pretrained=False, **kwargs):

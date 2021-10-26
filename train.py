@@ -1,7 +1,6 @@
 from __future__ import division
 
 import os
-import random
 import argparse
 import time
 import cv2
@@ -16,16 +15,16 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from data.voc import VOCDetection
 from data.coco import COCODataset
 from data import config
-from data.transforms import TrainTransforms, ValTransforms, ColorTransforms
+from data.transforms import TrainTransforms, ValTransforms
 
-from utils import distributed_utils
-from utils import create_labels
 from utils.com_paras_flops import FLOPs_and_Params
 from utils.misc import detection_collate
 from utils.misc import ModelEMA
 
 from evaluator.cocoapi_evaluator import COCOAPIEvaluator
 from evaluator.vocapi_evaluator import VOCAPIEvaluator
+
+from engine import train_one_epoch, evaluate, set_lr
 
 
 def parse_args():
@@ -37,6 +36,10 @@ def parse_args():
                         help='Batch size for training')
     parser.add_argument('--lr', default=1e-3, type=float, 
                         help='initial learning rate')
+    parser.add_argument('--max_epoch', type=int, default=200,
+                        help='The upper bound of warm-up')
+    parser.add_argument('--lr_epoch', nargs='+', default=[100, 150], type=int,
+                        help='lr epoch to decay')
     parser.add_argument('--wp_epoch', type=int, default=2,
                         help='The upper bound of warm-up')
     parser.add_argument('--start_epoch', type=int, default=0,
@@ -150,7 +153,6 @@ def train():
                         data_dir=data_dir,
                         img_size=train_size,
                         transform=TrainTransforms(train_size),
-                        color_augment=ColorTransforms(train_size),
                         mosaic=args.mosaic)
 
         evaluator = VOCAPIEvaluator(
@@ -166,7 +168,6 @@ def train():
                     data_dir=data_dir,
                     img_size=train_size,
                     transform=TrainTransforms(train_size),
-                    color_augment=ColorTransforms(train_size),
                     mosaic=args.mosaic)
 
         evaluator = COCOAPIEvaluator(
@@ -179,6 +180,9 @@ def train():
     else:
         print('unknow dataset !! Only support voc and coco !!')
         exit(0)
+    
+    # dataloader
+    dataloader = build_dataloader(args, dataset, detection_collate)
     
     print('Training model on:', args.dataset)
     print('The dataset size:', len(dataset))
@@ -202,15 +206,162 @@ def train():
     # compute FLOPs and Params
     FLOPs_and_Params(model=model, size=train_size)
 
-    # distributed
+    # DDP
     if args.distributed and args.num_gpu > 1:
         print('using DDP ...')
         model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+     
+    # keep training
+    if args.resume is not None:
+        print('keep training model: %s' % (args.resume))
+        model.load_state_dict(torch.load(args.resume, map_location=device))
+
+    # EMA
+    ema = ModelEMA(model) if args.ema else None
+
+    # use tfboard
+    tblogger = None
+    if args.tfboard:
+        print('use tensorboard')
+        from torch.utils.tensorboard import SummaryWriter
+        c_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+        log_path = os.path.join('log/', args.dataset, c_time)
+        os.makedirs(log_path, exist_ok=True)
+
+        tblogger = SummaryWriter(log_path)
+    
+    # optimizer setup
+    tmp_lr = args.lr
+    optimizer = optim.SGD(model.parameters(), 
+                            lr=tmp_lr, 
+                            momentum=0.9,
+                            weight_decay=5e-4)
+
+    batch_size = args.batch_size
+    epoch_size = len(dataset) // (batch_size * args.num_gpu)
+    best_map = -100.
+
+    # start training loop
+    for epoch in range(args.start_epoch, args.max_epoch):
+        if args.distributed:
+            dataloader.sampler.set_epoch(epoch)        
+
+        # use step lr decay
+        if epoch in args.lr_epoch:
+            tmp_lr = tmp_lr * 0.1
+            set_lr(optimizer, tmp_lr)
+
+        # train one epoch
+        train_size, tmp_lr = train_one_epoch(
+                                    args=args, 
+                                    epoch=epoch,
+                                    epoch_size=epoch_size,
+                                    cfg=cfg,
+                                    train_size=train_size,
+                                    tmp_lr=tmp_lr,
+                                    model=model, 
+                                    dataloader=dataloader, 
+                                    optimizer=optimizer,
+                                    anchor_size=anchor_size,
+                                    ema=ema,
+                                    tblogger=tblogger)
+        
+        # evaluation
+        if (epoch + 1) % args.eval_epoch == 0 or (epoch + 1) == args.max_epoch:
+            if args.ema:
+                model_eval = ema.ema
+            else:
+                model_eval = model.module if args.distributed else model
+            
+            # set eval mode
+            model_eval.trainable = False
+            model_eval.set_grid(val_size)
+            model_eval.eval()
+
+            if local_rank == 0:
+                evaluate(args=args, 
+                        epoch=epoch,
+                        model=model_eval, 
+                        evaluator=evaluator,
+                        best_map=best_map,
+                        path_to_save=path_to_save,
+                        tblogger=tblogger)
+            
+            if args.distributed:
+                # wait for all processes to synchronize
+                dist.barrier()
+
+            # set train mode.
+            model_eval.trainable = True
+            model_eval.set_grid(train_size)
+            model_eval.eval()
+
+
+    if args.mosaic:
+        # train more epoch without mosaic augmentation
+        print('Close Mosaic Augmentation ...')
+        dataset.mosaic = False
+        # dataloader
+        dataloader = build_dataloader(args, dataset, detection_collate)
+        # start training
+        for epoch in range(args.max_epoch, args.max_epoch + 20):
+            # train one epoch
+            train_size, tmp_lr = train_one_epoch(
+                                            args=args, 
+                                            epoch=epoch,
+                                            epoch_size=epoch_size,
+                                            cfg=cfg,
+                                            train_size=train_size,
+                                            tmp_lr=tmp_lr,
+                                            model=model, 
+                                            dataloader=dataloader, 
+                                            optimizer=optimizer,
+                                            anchor_size=anchor_size,
+                                            ema=ema,
+                                            tblogger=tblogger)
+            # evaluation
+            if (epoch + 1) % 5 == 0 or (epoch + 1) == args.max_epoch + 20:
+                if args.ema:
+                    model_eval = ema.ema
+                else:
+                    model_eval = model.module if args.distributed else model
+                
+                # set eval mode
+                model.trainable = False
+                model.set_grid(val_size)
+                model.eval()
+
+                if local_rank == 0:
+                    evaluate(args=args, 
+                            epoch=epoch,
+                            val_size=val_size, 
+                            model=model_eval, 
+                            evaluator=evaluator,
+                            best_map=best_map,
+                            path_to_save=path_to_save,
+                            tblogger=tblogger)
+                
+                if args.distributed:
+                    # wait for all processes to synchronize
+                    dist.barrier()
+
+                # set train mode.
+                model_eval.trainable = True
+                model_eval.set_grid(train_size)
+                model_eval.eval()
+
+    if args.tfboard:
+        tblogger.close()
+
+
+def build_dataloader(args, dataset, collate_fn=None):
+    # distributed
+    if args.distributed and args.num_gpu > 1:
         # dataloader
         dataloader = torch.utils.data.DataLoader(
                         dataset=dataset, 
                         batch_size=args.batch_size, 
-                        collate_fn=detection_collate,
+                        collate_fn=collate_fn,
                         num_workers=args.num_workers,
                         pin_memory=True,
                         sampler=torch.utils.data.distributed.DistributedSampler(dataset)
@@ -222,198 +373,11 @@ def train():
                         dataset=dataset, 
                         shuffle=True,
                         batch_size=args.batch_size, 
-                        collate_fn=detection_collate,
+                        collate_fn=collate_fn,
                         num_workers=args.num_workers,
                         pin_memory=True
                         )
-
-    # keep training
-    if args.resume is not None:
-        print('keep training model: %s' % (args.resume))
-        model.load_state_dict(torch.load(args.resume, map_location=device))
-
-    # EMA
-    ema = ModelEMA(model) if args.ema else None
-
-    # use tfboard
-    if args.tfboard:
-        print('use tensorboard')
-        from torch.utils.tensorboard import SummaryWriter
-        c_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-        log_path = os.path.join('log/', args.dataset, c_time)
-        os.makedirs(log_path, exist_ok=True)
-
-        tblogger = SummaryWriter(log_path)
-    
-    # optimizer setup
-    base_lr = args.lr
-    tmp_lr = base_lr
-    optimizer = optim.SGD(model.parameters(), 
-                            lr=base_lr, 
-                            momentum=0.9,
-                            weight_decay=5e-4)
-
-    batch_size = args.batch_size
-    max_epoch = cfg['max_epoch']
-    epoch_size = len(dataset) // (batch_size * args.num_gpu)
-    warmup = not args.no_warmup
-    best_map = -100.
-
-    t0 = time.time()
-    # start training loop
-    for epoch in range(args.start_epoch, max_epoch):
-        if args.distributed:
-            dataloader.sampler.set_epoch(epoch)        
-
-        # close mosaic and mixup
-        if max_epoch - epoch < 15:
-            if args.mosaic:
-                print('Close Mosaic Augmentation ...')
-                dataloader.dataset.mosaic = False
-
-        # use step lr decay
-        if epoch in cfg['lr_epoch']:
-            tmp_lr = tmp_lr * 0.1
-            set_lr(optimizer, tmp_lr)
-    
-        # train one epoch
-        for iter_i, (images, targets) in enumerate(dataloader):
-            # warmup
-            ni = iter_i+epoch*epoch_size
-            if epoch < args.wp_epoch and warmup:
-                nw = args.wp_epoch * epoch_size
-                tmp_lr = base_lr * pow(ni / nw, 4)
-                set_lr(optimizer, tmp_lr)
-
-            elif epoch == args.wp_epoch and iter_i == 0 and warmup:
-                # warmup is over
-                warmup = False
-                tmp_lr = base_lr
-                set_lr(optimizer, tmp_lr)
-
-            # multi-scale trick
-            if iter_i % 10 == 0 and iter_i > 0 and args.multi_scale:
-                # randomly choose a new size
-                r = cfg['random_size_range']
-                train_size = random.randint(r[0], r[1]) * 32
-                model.set_grid(train_size)
-            if args.multi_scale:
-                # interpolate
-                images = torch.nn.functional.interpolate(
-                                    input=images, 
-                                    size=train_size, 
-                                    mode='bilinear', 
-                                    align_corners=False)
-            
-            # make labels
-            targets = [label.tolist() for label in targets]
-            if args.vis:
-                vis_data(images, targets, train_size)
-                continue
-
-            targets = create_labels.gt_creator(
-                                img_size=train_size, 
-                                strides=net.stride, 
-                                label_lists=targets, 
-                                anchor_size=anchor_size, 
-                                center_sample=args.center_sample)
-
-            # to device
-            images = images.to(device)
-            targets = targets.to(device)
-
-            # forward
-            obj_loss, cls_loss, reg_loss, total_loss = model(images, targets=targets)
-
-            loss_dict = dict(obj_loss=obj_loss,
-                             cls_loss=cls_loss,
-                             reg_loss=reg_loss,
-                             total_loss=total_loss)
-            loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
-
-            # check NAN for loss
-            if torch.isnan(total_loss):
-                continue
-
-            # backprop
-            total_loss.backward()        
-            optimizer.step()
-            optimizer.zero_grad()
-
-            # ema
-            if args.ema:
-                ema.update(model)
-
-            # display
-            if iter_i % 10 == 0:
-                if args.tfboard:
-                    # viz loss
-                    tblogger.add_scalar('obj loss',    loss_dict_reduced['obj_loss'].item(),    iter_i + epoch * epoch_size)
-                    tblogger.add_scalar('cls loss',    loss_dict_reduced['cls_loss'].item(),    iter_i + epoch * epoch_size)
-                    tblogger.add_scalar('box loss',    loss_dict_reduced['reg_loss'].item(),    iter_i + epoch * epoch_size)
-                    tblogger.add_scalar('total loss',  loss_dict_reduced['total_loss'].item(),  iter_i + epoch * epoch_size)
-                
-                t1 = time.time()
-                outstream = ('[Epoch %d/%d][Iter %d/%d][lr %.6f]'
-                        '[Loss: obj %.2f || cls %.2f || reg %.2f || total %.2f || size %d || time: %.2f]'
-                        % (epoch+1, 
-                           max_epoch, 
-                           iter_i, 
-                           epoch_size, 
-                           tmp_lr,
-                           loss_dict_reduced['obj_loss'].item(),
-                           loss_dict_reduced['cls_loss'].item(), 
-                           loss_dict_reduced['reg_loss'].item(),
-                           loss_dict_reduced['total_loss'].item(),
-                           train_size, 
-                           t1-t0))
-
-                print(outstream, flush=True)
-
-                t0 = time.time()
-
-        # evaluation
-        if (epoch + 1) % args.eval_epoch == 0:
-            if args.ema:
-                model_eval = ema.ema
-            else:
-                model_eval = model.module if args.distributed else model
-
-            # set eval mode
-            model_eval.trainable = False
-            model_eval.set_grid(val_size)
-            model_eval.eval()
-
-            if local_rank == 0:
-                # evaluate
-                evaluator.evaluate(model_eval)
-
-                cur_map = evaluator.map
-                if cur_map > best_map:
-                    # update best-map
-                    best_map = cur_map
-                    # save model
-                    print('Saving state, epoch:', epoch + 1)
-                    torch.save(model_eval.state_dict(), os.path.join(path_to_save, 
-                                args.version + '_' + str(epoch + 1) + '_' + str(round(best_map*100, 2)) + '.pth'))  
-                if args.tfboard:
-                    if args.dataset == 'voc':
-                        tblogger.add_scalar('07test/mAP', evaluator.map, epoch)
-                    elif args.dataset == 'coco':
-                        tblogger.add_scalar('val/AP50_95', evaluator.ap50_95, epoch)
-                        tblogger.add_scalar('val/AP50', evaluator.ap50, epoch)
-
-            if args.distributed:
-                # wait for all processes to synchronize
-                dist.barrier()
-
-            # set train mode.
-            model_eval.trainable = True
-            model_eval.set_grid(train_size)
-            model_eval.eval()
-    
-    if args.tfboard:
-        tblogger.close()
+    return dataloader
 
 
 def set_lr(optimizer, lr):
