@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from backbone.darknet53 import darknet53
-from utils.modules import Conv, UpSample, SPP, ConvBlocks
+from utils.modules import Conv, UpSample, ConvBlocks, DilatedEncoder
 from utils import box_ops
 from utils import loss
 
@@ -17,7 +17,8 @@ class YOLOv3(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
                  anchor_size=None,
-                 center_sample=False):
+                 center_sample=False,
+                 num_queries=None):
 
         super(YOLOv3, self).__init__()
         self.device = device
@@ -37,24 +38,21 @@ class YOLOv3(nn.Module):
         self.backbone = darknet53(pretrained=trainable)
         c3, c4, c5 = 256, 512, 1024
 
-        # neck
-        self.neck = SPP(c5, c5, e=0.5)
-
         # head
         # P3/8-small
-        self.head_convblock_0 = ConvBlocks(c5, c5//2)  # 10
+        self.head_convblock_0 = DilatedEncoder(c5, c5//2) # ConvBlocks(c5, c5//2)
         self.head_conv_0 = Conv(c5//2, c4//2, k=1)
         self.head_upsample_0 = UpSample(scale_factor=2)
         self.head_conv_1 = Conv(c5//2, c5, k=3, p=1)
 
         # P4/16-medium
-        self.head_convblock_1 = ConvBlocks(c4 + c4//2, c4//2)  # 10
+        self.head_convblock_1 = ConvBlocks(c4 + c4//2, c4//2)
         self.head_conv_2 = Conv(c4//2, c3//2, k=1)
         self.head_upsample_1 = UpSample(scale_factor=2)
         self.head_conv_3 = Conv(c4//2, c4, k=3, p=1)
 
         # P8/32-large
-        self.head_convblock_2 = ConvBlocks(c3 + c3//2, c3//2)  # 10
+        self.head_convblock_2 = ConvBlocks(c3 + c3//2, c3//2)
         self.head_conv_4 = Conv(c3//2, c3, k=3, p=1)
 
         # det conv
@@ -175,9 +173,6 @@ class YOLOv3(nn.Module):
         C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
-
-        # neck
-        c5 = self.neck(c5)
 
         # head
         # p5/32

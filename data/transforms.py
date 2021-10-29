@@ -409,6 +409,7 @@ class TrainTransforms(object):
             ConvertFromInts(),
             ToAbsoluteCoords(),
             PhotometricDistort(),
+            RandomSampleCrop(),
             RandomMirror(),
             ToPercentCoords(),
             Resize(self.size, self.mean),

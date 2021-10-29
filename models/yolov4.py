@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from backbone.cspdarknet53 import cspdarknet53
-from utils.modules import Conv, UpSample, BottleneckCSP, SPP
+from utils.modules import Conv, UpSample, BottleneckCSP, DilatedEncoder
 from utils import box_ops
 from utils import loss
 
@@ -17,7 +17,8 @@ class YOLOv4(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
                  anchor_size=None,
-                 center_sample=False):
+                 center_sample=False,
+                 num_queries=None):
 
         super(YOLOv4, self).__init__()
         self.device = device
@@ -37,14 +38,8 @@ class YOLOv4(nn.Module):
         self.backbone = cspdarknet53(pretrained=trainable)
         c3, c4, c5 = 256, 512, 1024
 
-        # neck
-        self.neck = nn.Sequential(
-            SPP(c5, c5, e=0.5),
-            BottleneckCSP(c5, c5, n=3, shortcut=False)
-        ) 
-
         # head
-        self.head_conv_0 = Conv(c5, c5//2, k=1)  # 10
+        self.head_conv_0 = DilatedEncoder(c5, c5//2)  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
         self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
 
@@ -178,9 +173,6 @@ class YOLOv4(nn.Module):
         C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
-
-        # neck
-        c5 = self.neck(c5)
 
         # FPN + PAN
         # head

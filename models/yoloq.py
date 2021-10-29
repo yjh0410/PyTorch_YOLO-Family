@@ -7,29 +7,28 @@ from utils import box_ops
 from utils import loss
 
 
-class YOLOv2(nn.Module):
+class YOLOQ(nn.Module):
     def __init__(self, 
                  device, 
                  img_size=None, 
                  num_classes=20, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.6, 
+                 nms_thresh=0.6,
                  anchor_size=None,
                  center_sample=False,
-                 num_queries=None):
-        super(YOLOv2, self).__init__()
+                 num_queries=4):
+        super(YOLOQ, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
+        self.num_queirs = num_queries
         self.stride = [32]
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
-        self.anchor_size = torch.tensor(anchor_size)
-        self.num_anchors = len(anchor_size)
-        self.grid_xy, self.anchor_wh = self.create_grid(img_size)
+        self.grid_xy = self.create_grid(img_size)
 
         # backbone
         self.backbone = resnet50(pretrained=trainable)
@@ -51,9 +50,9 @@ class YOLOv2(nn.Module):
         )
 
         # head
-        self.obj_pred = nn.Conv2d(p5, self.num_anchors * 1, kernel_size=1)
-        self.cls_pred = nn.Conv2d(p5, self.num_anchors * self.num_classes, kernel_size=1)
-        self.reg_pred = nn.Conv2d(p5, self.num_anchors * 4, kernel_size=1)
+        self.obj_pred = nn.Conv2d(p5, self.num_queirs * 1, kernel_size=1)
+        self.cls_pred = nn.Conv2d(p5, self.num_queirs * self.num_classes, kernel_size=1)
+        self.reg_pred = nn.Conv2d(p5, self.num_queirs * 4, kernel_size=1)
 
 
     def init_bias(self):               
@@ -71,17 +70,32 @@ class YOLOv2(nn.Module):
         grid_y, grid_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
         # [H, W, 2] -> [HW, 2]
         grid_xy = torch.stack([grid_x, grid_y], dim=-1).float().view(-1, 2)
-        # [HW, 2] -> [1, HW, 1, 2]   
+        # [HW, 2] -> [1, HW, 1, 2]
         grid_xy = grid_xy[None, :, None, :].to(self.device)
-        # [1, HW, 1, 2]
-        anchor_wh = self.anchor_size.repeat(fmp_h*fmp_w, 1, 1).unsqueeze(0).to(self.device)
 
-        return grid_xy, anchor_wh
+        return grid_xy
 
 
     def set_grid(self, img_size):
-        self.grid_xy, self.anchor_wh = self.create_grid(img_size)
+        self.grid_xy = self.create_grid(img_size)
         self.img_size = img_size
+
+
+    def decode_bbox(self, reg_pred):
+        """reg_pred: [B, HW, Q, 4]"""
+        B = reg_pred.size(0)
+        if self.center_sample:
+            xy_pred = reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy
+        else:
+            xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
+        wh_pred = reg_pred[..., 2:].exp()
+        xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
+        # xywh -> x1y1x2y2
+        x1y1_pred = xywh_pred[..., :2] - xywh_pred[..., 2:] / 2
+        x2y2_pred = xywh_pred[..., :2] + xywh_pred[..., 2:] / 2
+        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1) * self.stride[0]
+
+        return box_pred # [B, N, 4]
 
 
     def nms(self, dets, scores):
@@ -150,28 +164,10 @@ class YOLOv2(nn.Module):
         return bboxes, scores, cls_inds
 
 
-    def decode_bbox(self, reg_pred):
-        """reg_pred: [B, N, KA, 4]"""
-        B = reg_pred.size(0)
-        # txtytwth -> xywh, and normalize
-        if self.center_sample:
-            xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
-        else:
-            xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
-        wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
-        xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
-        # xywh -> x1y1x2y2
-        x1y1_pred = xywh_pred[..., :2] - xywh_pred[..., 2:] / 2
-        x2y2_pred = xywh_pred[..., :2] + xywh_pred[..., 2:] / 2
-        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1)
-
-        return box_pred
-
-
     def forward(self, x, targets=None):
         B = x.size(0)
-        KA = self.num_anchors
         C = self.num_classes
+        Q = self.num_queirs
         # backbone
         x = self.backbone(x)
 
@@ -187,13 +183,13 @@ class YOLOv2(nn.Module):
         cls_pred = self.cls_pred(cls_feat)
         reg_pred = self.reg_pred(reg_feat)
 
-        # [B, KA*1, H, W] -> [B, H, W, KA*1] -> [B, H*W*KA, 1]
-        obj_pred = obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-        # [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
-        cls_pred = cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-        # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
-        reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
-        # [B, HW, KA, 4] -> [B, HW*KA, 4]
+        # [B, Q*1, H, W] -> [B, H, W, Q*1] -> [B, H*W*Q, 1]
+        obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
+        # [B, Q*C, H, W] -> [B, H, W, Q*C] -> [B, H*W*Q, C]
+        cls_pred =cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
+        # [B, Q*4, H, W] -> [B, H, W, Q*4] -> [B, HW, Q, 4]
+        reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, Q, 4)
+        # [B, HW, Q, 4] -> [B, HW*Q, 4]
         box_pred = self.decode_bbox(reg_pred)
 
         # train

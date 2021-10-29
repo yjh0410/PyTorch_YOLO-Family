@@ -46,10 +46,6 @@ def parse_args():
                         help='start epoch to train')
     parser.add_argument('-r', '--resume', default=None, type=str, 
                         help='keep training')
-    parser.add_argument('--momentum', default=0.9, type=float, 
-                        help='Momentum value for optim')
-    parser.add_argument('--weight_decay', default=5e-4, type=float, 
-                        help='Weight decay for SGD')
     parser.add_argument('--num_workers', default=8, type=int, 
                         help='Number of workers used in dataloading')
     parser.add_argument('--num_gpu', default=1, type=int, 
@@ -65,8 +61,10 @@ def parse_args():
 
     # model
     parser.add_argument('-v', '--version', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4')
-    
+                        help='yoloq, yolov1, yolov2, yolov3, yolov4')
+    parser.add_argument('--num_queries', type=int, default=4, 
+                        help='number of queris of YOLOQ')
+
     # dataset
     parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
                         help='data root')
@@ -78,8 +76,6 @@ def parse_args():
                         help='do not use warmup')
     parser.add_argument('-ms', '--multi_scale', action='store_true', default=False,
                         help='use multi-scale trick')      
-    parser.add_argument('--mosaic', action='store_true', default=False,
-                        help='use mosaic augmentation')
     parser.add_argument('--ema', action='store_true', default=False,
                         help='use ema training trick')
     parser.add_argument('--center_sample', action='store_true', default=False,
@@ -125,7 +121,10 @@ def train():
     print('Model: ', model_name)
 
     # load model and config file
-    if model_name == 'yolov1':
+    if model_name == 'yoloq':
+        from models.yoloq import YOLOQ as yolo_net
+
+    elif model_name == 'yolov1':
         from models.yolov1 import YOLOv1 as yolo_net
 
     elif model_name == 'yolov2':
@@ -152,8 +151,7 @@ def train():
         dataset = VOCDetection(
                         data_dir=data_dir,
                         img_size=train_size,
-                        transform=TrainTransforms(train_size),
-                        mosaic=args.mosaic)
+                        transform=TrainTransforms(train_size))
 
         evaluator = VOCAPIEvaluator(
                         data_dir=data_dir,
@@ -167,8 +165,7 @@ def train():
         dataset = COCODataset(
                     data_dir=data_dir,
                     img_size=train_size,
-                    transform=TrainTransforms(train_size),
-                    mosaic=args.mosaic)
+                    transform=TrainTransforms(train_size))
 
         evaluator = COCOAPIEvaluator(
                         data_dir=data_dir,
@@ -194,7 +191,9 @@ def train():
                    img_size=train_size, 
                    num_classes=num_classes, 
                    trainable=True, 
-                   anchor_size=anchor_size)
+                   anchor_size=anchor_size,
+                   center_sample=args.center_sample,
+                   num_queries=args.num_queries)
     model = net
 
     # SyncBatchNorm
@@ -255,6 +254,7 @@ def train():
         train_size, tmp_lr = train_one_epoch(
                                     args=args, 
                                     epoch=epoch,
+                                    max_epoch=args.max_epoch,
                                     epoch_size=epoch_size,
                                     cfg=cfg,
                                     train_size=train_size,
@@ -295,60 +295,6 @@ def train():
             model_eval.trainable = True
             model_eval.set_grid(train_size)
             model_eval.eval()
-
-
-    if args.mosaic:
-        # train more epoch without mosaic augmentation
-        print('Close Mosaic Augmentation ...')
-        dataset.mosaic = False
-        # dataloader
-        dataloader = build_dataloader(args, dataset, detection_collate)
-        # start training
-        for epoch in range(args.max_epoch, args.max_epoch + 20):
-            # train one epoch
-            train_size, tmp_lr = train_one_epoch(
-                                            args=args, 
-                                            epoch=epoch,
-                                            epoch_size=epoch_size,
-                                            cfg=cfg,
-                                            train_size=train_size,
-                                            tmp_lr=tmp_lr,
-                                            model=model, 
-                                            dataloader=dataloader, 
-                                            optimizer=optimizer,
-                                            anchor_size=anchor_size,
-                                            ema=ema,
-                                            tblogger=tblogger)
-            # evaluation
-            if (epoch + 1) % 5 == 0 or (epoch + 1) == args.max_epoch + 20:
-                if args.ema:
-                    model_eval = ema.ema
-                else:
-                    model_eval = model.module if args.distributed else model
-                
-                # set eval mode
-                model.trainable = False
-                model.set_grid(val_size)
-                model.eval()
-
-                if local_rank == 0:
-                    evaluate(args=args, 
-                            epoch=epoch,
-                            val_size=val_size, 
-                            model=model_eval, 
-                            evaluator=evaluator,
-                            best_map=best_map,
-                            path_to_save=path_to_save,
-                            tblogger=tblogger)
-                
-                if args.distributed:
-                    # wait for all processes to synchronize
-                    dist.barrier()
-
-                # set train mode.
-                model_eval.trainable = True
-                model_eval.set_grid(train_size)
-                model_eval.eval()
 
     if args.tfboard:
         tblogger.close()

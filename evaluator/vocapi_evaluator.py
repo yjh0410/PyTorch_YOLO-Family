@@ -38,7 +38,7 @@ class VOCAPIEvaluator():
         self.display = display
 
         # path
-        self.devkit_path = data_dir + 'VOC' + year
+        self.devkit_path = os.path.join(data_dir, 'VOC' + year)
         self.annopath = os.path.join(data_dir, 'VOC2007', 'Annotations', '%s.xml')
         self.imgpath = os.path.join(data_dir, 'VOC2007', 'JPEGImages', '%s.jpg')
         self.imgsetpath = os.path.join(data_dir, 'VOC2007', 'ImageSets', 'Main', set_type+'.txt')

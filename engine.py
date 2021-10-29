@@ -40,6 +40,7 @@ def vis_data(images, targets, img_size):
 
 def train_one_epoch(args, 
                     epoch,
+                    max_epoch,
                     epoch_size,
                     cfg,
                     train_size,
@@ -88,13 +89,20 @@ def train_one_epoch(args,
         if args.vis:
             vis_data(images, targets, train_size)
             continue
-
-        targets = create_labels.gt_creator(
-                            img_size=train_size, 
-                            strides=model.module().stride if args.distributed else model.stride, 
-                            label_lists=targets, 
-                            anchor_size=anchor_size, 
-                            center_sample=args.center_sample)
+        if args.version == 'yoloq':
+            targets = create_labels.gt_creator_with_queris(
+                                img_size=train_size, 
+                                strides=model.module().stride if args.distributed else model.stride, 
+                                label_lists=targets, 
+                                center_sample=args.center_sample,
+                                num_queries=args.num_queries)
+        else:
+            targets = create_labels.gt_creator(
+                                img_size=train_size, 
+                                strides=model.module().stride if args.distributed else model.stride, 
+                                label_lists=targets, 
+                                anchor_size=anchor_size, 
+                                center_sample=args.center_sample)
 
         # to device
         try:
@@ -139,7 +147,7 @@ def train_one_epoch(args,
             outstream = ('[Epoch %d/%d][Iter %d/%d][lr %.6f]'
                     '[Loss: obj %.2f || cls %.2f || reg %.2f || total %.2f || size %d || time: %.2f]'
                     % (epoch+1, 
-                        args.max_epoch, 
+                        max_epoch, 
                         iter_i, 
                         epoch_size, 
                         tmp_lr,

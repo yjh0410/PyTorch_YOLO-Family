@@ -62,6 +62,51 @@ def set_anchors(anchor_size):
     return anchor_boxes
 
 
+def label_assignment_with_anchorbox(anchor_size, target_boxes, num_anchors, strides):
+    # prepare
+    anchor_boxes = set_anchors(anchor_size)
+    gt_box = np.array([[0, 0, target_boxes[2], target_boxes[3]]])
+
+    # compute IoU
+    iou = compute_iou(anchor_boxes, gt_box)
+
+    # We assign the anchor box with highest IoU score.
+    iou_ind = np.argmax(iou)
+
+    # scale_ind, anchor_ind = index // num_scale, index % num_scale
+    scale_ind = iou_ind // num_anchors
+    anchor_ind = iou_ind - scale_ind * num_anchors
+
+    # get the corresponding stride
+    stride = strides[scale_ind]
+
+    # compute the gride cell
+    xc_s = target_boxes[0] / stride
+    yc_s = target_boxes[1] / stride
+    grid_x = int(xc_s)
+    grid_y = int(yc_s)
+
+    return grid_x, grid_y, scale_ind, anchor_ind
+
+
+def label_assignment_without_anchorbox(target_boxes, strides):
+    # no anchor box
+    scale_ind = 0
+    anchor_ind = 0
+
+    # get the corresponding stride
+    stride = strides[scale_ind]
+
+    # compute the gride cell
+    xc_s = target_boxes[0] / stride
+    yc_s = target_boxes[1] / stride
+    grid_x = int(xc_s)
+    grid_y = int(yc_s)
+    
+
+    return grid_x, grid_y, scale_ind, anchor_ind
+
+
 def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=False):
     """creator gt"""
     # prepare
@@ -83,59 +128,115 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=F
             # get a bbox coords
             cls_id = int(box_cls[-1])
             x1, y1, x2, y2 = box_cls[:-1]
-            # compute the center, width and height
+            # [x1, y1, x2, y2] -> [xc, yc, bw, bh]
             xc = (x2 + x1) / 2 * img_w
             yc = (y2 + y1) / 2 * img_h
             bw = (x2 - x1) * img_w
             bh = (y2 - y1) * img_h
-
+            target_boxes = [xc, yc, bw, bh]
+            # check label
             if bw < 1. or bh < 1.:
                 # print('A dirty data !!!')
-                continue    
+                continue
 
+            # label assignment
             if anchor_size is not None:
                 # use anchor box
-                # compute the IoU
-                anchor_boxes = set_anchors(anchor_size)
-                gt_box = np.array([[0, 0, bw, bh]])
-                iou = compute_iou(anchor_boxes, gt_box)
-
-                # We assign the anchor box with highest IoU score.
-                index = np.argmax(iou)
-                # s_indx, ab_ind = index // num_scale, index % num_scale
-                s_indx = index // KA
-                ab_ind = index - s_indx * KA
-                # get the corresponding stride
-                s = strides[s_indx]
-                # compute the gride cell
-                xc_s = xc / s
-                yc_s = yc / s
-                grid_x = int(xc_s)
-                grid_y = int(yc_s)
+                label_assignment_results = label_assignment_with_anchorbox(
+                                                anchor_size=anchor_size,
+                                                target_boxes=target_boxes,
+                                                num_anchors=KA,
+                                                strides=strides)
             else:
                 # no anchor box
-                s_indx = 0
-                ab_ind = 0
-                # compute the gride cell
-                s = strides[s_indx]
-                xc_s = xc / s
-                yc_s = yc / s
-                grid_x = int(xc_s)
-                grid_y = int(yc_s)
+                label_assignment_results = label_assignment_without_anchorbox(
+                                                target_boxes=target_boxes,
+                                                strides=strides)
 
+            grid_x, grid_y, scale_ind, anchor_ind = label_assignment_results
+            
+            # make labels
             if center_sample:
                 for j in range(grid_y, grid_y+1):
                     for i in range(grid_x, grid_x+1):
-                        if (j >= 0 and j < gt_tensor[s_indx].shape[1]) and (i >= 0 and i < gt_tensor[s_indx].shape[2]):
-                            gt_tensor[s_indx][bi, j, i, ab_ind, 0] = 1.0
-                            gt_tensor[s_indx][bi, j, i, ab_ind, 1] = cls_id
-                            gt_tensor[s_indx][bi, j, i, ab_ind, 2:] = np.array([x1, y1, x2, y2])
+                        if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
+                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
+                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
+                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
             else:
-                if (grid_y >= 0 and grid_y < gt_tensor[s_indx].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[s_indx].shape[2]):
-                    gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 0] = 1.0
-                    gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 1] = cls_id
-                    gt_tensor[s_indx][bi, grid_y, grid_x, ab_ind, 2:] = np.array([x1, y1, x2, y2])
+                if (grid_y >= 0 and grid_y < gt_tensor[scale_ind].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[scale_ind].shape[2]):
+                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 0] = 1.0
+                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 1] = cls_id
+                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
 
+
+    gt_tensor = [gt.reshape(batch_size, -1, 1+1+4) for gt in gt_tensor]
+    gt_tensor = np.concatenate(gt_tensor, axis=0)
+    
+    return torch.from_numpy(gt_tensor).float()
+
+
+def gt_creator_with_queris(img_size, strides, label_lists, center_sample=False, num_queries=None):
+    """creator gt"""
+    # check
+    assert len(strides) == 1 and num_queries is not None
+    # prepare
+    batch_size = len(label_lists)
+    img_h = img_w = img_size
+    gt_tensor = []
+    Q = num_queries
+
+    for s in strides:
+        fmp_h, fmp_w = img_h // s, img_w // s
+        # [B, H, W, Q, obj+cls+box+pos]
+        gt_tensor.append(np.zeros([batch_size, fmp_h, fmp_w, Q, 1+1+4]))
+        
+    # generate gt datas  
+    for bi in range(batch_size):
+        label = label_lists[bi]
+        for box_cls in label:
+            # get a bbox coords
+            cls_id = int(box_cls[-1])
+            x1, y1, x2, y2 = box_cls[:-1]
+            # [x1, y1, x2, y2] -> [xc, yc, bw, bh]
+            xc = (x2 + x1) / 2 * img_w
+            yc = (y2 + y1) / 2 * img_h
+            bw = (x2 - x1) * img_w
+            bh = (y2 - y1) * img_h
+            target_boxes = [xc, yc, bw, bh]
+            # check label
+            if bw < 1. or bh < 1.:
+                # print('A dirty data !!!')
+                continue
+
+            # label assignment
+            label_assignment_results = label_assignment_without_anchorbox(
+                                            target_boxes=target_boxes,
+                                            strides=strides)
+
+            grid_x, grid_y, scale_ind, _ = label_assignment_results
+            
+            # make labels
+            for q in range(Q):
+                objectness = gt_tensor[scale_ind][bi, grid_y, grid_x, q, 0]
+                if objectness > 0.:
+                    # This anchor has been assigned with an object.
+                    continue
+                else:
+                    if center_sample:
+                        for j in range(grid_y, grid_y+1):
+                            for i in range(grid_x, grid_x+1):
+                                if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
+                                    gt_tensor[scale_ind][bi, j, i, q, 0] = 1.0
+                                    gt_tensor[scale_ind][bi, j, i, q, 1] = cls_id
+                                    gt_tensor[scale_ind][bi, j, i, q, 2:] = np.array([x1, y1, x2, y2])
+                    else:
+                        if (grid_y >= 0 and grid_y < gt_tensor[scale_ind].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[scale_ind].shape[2]):
+                            gt_tensor[scale_ind][bi, grid_y, grid_x, q, 0] = 1.0
+                            gt_tensor[scale_ind][bi, grid_y, grid_x, q, 1] = cls_id
+                            gt_tensor[scale_ind][bi, grid_y, grid_x, q, 2:] = np.array([x1, y1, x2, y2])
+                    # Each object only occupied one queriy in the anchor.
+                    break
 
     gt_tensor = [gt.reshape(batch_size, -1, 1+1+4) for gt in gt_tensor]
     gt_tensor = np.concatenate(gt_tensor, axis=0)
