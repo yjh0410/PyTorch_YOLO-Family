@@ -176,7 +176,7 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=F
     return torch.from_numpy(gt_tensor).float()
 
 
-def gt_creator_with_queris(img_size, strides, label_lists, center_sample=False, num_queries=None):
+def gt_creator_with_queries(img_size, strides, label_lists, center_sample=False, num_queries=None):
     """creator gt"""
     # check
     assert len(strides) == 1 and num_queries is not None

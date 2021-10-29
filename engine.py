@@ -90,7 +90,7 @@ def train_one_epoch(args,
             vis_data(images, targets, train_size)
             continue
         if args.version == 'yoloq':
-            targets = create_labels.gt_creator_with_queris(
+            targets = create_labels.gt_creator_with_queries(
                                 img_size=train_size, 
                                 strides=model.module().stride if args.distributed else model.stride, 
                                 label_lists=targets, 
