@@ -32,8 +32,8 @@ parser.add_argument('--nms_thresh', default=0.45, type=float,
 # dataset
 parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
                     help='data root')
-parser.add_argument('-d', '--dataset', default='coco',
-                    help='coco.')
+parser.add_argument('-d', '--dataset', default='coco-val',
+                    help='voc, coco-val, coco-test.')
 # TTA
 parser.add_argument('-tta', '--test_aug', action='store_true', default=False,
                     help='use test augmentation.')
