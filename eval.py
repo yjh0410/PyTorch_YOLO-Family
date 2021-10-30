@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import torch
 
@@ -85,12 +86,15 @@ if __name__ == '__main__':
     if args.dataset == 'voc':
         print('eval on voc ...')
         num_classes = 20
+        data_dir = os.path.join(args.root, 'VOCdevkit')
     elif args.dataset == 'coco-val':
         print('eval on coco-val ...')
         num_classes = 80
+        data_dir = os.path.join(args.root, 'COCO')
     elif args.dataset == 'coco-test':
         print('eval on coco-test-dev ...')
         num_classes = 80
+        data_dir = os.path.join(args.root, 'COCO')
     else:
         print('unknow dataset !! we only support voc, coco-val, coco-test !!!')
         exit(0)
@@ -152,8 +156,8 @@ if __name__ == '__main__':
     # evaluation
     with torch.no_grad():
         if args.dataset == 'voc':
-            voc_test(model, device, args.img_size)
+            voc_test(model, data_dir, device, args.img_size)
         elif args.dataset == 'coco-val':
-            coco_test(model, device, args.img_size, test=False)
+            coco_test(model, data_dir, device, args.img_size, test=False)
         elif args.dataset == 'coco-test':
-            coco_test(model, device, args.img_size, test=True)
+            coco_test(model, data_dir, device, args.img_size, test=True)
