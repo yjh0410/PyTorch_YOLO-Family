@@ -17,7 +17,7 @@ from data.coco import COCODataset
 from data import config
 from data.transforms import TrainTransforms, ValTransforms
 
-from utils.com_paras_flops import FLOPs_and_Params
+from utils.com_flops_params import FLOPs_and_Params
 from utils.misc import detection_collate
 from utils.misc import ModelEMA
 

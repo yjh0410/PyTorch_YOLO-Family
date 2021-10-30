@@ -2,6 +2,8 @@ import numpy as np
 import random
 import argparse
 import os
+import sys
+sys.path.append('..')
 
 from data.voc import VOCDetection
 from data.coco import COCODataset
@@ -15,7 +17,7 @@ def parse_args():
                         help='coco, widerface, crowdhuman')
     parser.add_argument('-na', '--num_anchorbox', default=9, type=int,
                         help='number of anchor box.')
-    parser.add_argument('-size', '--input_size', default=512, type=int,
+    parser.add_argument('-size', '--img_size', default=512, type=int,
                         help='input size.')
     return parser.parse_args()
                     
@@ -166,19 +168,17 @@ def anchor_box_kmeans(total_gt_boxes, n_anchors, loss_convergence, iters, plus=T
 if __name__ == "__main__":
 
     n_anchors = args.num_anchorbox
-    size = args.input_size
+    img_size = args.img_size
     dataset = args.dataset
     
     loss_convergence = 1e-6
     iters_n = 1000
     
-    dataset_voc = VOCDetection(data_dir=os.path.join(args.root, 'VOCkevdit'), 
-                                img_size=size
-                                )
+    dataset_voc = VOCDetection(data_dir=os.path.join(args.root, 'VOCdevkit'), 
+                                img_size=img_size)
 
     dataset_coco = COCODataset(data_dir=os.path.join(args.root, 'COCO'),
-                                img_size=size
-                                )
+                                img_size=img_size)
 
     boxes = []
     print("The dataset size: ", len(dataset))
@@ -197,8 +197,8 @@ if __name__ == "__main__":
         for box_and_label in annotation:
             box = box_and_label[:-1]
             xmin, ymin, xmax, ymax = box
-            bw = (xmax - xmin) / max(w, h) * size
-            bh = (ymax - ymin) / max(w, h) * size
+            bw = (xmax - xmin) / max(w, h) * img_size
+            bh = (ymax - ymin) / max(w, h) * img_size
             # check bbox
             if bw < 1.0 or bh < 1.0:
                 continue
@@ -218,8 +218,8 @@ if __name__ == "__main__":
         for box_and_label in annotation:
             box = box_and_label[:-1]
             xmin, ymin, xmax, ymax = box
-            bw = (xmax - xmin) / max(w, h) * size
-            bh = (ymax - ymin) / max(w, h) * size
+            bw = (xmax - xmin) / max(w, h) * img_size
+            bh = (ymax - ymin) / max(w, h) * img_size
             # check bbox
             if bw < 1.0 or bh < 1.0:
                 continue

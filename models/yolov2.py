@@ -221,7 +221,7 @@ class YOLOv2(nn.Module):
             with torch.no_grad():
                 # batch size = 1
                 # [B, H*W*KA, C] -> [H*W*KA, C]
-                scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
+                scores = torch.sqrt(torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0])
                 # [B, H*W*KA, 4] -> [H*W*KA, 4]
                 bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
 
