@@ -1,6 +1,6 @@
-import torch
-import torch.nn as nn
 import argparse
+
+import torch
 
 from evaluator.vocapi_evaluator import VOCAPIEvaluator
 from evaluator.cocoapi_evaluator import COCOAPIEvaluator

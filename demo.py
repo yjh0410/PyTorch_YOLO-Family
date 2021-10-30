@@ -1,12 +1,13 @@
 import argparse
 import os
+import cv2
+import time
+import numpy as np
 import torch
+
 from data.coco import coco_class_labels, coco_class_index
 from data.transforms import ValTransforms
 from data import config
-import numpy as np
-import cv2
-import time
 
 
 

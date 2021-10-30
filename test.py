@@ -1,8 +1,8 @@
 import argparse
-import numpy as np
 import cv2
-import time
 import os
+import time
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
