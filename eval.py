@@ -26,9 +26,9 @@ parser.add_argument('--num_queries', type=int, default=4,
 parser.add_argument('--trained_model', type=str,
                     default='weights/', 
                     help='Trained state_dict file path to open')
-parser.add_argument('--conf_thresh', default=0.1, type=float,
+parser.add_argument('--conf_thresh', default=0.001, type=float,
                     help='NMS threshold')
-parser.add_argument('--nms_thresh', default=0.45, type=float,
+parser.add_argument('--nms_thresh', default=0.6, type=float,
                     help='NMS threshold')
 # dataset
 parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
