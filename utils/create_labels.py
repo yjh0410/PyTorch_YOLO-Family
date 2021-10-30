@@ -157,8 +157,8 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=F
             
             # make labels
             if center_sample:
-                for j in range(grid_y, grid_y+1):
-                    for i in range(grid_x, grid_x+1):
+                for j in range(grid_y, grid_y+2):
+                    for i in range(grid_x, grid_x+2):
                         if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
                             gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
                             gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
@@ -169,9 +169,8 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=F
                     gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 1] = cls_id
                     gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
 
-
     gt_tensor = [gt.reshape(batch_size, -1, 1+1+4) for gt in gt_tensor]
-    gt_tensor = np.concatenate(gt_tensor, axis=0)
+    gt_tensor = np.concatenate(gt_tensor, axis=1)
     
     return torch.from_numpy(gt_tensor).float()
 
