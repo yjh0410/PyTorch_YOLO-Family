@@ -22,26 +22,23 @@ Tricks in this project:
 - [x] Augmentations: Flip + Color jitter + RandomCrop + Multi-scale
 - [x] Model EMA
 - [x] GIoU
-- [x] Center Sampling
 
 I also tried Mosaic Augmentation but it doesn't work.
 
 On the COCO-val:
 
 <table><tbody>
-<tr><th align="left" bgcolor=#f8f8f8>       </th><td bgcolor=white> CS  </td><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8>       </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white>  ×  </td><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white>  √  </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white>  √  </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3</th><td bgcolor=white>  √  </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white>  √  </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOQ </th><td bgcolor=white>  √  </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOQ </th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
 
 </table></tbody>
 

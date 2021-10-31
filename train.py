@@ -192,7 +192,6 @@ def train():
                    num_classes=num_classes, 
                    trainable=True, 
                    anchor_size=anchor_size,
-                   center_sample=args.center_sample,
                    num_queries=args.num_queries)
     model = net
 

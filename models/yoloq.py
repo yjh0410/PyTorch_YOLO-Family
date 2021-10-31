@@ -16,7 +16,6 @@ class YOLOQ(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.6,
                  anchor_size=None,
-                 center_sample=False,
                  num_queries=4):
         super(YOLOQ, self).__init__()
         self.device = device
@@ -27,7 +26,6 @@ class YOLOQ(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.center_sample = center_sample
         self.grid_xy = self.create_grid(img_size)
 
         # backbone
@@ -85,10 +83,7 @@ class YOLOQ(nn.Module):
     def decode_bbox(self, reg_pred):
         """reg_pred: [B, HW, Q, 4]"""
         B = reg_pred.size(0)
-        if self.center_sample:
-            xy_pred = reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy
-        else:
-            xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
+        xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
         wh_pred = reg_pred[..., 2:].exp()
         xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
         # xywh -> x1y1x2y2

@@ -17,7 +17,6 @@ class YOLOv4(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
                  anchor_size=None,
-                 center_sample=False,
                  num_queries=None):
 
         super(YOLOv4, self).__init__()
@@ -28,7 +27,6 @@ class YOLOv4(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.center_sample = center_sample
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
@@ -212,10 +210,7 @@ class YOLOv4(nn.Module):
             # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
             reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
             # txtytwth -> xywh
-            if self.center_sample:
-                xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
-            else:
-                xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+            xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
             wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
             xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1).view(B, -1, 4)
             # xywh -> x1y1x2y2
