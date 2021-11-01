@@ -21,8 +21,6 @@ parser.add_argument('--conf_thresh', default=0.1, type=float,
                     help='confidence threshold')
 parser.add_argument('--nms_thresh', default=0.45, type=float,
                     help='NMS threshold')
-parser.add_argument('--num_queries', default=4, type=int,
-                    help='number of queris of YOLOQ')
 # data root
 parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
                     help='data root')
@@ -111,10 +109,7 @@ if __name__ == '__main__':
     print('Model: ', model_name)
 
     # load model and config file
-    if model_name == 'yoloq':
-        from models.yoloq import YOLOQ as yolo_net
-
-    elif model_name == 'yolov1':
+    if model_name == 'yolov1':
         from models.yolov1 import YOLOv1 as yolo_net
 
     elif model_name == 'yolov2':
@@ -140,8 +135,7 @@ if __name__ == '__main__':
                    trainable=False,
                    conf_thresh=args.conf_thresh,
                    nms_thresh=args.nms_thresh, 
-                   anchor_size=anchor_size,
-                   num_queries=args.num_queries)
+                   anchor_size=anchor_size)
 
     # load weight
     if args.trained_model:

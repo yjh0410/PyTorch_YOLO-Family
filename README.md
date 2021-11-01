@@ -11,7 +11,6 @@ In this project, you can enjoy:
 - a new YOLOv2 !
 - a new YOLOv3 !
 - a new YOLOv4 !
-- a new YOLOQ !!!
 
 # Weights
 I will upload all weight files to Google Drive.
@@ -38,16 +37,12 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOQ </th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td></tr>
-
 </table></tbody>
 
 The FPS of all YOLO detectors are measured on a one 2080ti GPU with 640 × 640 size.
 
 # Visualization
 I visualize some detection results whose score is over 0.3 on VOC 2007 test:
-
-## YOLOQ
 
 ## YOLOv1
 

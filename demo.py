@@ -30,7 +30,7 @@ def parse_args():
 
     # model
     parser.add_argument('-v', '--version', default='yolov1',
-                        help='yoloq, yolov1, yolov2, yolov3, yolov4')
+                        help='yolov1, yolov2, yolov3, yolov4')
     parser.add_argument('--num_queries', type=int, default=4, 
                         help='number of queris of YOLOQ')
     parser.add_argument('--trained_model', default='weights/',
@@ -218,10 +218,7 @@ def run():
 
 
     # load model and config file
-    if model_name == 'yoloq':
-        from models.yoloq import YOLOQ as yolo_net
-
-    elif model_name == 'yolov1':
+    if model_name == 'yolov1':
         from models.yolov1 import YOLOv1 as yolo_net
 
     elif model_name == 'yolov2':
@@ -247,8 +244,7 @@ def run():
                    trainable=False,
                    conf_thresh=args.conf_thresh,
                    nms_thresh=args.nms_thresh, 
-                   anchor_size=anchor_size,
-                   num_queries=args.num_queries)
+                   anchor_size=anchor_size)
 
     # load weight
     model.load_state_dict(torch.load(args.trained_model, map_location=device), strict=False)

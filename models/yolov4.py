@@ -16,8 +16,7 @@ class YOLOv4(nn.Module):
                  trainable=False, 
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
-                 anchor_size=None,
-                 num_queries=None):
+                 anchor_size=None):
 
         super(YOLOv4, self).__init__()
         self.device = device

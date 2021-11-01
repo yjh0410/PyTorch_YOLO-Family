@@ -15,8 +15,7 @@ class YOLOv1(nn.Module):
                  trainable=False, 
                  conf_thresh=0.001, 
                  nms_thresh=0.6,
-                 anchor_size=None,
-                 num_queries=None):
+                 anchor_size=None):
         super(YOLOv1, self).__init__()
         self.device = device
         self.img_size = img_size
