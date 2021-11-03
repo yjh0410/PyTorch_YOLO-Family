@@ -76,7 +76,7 @@ class COCODataset(Dataset):
         anno_ids = self.coco.getAnnIds(imgIds=[int(index)], iscrowd=None)
         annotations = self.coco.loadAnns(anno_ids)
 
-        # load image and preprocess
+        # load an image
         img_file = os.path.join(self.data_dir, self.image_set,
                                 '{:012}'.format(index) + '.jpg')
         img = cv2.imread(img_file)
@@ -90,8 +90,7 @@ class COCODataset(Dataset):
 
         height, width, channels = img.shape
         
-        # COCOAnnotation Transform
-        # start here :
+        #load a target
         target = []
         for anno in annotations:
             if 'bbox' in anno and anno['area'] > 0:   
@@ -99,9 +98,6 @@ class COCODataset(Dataset):
                 ymin = np.max((0, anno['bbox'][1]))
                 xmax = np.min((width - 1, xmin + np.max((0, anno['bbox'][2] - 1))))
                 ymax = np.min((height - 1, ymin + np.max((0, anno['bbox'][3] - 1))))
-                # xmin, ymin, w, h = anno['bbox']
-                # xmax = xmin + w
-                # ymax = ymin + h
                 if xmax > xmin and ymax > ymin:
                     label_ind = anno['category_id']
                     cls_id = self.class_ids.index(label_ind)
@@ -113,7 +109,6 @@ class COCODataset(Dataset):
                     target.append([xmin, ymin, xmax, ymax, cls_id])  # [xmin, ymin, xmax, ymax, label_ind]
             else:
                 print('No bbox !!!')
-        # end here .
 
         return img, target, height, width
 
@@ -193,12 +188,12 @@ class COCODataset(Dataset):
 
 
     def pull_item(self, index):
-        # load mosaic image
+        # load a mosaic image
         if self.mosaic:
             # mosaic
             img, target, height, width = self.load_mosaic(index)
 
-        # load a image
+        # load an image and target
         else:
             id_ = self.ids[index]
             img, target, height, width = self.load_img_targets(id_)
@@ -254,7 +249,7 @@ class COCODataset(Dataset):
 
 
 if __name__ == "__main__":
-    from transforms import TrainTransforms, ValTransforms, ColorTransforms
+    from transforms import TrainTransforms, ValTransforms
 
     mean=(0.406, 0.456, 0.485)
     std=(0.225, 0.224, 0.229)
@@ -267,7 +262,6 @@ if __name__ == "__main__":
                 img_size=img_size,
                 image_set='train2017',
                 transform=ValTransforms(img_size),
-                color_augment=ColorTransforms(img_size),
                 mosaic=False)
     
     np.random.seed(0)

@@ -1,5 +1,5 @@
 # A new and strong YOLO family
-My new and strong family of YOLO project !!
+Recently, I rebuild my YOLO-Family project !!
 
 # Installation
 - Pytorch >= 1.1.0 (My Pytorch is torch-1.9.1)
@@ -42,7 +42,7 @@ On the COCO-val:
 The FPS of all YOLO detectors are measured on a one 2080ti GPU with 640 × 640 size.
 
 # Visualization
-I visualize some detection results whose score is over 0.3 on VOC 2007 test:
+I will upload some visualization results:
 
 ## YOLOv1
 

@@ -123,10 +123,12 @@ class VOCDetection(data.Dataset):
 
 
     def load_img_targets(self, img_id):
-        target = ET.parse(self._annopath % img_id).getroot()
+        # load an image
         img = cv2.imread(self._imgpath % img_id)
         height, width, channels = img.shape
 
+        # laod a target
+        target = ET.parse(self._annopath % img_id).getroot()
         if self.target_transform is not None:
             target = self.target_transform(target, width, height)
 
@@ -208,12 +210,12 @@ class VOCDetection(data.Dataset):
 
 
     def pull_item(self, index):
-        # load mosaic image
+        # load a mosaic image
         if self.mosaic:
             # mosaic
             img, target, height, width = self.load_mosaic(index)
 
-        # load a image
+        # load an image and target
         else:
             img_id = self.ids[index]
             img, target, height, width = self.load_img_targets(img_id)
@@ -264,7 +266,7 @@ class VOCDetection(data.Dataset):
 
 
 if __name__ == "__main__":
-    from transforms import TrainTransforms, ValTransforms, ColorTransforms
+    from transforms import TrainTransforms, ValTransforms
 
     mean=(0.406, 0.456, 0.485)
     std=(0.225, 0.224, 0.229)
@@ -276,8 +278,7 @@ if __name__ == "__main__":
                 data_dir='/mnt/share/ssd2/dataset/VOCdevkit/',
                 img_size=img_size,
                 transform=ValTransforms(img_size),
-                color_augment=ColorTransforms(img_size),
-                mosaic=True)
+                mosaic=False)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

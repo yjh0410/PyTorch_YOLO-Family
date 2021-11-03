@@ -1,5 +1,4 @@
 import cv2
-from numpy.lib.type_check import imag
 import torch
 import numpy as np
 from numpy import random
