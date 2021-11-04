@@ -50,6 +50,10 @@ class YOLOv1(nn.Module):
         self.cls_pred = nn.Conv2d(p5, self.num_classes, kernel_size=1)
         self.reg_pred = nn.Conv2d(p5, 4, kernel_size=1)
 
+        if self.trainable:
+            # init bias
+            self.init_bias()
+
 
     def init_bias(self):               
         # init bias
