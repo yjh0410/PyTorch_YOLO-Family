@@ -13,7 +13,7 @@ class Conv(nn.Module):
             self.convs = nn.Sequential(
                 nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=False),
                 nn.BatchNorm2d(c2),
-                nn.Mish(inplace=True)
+                nn.LeakyReLU(0.1, inplace=True)
             )
         else:
             self.convs = nn.Sequential(
@@ -115,7 +115,7 @@ def cspdarknet53(pretrained=False, **kwargs):
 
 if __name__ == '__main__':
     import time
-    net = CSPDarknet53()
+    net = cspdarknet53(pretrained=True)
     x = torch.randn(1, 3, 224, 224)
     t0 = time.time()
     y = net(x)
