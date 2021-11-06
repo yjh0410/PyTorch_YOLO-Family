@@ -50,10 +50,6 @@ class YOLOv1(nn.Module):
         self.cls_pred = nn.Conv2d(p5, self.num_classes, kernel_size=1)
         self.reg_pred = nn.Conv2d(p5, 4, kernel_size=1)
 
-        if self.trainable:
-            # init bias
-            self.init_bias()
-
 
     def init_bias(self):               
         # init bias
@@ -211,7 +207,7 @@ class YOLOv1(nn.Module):
             with torch.no_grad():
                 # batch size = 1
                 # [B, H*W*KA, C] -> [H*W*KA, C]
-                scores = torch.sqrt(torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0])
+                scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
                 # [B, H*W*KA, 4] -> [H*W*KA, 4]
                 bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
 

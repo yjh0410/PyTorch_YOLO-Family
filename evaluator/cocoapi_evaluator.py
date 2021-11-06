@@ -114,20 +114,20 @@ class COCOAPIEvaluator():
                 _, tmp = tempfile.mkstemp()
                 json.dump(data_dict, open(tmp, 'w'))
                 cocoDt = cocoGt.loadRes(tmp)
-            cocoEval = COCOeval(self.dataset.coco, cocoDt, annType[1])
-            cocoEval.params.imgIds = ids
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            cocoEval.summarize()
+                cocoEval = COCOeval(self.dataset.coco, cocoDt, annType[1])
+                cocoEval.params.imgIds = ids
+                cocoEval.evaluate()
+                cocoEval.accumulate()
+                cocoEval.summarize()
 
-            ap50_95, ap50 = cocoEval.stats[0], cocoEval.stats[1]
-            print('ap50_95 : ', ap50_95)
-            print('ap50 : ', ap50)
-            self.map = ap50_95
-            self.ap50_95 = ap50_95
-            self.ap50 = ap50
+                ap50_95, ap50 = cocoEval.stats[0], cocoEval.stats[1]
+                print('ap50_95 : ', ap50_95)
+                print('ap50 : ', ap50)
+                self.map = ap50_95
+                self.ap50_95 = ap50_95
+                self.ap50 = ap50
 
-            return ap50, ap50_95
+                return ap50, ap50_95
         else:
             return 0, 0
 

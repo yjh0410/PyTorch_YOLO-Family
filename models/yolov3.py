@@ -132,8 +132,8 @@ class YOLOv3(nn.Module):
 
     def postprocess(self, bboxes, scores):
         """
-        bboxes: (HxW, 4), bsize = 1
-        scores: (HxW, num_classes), bsize = 1
+        bboxes: (N, 4), bsize = 1
+        scores: (N, C), bsize = 1
         """
 
         cls_inds = np.argmax(scores, axis=1)
@@ -197,11 +197,11 @@ class YOLOv3(nn.Module):
         box_pred_list = []
 
         for i, pred in enumerate(preds):
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
+            # [B, KA*(1 + C + 4), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
             obj_pred_i = pred[:, :KA, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
+            # [B, KA*(1 + C + 4), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
             cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
+            # [B, KA*(1 + C + 4), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
             reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
             # txtytwth -> xywh
             xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
@@ -245,15 +245,15 @@ class YOLOv3(nn.Module):
             with torch.no_grad():
                 # batch size = 1
                 # [B, H*W*KA, C] -> [H*W*KA, C]
-                scores = torch.sqrt(torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0])
+                scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
                 # [B, H*W*KA, 4] -> [H*W*KA, 4]
                 bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
 
-                # 将预测放在cpu处理上，以便进行后处理
+                # to cpu
                 scores = scores.to('cpu').numpy()
                 bboxes = bboxes.to('cpu').numpy()
 
-                # 后处理
+                # post-process
                 bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
 
                 return bboxes, scores, cls_inds

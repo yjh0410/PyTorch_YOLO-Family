@@ -45,12 +45,56 @@ The FPS of all YOLO detectors are measured on a one 2080ti GPU with 640 × 640 s
 I will upload some visualization results:
 
 ## YOLOv1
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1-640</th><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td></tr>
+</table></tbody>
 
 ## YOLOv2
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-640</th><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white>  15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td></tr>
+</table></tbody>
 
 ## YOLOv3
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+</table></tbody>
 
 ## YOLOv4
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+</table></tbody>
 
 # Dataset
 

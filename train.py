@@ -3,6 +3,7 @@ from __future__ import division
 import os
 import argparse
 import time
+import random
 import cv2
 import numpy as np
 
@@ -17,14 +18,14 @@ from data.coco import COCODataset
 from data import config
 from data.transforms import TrainTransforms, ValTransforms
 
+from utils import distributed_utils
+from utils import create_labels
 from utils.com_flops_params import FLOPs_and_Params
 from utils.misc import detection_collate
 from utils.misc import ModelEMA
 
 from evaluator.cocoapi_evaluator import COCOAPIEvaluator
 from evaluator.vocapi_evaluator import VOCAPIEvaluator
-
-from engine import train_one_epoch, evaluate, set_lr
 
 
 def parse_args():
@@ -140,39 +141,7 @@ def train():
     val_size = cfg['val_size']
 
     # dataset and evaluator
-    if args.dataset == 'voc':
-        data_dir = os.path.join(args.root, 'VOCdevkit')
-        num_classes = 20
-        dataset = VOCDetection(
-                        data_dir=data_dir,
-                        img_size=train_size,
-                        transform=TrainTransforms(train_size))
-
-        evaluator = VOCAPIEvaluator(
-                        data_dir=data_dir,
-                        img_size=val_size,
-                        device=device,
-                        transform=ValTransforms(val_size))
-
-    elif args.dataset == 'coco':
-        data_dir = os.path.join(args.root, 'COCO')
-        num_classes = 80
-        dataset = COCODataset(
-                    data_dir=data_dir,
-                    img_size=train_size,
-                    transform=TrainTransforms(train_size))
-
-        evaluator = COCOAPIEvaluator(
-                        data_dir=data_dir,
-                        img_size=val_size,
-                        device=device,
-                        transform=ValTransforms(val_size)
-                        )
-    
-    else:
-        print('unknow dataset !! Only support voc and coco !!')
-        exit(0)
-    
+    dataset, evaluator, num_classes = build_dataset(args, train_size, val_size, device)
     # dataloader
     dataloader = build_dataloader(args, dataset, detection_collate)
     
@@ -223,6 +192,7 @@ def train():
         tblogger = SummaryWriter(log_path)
     
     # optimizer setup
+    base_lr = args.lr
     tmp_lr = args.lr
     optimizer = optim.SGD(model.parameters(), 
                             lr=tmp_lr, 
@@ -232,11 +202,13 @@ def train():
     batch_size = args.batch_size
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
     best_map = -100.
+    warmup = not args.no_warmup
 
+    t0 = time.time()
     # start training loop
     for epoch in range(args.start_epoch, args.max_epoch):
         if args.distributed:
-            dataloader.sampler.set_epoch(epoch)        
+            dataloader.sampler.set_epoch(epoch)            
 
         # use step lr decay
         if epoch in args.lr_epoch:
@@ -244,53 +216,186 @@ def train():
             set_lr(optimizer, tmp_lr)
 
         # train one epoch
-        train_size, tmp_lr = train_one_epoch(
-                                    args=args, 
-                                    epoch=epoch,
-                                    max_epoch=args.max_epoch,
-                                    epoch_size=epoch_size,
-                                    cfg=cfg,
-                                    train_size=train_size,
-                                    tmp_lr=tmp_lr,
-                                    model=model, 
-                                    dataloader=dataloader, 
-                                    optimizer=optimizer,
-                                    anchor_size=anchor_size,
-                                    ema=ema,
-                                    tblogger=tblogger)
-        
+        for iter_i, (images, targets) in enumerate(dataloader):
+            ni = iter_i + epoch * epoch_size
+            # warmup
+            if epoch < args.wp_epoch and warmup:
+                nw = args.wp_epoch * epoch_size
+                tmp_lr = base_lr * pow(ni / nw, 4)
+                set_lr(optimizer, tmp_lr)
+
+            elif epoch == args.wp_epoch and iter_i == 0 and warmup:
+                # warmup is over
+                warmup = False
+                tmp_lr = base_lr
+                set_lr(optimizer, tmp_lr)
+
+            # multi-scale trick
+            if iter_i % 10 == 0 and iter_i > 0 and args.multi_scale:
+                # randomly choose a new size
+                r = cfg['random_size_range']
+                train_size = random.randint(r[0], r[1]) * 32
+                model.set_grid(train_size)
+            if args.multi_scale:
+                # interpolate
+                images = torch.nn.functional.interpolate(
+                                    input=images, 
+                                    size=train_size, 
+                                    mode='bilinear', 
+                                    align_corners=False)
+
+            targets = [label.tolist() for label in targets]
+            # visualize target
+            if args.vis:
+                vis_data(images, targets, train_size)
+                continue
+            # make labels
+            targets = create_labels.gt_creator(
+                                    img_size=train_size, 
+                                    strides=net.stride, 
+                                    label_lists=targets, 
+                                    anchor_size=anchor_size, 
+                                    center_sample=args.center_sample)
+            # to device
+            images = images.to(device)
+            targets = targets.to(device)
+
+            # forward
+            obj_loss, cls_loss, reg_loss, total_loss = model(images, targets=targets)
+
+            loss_dict = dict(
+                obj_loss=obj_loss,
+                cls_loss=cls_loss,
+                reg_loss=reg_loss,
+                total_loss=total_loss
+            )
+            loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
+
+            # check loss
+            if torch.isnan(total_loss):
+                continue
+
+            # Backward and Optimize
+            total_loss.backward()        
+            optimizer.step()
+            optimizer.zero_grad()
+
+            # ema
+            if args.ema:
+                ema.update(model)
+
+            # display
+            if iter_i % 10 == 0:
+                if args.tfboard:
+                    # viz loss
+                    tblogger.add_scalar('obj loss',  loss_dict_reduced['obj_loss'].item(),  ni)
+                    tblogger.add_scalar('cls loss',  loss_dict_reduced['cls_loss'].item(),  ni)
+                    tblogger.add_scalar('reg loss',  loss_dict_reduced['reg_loss'].item(),  ni)
+                
+                t1 = time.time()
+                print('[Epoch %d/%d][Iter %d/%d][lr %.6f][Loss: obj %.2f || cls %.2f || reg %.2f || size %d || time: %.2f]'
+                        % (epoch+1, 
+                           args.max_epoch, 
+                           iter_i, 
+                           epoch_size, 
+                           tmp_lr,
+                           loss_dict['obj_loss'].item(), 
+                           loss_dict['cls_loss'].item(), 
+                           loss_dict['reg_loss'].item(), 
+                           train_size, 
+                           t1-t0),
+                        flush=True)
+
+                t0 = time.time()
+
         # evaluation
         if (epoch + 1) % args.eval_epoch == 0 or (epoch + 1) == args.max_epoch:
-            if args.ema:
-                model_eval = ema.ema
+            if evaluator is None:
+                print('No evaluator ...')
+                print('Saving state, epoch:', epoch + 1)
+                torch.save(model_eval.state_dict(), os.path.join(path_to_save, 
+                            args.version + '_' + repr(epoch + 1) + '.pth'))  
+                print('Keep training ...')
             else:
-                model_eval = model.module if args.distributed else model
-            
-            # set eval mode
-            model_eval.trainable = False
-            model_eval.set_grid(val_size)
-            model_eval.eval()
+                print('eval ...')
+                # check ema
+                if args.ema:
+                    model_eval = ema.ema
+                else:
+                    model_eval = model.module if args.distributed else model
 
-            if local_rank == 0:
-                evaluate(args=args, 
-                        epoch=epoch,
-                        model=model_eval, 
-                        evaluator=evaluator,
-                        best_map=best_map,
-                        path_to_save=path_to_save,
-                        tblogger=tblogger)
-            
-            if args.distributed:
-                # wait for all processes to synchronize
-                dist.barrier()
+                # set eval mode
+                model_eval.trainable = False
+                model_eval.set_grid(val_size)
+                model_eval.eval()
 
-            # set train mode.
-            model_eval.trainable = True
-            model_eval.set_grid(train_size)
-            model_eval.eval()
+                if local_rank == 0:
+                    # evaluate
+                    evaluator.evaluate(model_eval)
 
+                    cur_map = evaluator.map
+                    if cur_map > best_map:
+                        # update best-map
+                        best_map = cur_map
+                        # save model
+                        print('Saving state, epoch:', epoch + 1)
+                        torch.save(model_eval.state_dict(), os.path.join(path_to_save, 
+                                    args.version + '_' + repr(epoch + 1) + '_' + str(round(best_map*100, 2)) + '.pth'))  
+                    if args.tfboard:
+                        if args.dataset == 'voc':
+                            tblogger.add_scalar('07test/mAP', evaluator.map, epoch)
+                        elif args.dataset == 'coco':
+                            tblogger.add_scalar('val/AP50_95', evaluator.ap50_95, epoch)
+                            tblogger.add_scalar('val/AP50', evaluator.ap50, epoch)
+
+                if args.distributed:
+                    # wait for all processes to synchronize
+                    dist.barrier()
+
+                # set train mode.
+                model_eval.trainable = True
+                model_eval.set_grid(train_size)
+                model_eval.train()
+    
     if args.tfboard:
         tblogger.close()
+
+
+def build_dataset(args, train_size, val_size, device):
+    if args.dataset == 'voc':
+        data_dir = os.path.join(args.root, 'VOCdevkit')
+        num_classes = 20
+        dataset = VOCDetection(
+                        data_dir=data_dir,
+                        img_size=train_size,
+                        transform=TrainTransforms(train_size))
+
+        evaluator = VOCAPIEvaluator(
+                        data_dir=data_dir,
+                        img_size=val_size,
+                        device=device,
+                        transform=ValTransforms(val_size))
+
+    elif args.dataset == 'coco':
+        data_dir = os.path.join(args.root, 'COCO')
+        num_classes = 80
+        dataset = COCODataset(
+                    data_dir=data_dir,
+                    img_size=train_size,
+                    transform=TrainTransforms(train_size))
+
+        evaluator = COCOAPIEvaluator(
+                        data_dir=data_dir,
+                        img_size=val_size,
+                        device=device,
+                        transform=ValTransforms(val_size)
+                        )
+    
+    else:
+        print('unknow dataset !! Only support voc and coco !!')
+        exit(0)
+
+    return dataset, evaluator, num_classes
 
 
 def build_dataloader(args, dataset, collate_fn=None):

@@ -25,7 +25,7 @@ def parse_args():
                         type=str, help='The path to video files')
     parser.add_argument('--path_to_saveVid', default='data/video/result.avi',
                         type=str, help='The path to save the detection results video')
-    parser.add_argument('-vs', '--visual_threshold', default=0.4,
+    parser.add_argument('-vs', '--visual_threshold', default=0.3,
                         type=float, help='visual threshold')
 
     # model
