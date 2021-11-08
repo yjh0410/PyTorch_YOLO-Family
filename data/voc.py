@@ -211,7 +211,7 @@ class VOCDetection(data.Dataset):
 
     def pull_item(self, index):
         # load a mosaic image
-        if self.mosaic:
+        if self.mosaic and np.random.randint(2):
             # mosaic
             img, target, height, width = self.load_mosaic(index)
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
                 data_dir='/mnt/share/ssd2/dataset/VOCdevkit/',
                 img_size=img_size,
                 transform=ValTransforms(img_size),
-                mosaic=False)
+                mosaic=True)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

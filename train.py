@@ -71,6 +71,8 @@ def parse_args():
                         help='coco, widerface, crowdhuman')
     
     # train trick
+    parser.add_argument('--mosaic', action='store_true', default=False,
+                        help='use Mosaic Augmentation trick')
     parser.add_argument('--no_warmup', action='store_true', default=False,
                         help='do not use warmup')
     parser.add_argument('-ms', '--multi_scale', action='store_true', default=False,
@@ -368,7 +370,8 @@ def build_dataset(args, train_size, val_size, device):
         dataset = VOCDetection(
                         data_dir=data_dir,
                         img_size=train_size,
-                        transform=TrainTransforms(train_size))
+                        transform=TrainTransforms(train_size, mosaic=args.mosaic),
+                        mosaic=args.mosaic)
 
         evaluator = VOCAPIEvaluator(
                         data_dir=data_dir,
@@ -382,7 +385,8 @@ def build_dataset(args, train_size, val_size, device):
         dataset = COCODataset(
                     data_dir=data_dir,
                     img_size=train_size,
-                    transform=TrainTransforms(train_size))
+                    transform=TrainTransforms(train_size, mosaic=args.mosaic),
+                    mosaic=args.mosaic)
 
         evaluator = COCOAPIEvaluator(
                         data_dir=data_dir,
