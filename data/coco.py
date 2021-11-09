@@ -38,7 +38,8 @@ class COCODataset(Dataset):
                  image_set='train2017',
                  json_file='instances_train2017.json',
                  img_size=640,
-                 transform=None, 
+                 transform=None,
+                 color_augment=None, 
                  mosaic=False):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -59,6 +60,7 @@ class COCODataset(Dataset):
         # augmentation
         self.transform = transform
         self.mosaic = mosaic
+        self.color_augment = color_augment
         if self.mosaic:
             print('use Mosaic Augmentation ...')
 
@@ -193,6 +195,8 @@ class COCODataset(Dataset):
             # mosaic
             img, target, height, width = self.load_mosaic(index)
 
+            # augment
+            img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
         # load an image and target
         else:
             id_ = self.ids[index]
@@ -201,9 +205,8 @@ class COCODataset(Dataset):
                 target = np.zeros([1, 5])
             else:
                 target = np.array(target)
-
-        # augment
-        img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
+            # augment
+            img, boxes, labels, scale, offset = self.transform(img, target[:, :4], target[:, 4])
         
         target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
 
@@ -249,7 +252,7 @@ class COCODataset(Dataset):
 
 
 if __name__ == "__main__":
-    from transforms import TrainTransforms, ValTransforms
+    from transforms import TrainTransforms, ColorTransforms, ValTransforms
 
     mean=(0.406, 0.456, 0.485)
     std=(0.225, 0.224, 0.229)
@@ -261,7 +264,8 @@ if __name__ == "__main__":
                 data_dir='/mnt/share/ssd2/dataset/COCO/',
                 img_size=img_size,
                 image_set='train2017',
-                transform=ValTransforms(img_size),
+                transform=TrainTransforms(img_size),
+                color_augment=ColorTransforms(img_size),
                 mosaic=True)
     
     np.random.seed(0)

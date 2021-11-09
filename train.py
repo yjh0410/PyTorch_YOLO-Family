@@ -16,7 +16,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from data.voc import VOCDetection
 from data.coco import COCODataset
 from data import config
-from data.transforms import TrainTransforms, ValTransforms
+from data.transforms import TrainTransforms, ColorTransforms, ValTransforms
 
 from utils import distributed_utils
 from utils import create_labels
@@ -370,7 +370,8 @@ def build_dataset(args, train_size, val_size, device):
         dataset = VOCDetection(
                         data_dir=data_dir,
                         img_size=train_size,
-                        transform=TrainTransforms(train_size, mosaic=args.mosaic),
+                        transform=TrainTransforms(train_size),
+                        color_augment=ColorTransforms(train_size),
                         mosaic=args.mosaic)
 
         evaluator = VOCAPIEvaluator(
@@ -385,7 +386,8 @@ def build_dataset(args, train_size, val_size, device):
         dataset = COCODataset(
                     data_dir=data_dir,
                     img_size=train_size,
-                    transform=TrainTransforms(train_size, mosaic=args.mosaic),
+                    transform=TrainTransforms(train_size),
+                    color_augment=ColorTransforms(train_size),
                     mosaic=args.mosaic)
 
         evaluator = COCOAPIEvaluator(

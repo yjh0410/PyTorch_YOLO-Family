@@ -400,34 +400,42 @@ class ToTensor(object):
 
 # TrainTransform
 class TrainTransforms(object):
-    def __init__(self, size=640, mean=(0.406, 0.456, 0.485), std=(0.225, 0.224, 0.229), mosaic=False):
+    def __init__(self, size=640, mean=(0.406, 0.456, 0.485), std=(0.225, 0.224, 0.229)):
         self.mean = mean
         self.size = size
         self.std = std
-        if not mosaic:
-            self.augment = Compose([
-                ConvertFromInts(),
-                ToAbsoluteCoords(),
-                PhotometricDistort(),
-                RandomSampleCrop(),
-                RandomMirror(),
-                ToPercentCoords(),
-                Resize(self.size, self.mean),
-                Normalize(self.mean, self.std),
-                ToTensor()
-            ])
-        else:
-            # If mosaic, we don't use RandomSampleCrop. 
-            self.augment = Compose([
-                ConvertFromInts(),
-                ToAbsoluteCoords(),
-                PhotometricDistort(),
-                RandomMirror(),
-                ToPercentCoords(),
-                Resize(self.size, self.mean),
-                Normalize(self.mean, self.std),
-                ToTensor()
-            ])
+        self.augment = Compose([
+            ConvertFromInts(),
+            ToAbsoluteCoords(),
+            PhotometricDistort(),
+            RandomSampleCrop(),
+            RandomMirror(),
+            ToPercentCoords(),
+            Resize(self.size, self.mean),
+            Normalize(self.mean, self.std),
+            ToTensor()
+        ])
+
+    def __call__(self, image, boxes, labels, scale=None, offset=None):
+        return self.augment(image, boxes, labels, scale, offset)
+
+
+# ColorTransform
+class ColorTransforms(object):
+    def __init__(self, size=640, mean=(0.406, 0.456, 0.485), std=(0.225, 0.224, 0.229)):
+        self.mean = mean
+        self.size = size
+        self.std = std
+        self.augment = Compose([
+            ConvertFromInts(),
+            ToAbsoluteCoords(),
+            PhotometricDistort(),
+            RandomMirror(),
+            ToPercentCoords(),
+            Resize(self.size, self.mean),
+            Normalize(self.mean, self.std),
+            ToTensor()
+        ])
 
     def __call__(self, image, boxes, labels, scale=None, offset=None):
         return self.augment(image, boxes, labels, scale, offset)
