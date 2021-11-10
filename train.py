@@ -71,14 +71,16 @@ def parse_args():
                         help='coco, widerface, crowdhuman')
     
     # train trick
-    parser.add_argument('--mosaic', action='store_true', default=False,
-                        help='use Mosaic Augmentation trick')
     parser.add_argument('--no_warmup', action='store_true', default=False,
                         help='do not use warmup')
     parser.add_argument('-ms', '--multi_scale', action='store_true', default=False,
                         help='use multi-scale trick')      
     parser.add_argument('--ema', action='store_true', default=False,
                         help='use ema training trick')
+    parser.add_argument('--mosaic', action='store_true', default=False,
+                        help='use Mosaic Augmentation trick')
+    parser.add_argument('--multi_anchor', action='store_true', default=False,
+                        help='use multiple anchor boxes as the positive samples')
     parser.add_argument('--center_sample', action='store_true', default=False,
                         help='use center sample for labels')
 

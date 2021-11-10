@@ -62,7 +62,7 @@ def set_anchors(anchor_size):
     return anchor_boxes
 
 
-def label_assignment_with_anchorbox(anchor_size, target_boxes, num_anchors, strides):
+def label_assignment_with_anchorbox(anchor_size, target_boxes, num_anchors, strides, multi_anchor=False):
     # prepare
     anchor_boxes = set_anchors(anchor_size)
     gt_box = np.array([[0, 0, target_boxes[2], target_boxes[3]]])
@@ -70,23 +70,66 @@ def label_assignment_with_anchorbox(anchor_size, target_boxes, num_anchors, stri
     # compute IoU
     iou = compute_iou(anchor_boxes, gt_box)
 
-    # We assign the anchor box with highest IoU score.
-    iou_ind = np.argmax(iou)
+    label_assignment_results = []
+    if multi_anchor:
+        # We consider those anchor boxes whose IoU is more than 0.5,
+        iou_mask = (iou > 0.5)
+        if iou_mask.sum() == 0:
+            # We assign the anchor box with highest IoU score.
+            iou_ind = np.argmax(iou)
 
-    # scale_ind, anchor_ind = index // num_scale, index % num_scale
-    scale_ind = iou_ind // num_anchors
-    anchor_ind = iou_ind - scale_ind * num_anchors
+            # scale_ind, anchor_ind = index // num_scale, index % num_scale
+            scale_ind = iou_ind // num_anchors
+            anchor_ind = iou_ind - scale_ind * num_anchors
 
-    # get the corresponding stride
-    stride = strides[scale_ind]
+            # get the corresponding stride
+            stride = strides[scale_ind]
 
-    # compute the gride cell
-    xc_s = target_boxes[0] / stride
-    yc_s = target_boxes[1] / stride
-    grid_x = int(xc_s)
-    grid_y = int(yc_s)
+            # compute the grid cell
+            xc_s = target_boxes[0] / stride
+            yc_s = target_boxes[1] / stride
+            grid_x = int(xc_s)
+            grid_y = int(yc_s)
 
-    return grid_x, grid_y, scale_ind, anchor_ind
+            label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
+        else:            
+            for iou_ind, iou_m in enumerate(iou_mask):
+                if iou_m:
+                    # scale_ind, anchor_ind = index // num_scale, index % num_scale
+                    scale_ind = iou_ind // num_anchors
+                    anchor_ind = iou_ind - scale_ind * num_anchors
+
+                    # get the corresponding stride
+                    stride = strides[scale_ind]
+
+                    # compute the gride cell
+                    xc_s = target_boxes[0] / stride
+                    yc_s = target_boxes[1] / stride
+                    grid_x = int(xc_s)
+                    grid_y = int(yc_s)
+
+                    label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
+
+    else:
+        # We assign the anchor box with highest IoU score.
+        iou_ind = np.argmax(iou)
+
+        # scale_ind, anchor_ind = index // num_scale, index % num_scale
+        scale_ind = iou_ind // num_anchors
+        anchor_ind = iou_ind - scale_ind * num_anchors
+
+        # get the corresponding stride
+        stride = strides[scale_ind]
+
+        # compute the grid cell
+        xc_s = target_boxes[0] / stride
+        yc_s = target_boxes[1] / stride
+        grid_x = int(xc_s)
+        grid_y = int(yc_s)
+
+        label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
+
+    return label_assignment_results
 
 
 def label_assignment_without_anchorbox(target_boxes, strides):
@@ -94,20 +137,22 @@ def label_assignment_without_anchorbox(target_boxes, strides):
     scale_ind = 0
     anchor_ind = 0
 
+    label_assignment_results = []
     # get the corresponding stride
     stride = strides[scale_ind]
 
-    # compute the gride cell
+    # compute the grid cell
     xc_s = target_boxes[0] / stride
     yc_s = target_boxes[1] / stride
     grid_x = int(xc_s)
     grid_y = int(yc_s)
     
+    label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
 
-    return grid_x, grid_y, scale_ind, anchor_ind
+    return label_assignment_results
 
 
-def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=False):
+def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=False, center_sample=False):
     """creator gt"""
     # prepare
     batch_size = len(label_lists)
@@ -146,28 +191,32 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, center_sample=F
                                                 anchor_size=anchor_size,
                                                 target_boxes=target_boxes,
                                                 num_anchors=KA,
-                                                strides=strides)
+                                                strides=strides,
+                                                multi_anchor=multi_anchor)
             else:
                 # no anchor box
                 label_assignment_results = label_assignment_without_anchorbox(
                                                 target_boxes=target_boxes,
                                                 strides=strides)
 
-            grid_x, grid_y, scale_ind, anchor_ind = label_assignment_results
-            
             # make labels
-            if center_sample:
-                for j in range(grid_y, grid_y+2):
-                    for i in range(grid_x, grid_x+2):
-                        if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
-                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
-                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
-                            gt_tensor[scale_ind][bi, j, i, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
-            else:
-                if (grid_y >= 0 and grid_y < gt_tensor[scale_ind].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[scale_ind].shape[2]):
-                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 0] = 1.0
-                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 1] = cls_id
-                    gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
+            for result in label_assignment_results:
+                grid_x, grid_y, scale_ind, anchor_ind = result
+                
+                if center_sample:
+                    # We consider four grid points near the center point
+                    for j in range(grid_y, grid_y+2):
+                        for i in range(grid_x, grid_x+2):
+                            if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
+                                gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
+                                gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
+                                gt_tensor[scale_ind][bi, j, i, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
+                else:
+                    # We ongly consider top-left grid point near the center point
+                    if (grid_y >= 0 and grid_y < gt_tensor[scale_ind].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[scale_ind].shape[2]):
+                        gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 0] = 1.0
+                        gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 1] = cls_id
+                        gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 2:] = np.array([x1, y1, x2, y2])
 
     gt_tensor = [gt.reshape(batch_size, -1, 1+1+4) for gt in gt_tensor]
     gt_tensor = np.concatenate(gt_tensor, axis=1)
