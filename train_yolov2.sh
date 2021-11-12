@@ -1,8 +1,8 @@
 python train.py \
         --cuda \
+        -d coco \
+        --batch_size 16 \
         -v yolov2 \
         -ms \
-        --ema \
-        --batch_size 16 \
-        -d coco
+        --ema
         

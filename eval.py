@@ -9,7 +9,7 @@ from evaluator.cocoapi_evaluator import COCOAPIEvaluator
 from data.transforms import ValTransforms
 from data import config
 
-from utils.misc import TestWithAugmentation
+from utils.misc import TestTimeAugmentation
 
 
 parser = argparse.ArgumentParser(description='YOLO Detection')
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     print('Finished loading model!')
 
     # TTA
-    test_aug = TestWithAugmentation(num_classes=num_classes) if args.test_aug else None
+    test_aug = TestTimeAugmentation(num_classes=num_classes) if args.test_aug else None
     
     # evaluation
     with torch.no_grad():

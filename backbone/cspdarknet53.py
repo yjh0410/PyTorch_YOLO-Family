@@ -100,7 +100,7 @@ class CSPDarknet53(nn.Module):
 
 
 def cspdarknet53(pretrained=False, **kwargs):
-    """Constructs a CSPDarknet_X model.
+    """Constructs a CSPDarknet53 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet

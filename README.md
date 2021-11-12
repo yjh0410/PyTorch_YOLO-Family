@@ -1,16 +1,30 @@
 # A new and strong YOLO family
 Recently, I rebuild my YOLO-Family project !!
 
-# Installation
-- Pytorch >= 1.1.0 (My Pytorch is torch-1.9.1)
-- Python3
+# Requirements
+- We recommend you to use Anaconda to create a conda environment:
+```Shell
+conda create -n yolo python=3.6
+```
+
+- Then, activate the environment:
+```Shell
+conda activate yolo
+```
+
+- Requirements:
+```Shell
+pip install -r requirements.txt 
+```
+PyTorch >= 1.1.0 and Torchvision >= 0.3.0
+
 
 # This project
 In this project, you can enjoy: 
-- a new YOLOv1 !
-- a new YOLOv2 !
-- a new YOLOv3 !
-- a new YOLOv4 !
+- a new and stronger YOLOv1 !
+- a new and stronger YOLOv2 !
+- a new and stronger YOLOv3 !
+- YOLOv4 !
 
 # Weights
 I will upload all weight files to Google Drive.
@@ -33,7 +47,7 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white>  15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td><td bgcolor=white>  42.10   </td><td bgcolor=white> 44.89M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3</th><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
 
@@ -139,7 +153,10 @@ python train.py --cuda \
                 --root path/to/dataset/
 ```
 
-You can run ```python train.py -h``` to check all optional argument.
+You can run ```python train.py -h``` to check all optional argument. Or you can just run the shell file, for example:
+```Shell
+sh train_yolov1.sh
+```
 
 If you have multi gpus like 8, and you put 4 images on each gpu:
 ```Shell
@@ -153,6 +170,9 @@ python -m torch.distributed.launch --nproc_per_node=8 train.py -d coco \
                                                                --batch_size 4 \
                                                                --root path/to/dataset/
 ```
+Attention, `--batch_size` is the number of batchsize on per GPU, not all GPUs.
+
+I have upload all training log files. For example, `1-v1.txt` contains all the output information during the training YOLOv1.
 
 # Test
 ```Shell

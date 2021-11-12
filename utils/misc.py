@@ -86,8 +86,8 @@ class ModelEMA(object):
                     v += (1. - d) * msd[k].detach()
 
 
-# test augmentation
-class TestWithAugmentation(object):
+# test time augmentation(TTA)
+class TestTimeAugmentation(object):
     def __init__(self, num_classes=80, nms_thresh=0.4, scale_range=[320, 640, 32]):
         self.nms = nms
         self.num_classes = num_classes

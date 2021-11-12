@@ -4,18 +4,12 @@
     Licensed under The MIT License [see LICENSE for details]
 """
 
-from torch.autograd import Variable
 from data.voc import VOCDetection, VOC_CLASSES
-import sys
 import os
 import time
 import numpy as np
 import pickle
-
-if sys.version_info[0] == 2:
-    import xml.etree.cElementTree as ET
-else:
-    import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET
 
 
 class VOCAPIEvaluator():

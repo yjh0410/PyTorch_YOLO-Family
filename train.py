@@ -446,9 +446,8 @@ def vis_data(images, targets, img_size):
 
     img = images[0].permute(1, 2, 0).cpu().numpy()[:, :, ::-1]
     img = ((img * std + mean)*255).astype(np.uint8)
-    cv2.imwrite('1.jpg', img)
+    img = img.copy()
 
-    img_ = cv2.imread('1.jpg')
     for box in targets[0]:
         xmin, ymin, xmax, ymax = box[:-1]
         # print(xmin, ymin, xmax, ymax)
@@ -456,9 +455,9 @@ def vis_data(images, targets, img_size):
         ymin *= img_size
         xmax *= img_size
         ymax *= img_size
-        cv2.rectangle(img_, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255), 2)
+        cv2.rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255), 2)
 
-    cv2.imshow('img', img_)
+    cv2.imshow('img', img)
     cv2.waitKey(0)
 
 
