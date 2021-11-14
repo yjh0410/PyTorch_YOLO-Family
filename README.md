@@ -174,6 +174,8 @@ Attention, `--batch_size` is the number of batchsize on per GPU, not all GPUs.
 
 I have upload all training log files. For example, `1-v1.txt` contains all the output information during the training YOLOv1.
 
+It is strongly recommended that you open the training shell file to check how I train each YOLO detector.
+
 # Test
 ```Shell
 python test.py -d [select a dataset: voc or coco] \
