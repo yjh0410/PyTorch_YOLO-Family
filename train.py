@@ -169,7 +169,12 @@ def train():
 
     model = model.to(device).train()
     # compute FLOPs and Params
-    FLOPs_and_Params(model=model, size=train_size)
+    if local_rank == 0:
+        model.trainable = False
+        model.eval()
+        FLOPs_and_Params(model=model, size=train_size)
+        model.trainable = True
+        model.train()
 
     # DDP
     if args.distributed and args.num_gpu > 1:
