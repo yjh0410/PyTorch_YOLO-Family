@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone.cspdarknet53 import cspdarknet53
+from backbone.cspdarknet import cspdarknet53
 from utils.modules import Conv, UpSample, BottleneckCSP, DilatedEncoder
 from utils import box_ops
 from utils import loss

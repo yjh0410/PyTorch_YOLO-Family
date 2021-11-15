@@ -28,7 +28,7 @@ parser.add_argument('--save_folder', default='det_results/', type=str,
                     help='Dir to save results')
 # model
 parser.add_argument('-v', '--version', default='yolov1',
-                    help='yolov1, yolov2, yolov3, yolov4, yolo_nano')
+                    help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
 parser.add_argument('--trained_model', default='weight/',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--conf_thresh', default=0.1, type=float,
@@ -179,6 +179,9 @@ if __name__ == '__main__':
 
     elif model_name == 'yolov4':
         from models.yolov4 import YOLOv4 as yolo_net
+
+    elif model_name == 'yolo_tiny':
+        from models.yolo_tiny import YOLOTiny as yolo_net
 
     elif model_name == 'yolo_nano':
         from models.yolo_nano import YOLONano as yolo_net
