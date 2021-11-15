@@ -25,7 +25,8 @@ In this project, you can enjoy:
 - a new and stronger YOLOv2 !
 - a new and stronger YOLOv3 !
 - YOLOv4 !
-- YOLO-Nano !
+- a new YOLO-Tiny !
+- a new YOLO-Nano !
 
 # Weights
 I will upload all weight files to Google Drive.
