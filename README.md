@@ -24,7 +24,7 @@ In this project, you can enjoy:
 - a new and stronger YOLOv1 !
 - a new and stronger YOLOv2 !
 - a new and stronger YOLOv3 !
-- YOLOv4 !
+- a new YOLOv4 !
 - a new YOLO-Tiny !
 - a new YOLO-Nano !
 
