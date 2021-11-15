@@ -62,7 +62,7 @@ def parse_args():
 
     # model
     parser.add_argument('-v', '--version', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4')
+                        help='yolov1, yolov2, yolov3, yolov4, yolo_nano')
 
     # dataset
     parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
@@ -135,6 +135,9 @@ def train():
 
     elif model_name == 'yolov4':
         from models.yolov4 import YOLOv4 as yolo_net
+
+    elif model_name == 'yolo_nano':
+        from models.yolo_nano import YOLONano as yolo_net
 
     else:
         print('Unknown model name...')

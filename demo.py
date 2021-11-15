@@ -30,7 +30,7 @@ def parse_args():
 
     # model
     parser.add_argument('-v', '--version', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4')
+                        help='yolov1, yolov2, yolov3, yolov4, yolo_nano')
     parser.add_argument('--num_queries', type=int, default=4, 
                         help='number of queris of YOLOQ')
     parser.add_argument('--trained_model', default='weights/',
@@ -229,6 +229,9 @@ def run():
 
     elif model_name == 'yolov4':
         from models.yolov4 import YOLOv4 as yolo_net
+
+    elif model_name == 'yolo_nano':
+        from models.yolo_nano import YOLONano as yolo_net
 
     else:
         print('Unknown model name...')
