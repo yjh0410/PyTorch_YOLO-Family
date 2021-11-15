@@ -35,8 +35,8 @@ Tricks in this project:
 - [x] Augmentations: Flip + Color jitter + RandomCrop + Multi-scale
 - [x] Model EMA
 - [x] GIoU
+- [x] Mosaic Augmentation for my YOLOv4
 
-I also tried Mosaic Augmentation but it doesn't work.
 
 On the COCO-val:
 
