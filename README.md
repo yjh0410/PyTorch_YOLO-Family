@@ -38,6 +38,7 @@ Tricks in this project:
 - [x] Model EMA
 - [x] GIoU
 - [x] Mosaic Augmentation for my YOLOv4
+- [x] Multiple positive samples for my YOLOv4
 
 
 On the COCO-val:
