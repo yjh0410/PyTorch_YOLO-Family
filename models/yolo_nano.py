@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from backbone.shufflenetv2 import shufflenetv2
-from utils.modules import Conv
+from utils.modules import SPP, Conv
 from utils import box_ops
 from utils import loss
 
@@ -31,10 +31,13 @@ class YOLONano(nn.Module):
         self.num_anchors = self.anchor_size.size(1)
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
-        # use shufflenetv2_1.0x as backbone
+        # backbone
         print('Use backbone: shufflenetv2_1.0x')
         self.backbone = shufflenetv2(pretrained=trainable)
         c3, c4, c5 = 116, 232, 464
+
+        # neck
+        self.neck = SPP(c1=c5, c2=c5)
 
         # FPN+PAN
         self.conv1x1_0 = Conv(c3, 96, k=1)
@@ -183,6 +186,9 @@ class YOLONano(nn.Module):
         C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
+
+        # neck
+        c5 = self.neck(c5)
 
         p3 = self.conv1x1_0(c3)
         p4 = self.conv1x1_1(c4)
