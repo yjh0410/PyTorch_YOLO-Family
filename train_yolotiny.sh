@@ -1,12 +1,13 @@
 python train.py \
         --cuda \
         -d coco \
-        --batch_size 16 \
+        --batch_size 64 \
         -v yolo_tiny \
         -ms \
         --ema \
-        --max_epoch 200 \
-        --lr_epoch 100 150 \
+        --max_epoch 250 \
+        --lr_epoch 130 180 \
+        --mosaic \
         --multi_anchor \
         --center_sample
         
