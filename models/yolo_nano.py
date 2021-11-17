@@ -70,9 +70,9 @@ class YOLONano(nn.Module):
         )
 
         # det conv
-        self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_2 = nn.Conv2d(c4, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_3 = nn.Conv2d(c5, self.num_anchors * (1 + self.num_classes + 4), 1)
+        self.head_det_1 = nn.Conv2d(96, self.num_anchors * (1 + self.num_classes + 4), 1)
+        self.head_det_2 = nn.Conv2d(96, self.num_anchors * (1 + self.num_classes + 4), 1)
+        self.head_det_3 = nn.Conv2d(96, self.num_anchors * (1 + self.num_classes + 4), 1)
 
         if self.trainable:
             # init bias

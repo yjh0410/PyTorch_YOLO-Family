@@ -37,6 +37,10 @@ def parse_args():
                         help='Batch size for training')
     parser.add_argument('--lr', default=1e-3, type=float, 
                         help='initial learning rate')
+    parser.add_argument('--img_size', type=int, default=640,
+                        help='The upper bound of warm-up')
+    parser.add_argument('--multi_scale_range', nargs='+', default=[10, 20], type=int,
+                        help='lr epoch to decay')
     parser.add_argument('--max_epoch', type=int, default=200,
                         help='The upper bound of warm-up')
     parser.add_argument('--lr_epoch', nargs='+', default=[100, 150], type=int,
@@ -147,8 +151,7 @@ def train():
         exit(0)
     # YOLO Config
     cfg = config.yolo_cfg
-    train_size = cfg['train_size']
-    val_size = cfg['val_size']
+    train_size = val_size = args.img_size
 
     # dataset and evaluator
     dataset, evaluator, num_classes = build_dataset(args, train_size, val_size, device)
@@ -248,7 +251,7 @@ def train():
             # multi-scale trick
             if iter_i % 10 == 0 and iter_i > 0 and args.multi_scale:
                 # randomly choose a new size
-                r = cfg['random_size_range']
+                r = args.multi_scale_range
                 train_size = random.randint(r[0], r[1]) * 32
                 model.set_grid(train_size)
             if args.multi_scale:
