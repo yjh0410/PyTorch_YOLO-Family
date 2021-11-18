@@ -1,0 +1,65 @@
+Setting Arguments.. :  Namespace(batch_size=16, center_sample=True, cuda=True, dataset='coco', distributed=False, ema=True, eval_epoch=10, img_size=512, local_rank=0, lr=0.001, lr_epoch=[100, 150], max_epoch=200, mosaic=True, multi_anchor=False, multi_scale=True, multi_scale_range=[10, 16], no_warmup=False, num_gpu=1, num_workers=8, resume=None, root='/mnt/share/ssd2/dataset', save_folder='weights/', start_epoch=0, sybn=False, tfboard=False, version='yolo_tiny', vis=False, wp_epoch=2)
+----------------------------------------------------------
+use cuda
+Model:  yolo_tiny
+loading annotations into memory...
+Done (t=7.82s)
+creating index...
+index created!
+use Mosaic Augmentation ...
+loading annotations into memory...
+Done (t=1.05s)
+creating index...
+index created!
+Training model on: coco
+The dataset size: 118287
+----------------------------------------------------------
+backbone: CSPDarkNet-Tiny ...
+Loading the cspdarknet_tiny ...
+[INFO] Register count_convNd() for <class 'torch.nn.modules.conv.Conv2d'>.
+[INFO] Register count_bn() for <class 'torch.nn.modules.batchnorm.BatchNorm2d'>.
+[INFO] Register count_relu() for <class 'torch.nn.modules.activation.LeakyReLU'>.
+[91m[WARN] Cannot find rule for <class 'torch.nn.modules.container.Sequential'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'backbone.cspdarknet.Conv'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'backbone.cspdarknet.ResidualBlock'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'backbone.cspdarknet.CSPStage'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'backbone.cspdarknet.CSPDarknetTiny'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.Conv'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.DilatedBottleneck'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.DilatedEncoder'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.UpSample'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.Bottleneck'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.BottleneckCSP'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'models.yolo_tiny.YOLOTiny'>. Treat it as zero Macs and zero Params.[00m
+FLOPs :  5.523630848  B
+Params :  7.661389  M
+[Epoch 1/200][Iter 0/7392][lr 0.000000][Loss: obj 24.89 || cls 178.74 || reg 54.23 || size 512 || time: 3.36]
+[Epoch 1/200][Iter 10/7392][lr 0.000000][Loss: obj 27.61 || cls 199.95 || reg 62.35 || size 320 || time: 2.32]
+[Epoch 1/200][Iter 20/7392][lr 0.000000][Loss: obj 27.55 || cls 197.98 || reg 61.64 || size 512 || time: 1.29]
+[Epoch 1/200][Iter 30/7392][lr 0.000000][Loss: obj 24.02 || cls 169.06 || reg 50.90 || size 448 || time: 2.75]
+[Epoch 1/200][Iter 40/7392][lr 0.000000][Loss: obj 30.70 || cls 219.44 || reg 67.53 || size 480 || time: 2.25]
+[Epoch 1/200][Iter 50/7392][lr 0.000000][Loss: obj 25.92 || cls 230.22 || reg 75.40 || size 352 || time: 2.10]
+[Epoch 1/200][Iter 60/7392][lr 0.000000][Loss: obj 27.68 || cls 209.81 || reg 65.48 || size 384 || time: 1.93]
+[Epoch 1/200][Iter 70/7392][lr 0.000000][Loss: obj 44.27 || cls 353.71 || reg 110.67 || size 480 || time: 1.45]
+[Epoch 1/200][Iter 80/7392][lr 0.000000][Loss: obj 30.47 || cls 203.94 || reg 60.11 || size 512 || time: 1.98]
+[Epoch 1/200][Iter 90/7392][lr 0.000000][Loss: obj 34.99 || cls 266.34 || reg 82.16 || size 416 || time: 2.44]
+[Epoch 1/200][Iter 100/7392][lr 0.000000][Loss: obj 37.46 || cls 298.88 || reg 94.16 || size 448 || time: 1.36]
+[Epoch 1/200][Iter 110/7392][lr 0.000000][Loss: obj 29.69 || cls 212.15 || reg 64.60 || size 480 || time: 1.72]
+[Epoch 1/200][Iter 120/7392][lr 0.000000][Loss: obj 33.04 || cls 301.17 || reg 97.32 || size 352 || time: 1.76]
+[Epoch 1/200][Iter 130/7392][lr 0.000000][Loss: obj 33.46 || cls 275.17 || reg 87.67 || size 448 || time: 1.57]
+[Epoch 1/200][Iter 140/7392][lr 0.000000][Loss: obj 29.40 || cls 255.54 || reg 81.91 || size 352 || time: 1.82]
+[Epoch 1/200][Iter 150/7392][lr 0.000000][Loss: obj 29.79 || cls 269.59 || reg 85.99 || size 384 || time: 1.59]
+[Epoch 1/200][Iter 160/7392][lr 0.000000][Loss: obj 36.24 || cls 299.77 || reg 97.02 || size 480 || time: 1.74]
+[Epoch 1/200][Iter 170/7392][lr 0.000000][Loss: obj 29.48 || cls 232.75 || reg 73.82 || size 384 || time: 1.90]
+[Epoch 1/200][Iter 180/7392][lr 0.000000][Loss: obj 21.05 || cls 136.83 || reg 41.26 || size 480 || time: 1.56]
+[Epoch 1/200][Iter 190/7392][lr 0.000000][Loss: obj 41.03 || cls 300.95 || reg 91.80 || size 448 || time: 1.89]
+[Epoch 1/200][Iter 200/7392][lr 0.000000][Loss: obj 26.92 || cls 190.87 || reg 58.84 || size 480 || time: 1.83]
+[Epoch 1/200][Iter 210/7392][lr 0.000000][Loss: obj 35.65 || cls 267.57 || reg 82.80 || size 416 || time: 1.81]
+[Epoch 1/200][Iter 220/7392][lr 0.000000][Loss: obj 33.07 || cls 255.77 || reg 82.01 || size 480 || time: 1.71]
+[Epoch 1/200][Iter 230/7392][lr 0.000000][Loss: obj 42.32 || cls 330.56 || reg 104.46 || size 384 || time: 1.93]
+[Epoch 1/200][Iter 240/7392][lr 0.000000][Loss: obj 36.05 || cls 309.75 || reg 100.45 || size 352 || time: 1.62]
+[Epoch 1/200][Iter 250/7392][lr 0.000000][Loss: obj 40.69 || cls 344.36 || reg 110.85 || size 384 || time: 1.72]
+[Epoch 1/200][Iter 260/7392][lr 0.000000][Loss: obj 36.21 || cls 277.80 || reg 88.60 || size 512 || time: 1.69]
+[Epoch 1/200][Iter 270/7392][lr 0.000000][Loss: obj 22.39 || cls 169.63 || reg 52.26 || size 352 || time: 2.19]
+[Epoch 1/200][Iter 280/7392][lr 0.000000][Loss: obj 29.01 || cls 244.02 || reg 77.61 || size 384 || time: 1.60]
+[Epoch 1/200][Iter 290/7392][lr 0.000000][Loss: obj 24.29 || cls 223.32 || reg 74.20 || size 320 || time: 1.74]
