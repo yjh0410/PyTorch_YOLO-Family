@@ -3,13 +3,12 @@ python train.py \
         -v yolo_tiny \
         -d coco \
         --batch_size 16 \
-        --img_size 640 \
-        --multi_scale_range 10 20 \
+        --img_size 512 \
+        --multi_scale_range 10 16 \
         -ms \
         --ema \
-        --max_epoch 250 \
-        --lr_epoch 130 180 \
+        --max_epoch 200 \
+        --lr_epoch 100 150 \
         --mosaic \
-        --multi_anchor \
         --center_sample
         

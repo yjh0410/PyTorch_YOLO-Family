@@ -109,7 +109,7 @@ class YOLOv2(nn.Module):
             h = np.maximum(1e-28, yy2 - yy1)
             inter = w * h
 
-            ovr = inter / (areas[i] + areas[order[1:]] - inter)
+            ovr = inter / (areas[i] + areas[order[1:]] - inter + 1e-14)
             #reserve all the boundingbox whose ovr less than thresh
             inds = np.where(ovr <= self.nms_thresh)[0]
             order = order[inds + 1]

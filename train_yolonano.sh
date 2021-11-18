@@ -4,12 +4,10 @@ python train.py \
         -d coco \
         --batch_size 16 \
         --img_size 512 \
-        --multi_scale_range 9 16 \
+        --multi_scale_range 10 16 \
         -ms \
         --ema \
-        --max_epoch 250 \
-        --lr_epoch 130 180 \
-        --mosaic \
-        --multi_anchor \
+        --max_epoch 200 \
+        --lr_epoch 100 150 \
         --center_sample
         

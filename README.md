@@ -55,7 +55,7 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3</th><td bgcolor=white> DarkNet53 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white> CSPDarkNet53 </td><td bgcolor=white>     </td><td bgcolor=white>    </td><td bgcolor=white>      </td><td bgcolor=white>      </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>       </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white> CSPDarkNet53 </td><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
 
 </table></tbody>
 
@@ -74,7 +74,6 @@ I will upload some visualization results:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 </table></tbody>
 
 
@@ -88,7 +87,6 @@ I will upload some visualization results:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 </table></tbody>
 
 
@@ -135,13 +133,13 @@ I will upload some visualization results:
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-320</th><td bgcolor=white>     </td><td bgcolor=white> 36.7 </td><td bgcolor=white> 55.4 </td><td bgcolor=white> 38.2 </td><td bgcolor=white> 15.7 </td><td bgcolor=white> 39.9 </td><td bgcolor=white> 57.5 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-416</th><td bgcolor=white>     </td><td bgcolor=white> 39.2 </td><td bgcolor=white> 58.6 </td><td bgcolor=white> 41.4 </td><td bgcolor=white> 20.1 </td><td bgcolor=white> 43.3 </td><td bgcolor=white> 56.8 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.1 </td><td bgcolor=white> 43.1 </td><td bgcolor=white> 22.8 </td><td bgcolor=white> 44.5 </td><td bgcolor=white> 56.1 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-640</th><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td></tr>
 </table></tbody>
 
 # Dataset
