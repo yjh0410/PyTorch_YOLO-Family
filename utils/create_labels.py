@@ -62,9 +62,7 @@ def set_anchors(anchor_size):
     return anchor_boxes
 
 
-def label_assignment_with_anchorbox(img_h, img_w, anchor_size, target_boxes, num_anchors, strides, multi_anchor=False):
-    img_h = img_h
-    img_w = img_w
+def label_assignment_with_anchorbox(anchor_size, target_boxes, num_anchors, strides, multi_anchor=False):
     # prepare
     anchor_boxes = set_anchors(anchor_size)
     gt_box = np.array([[0, 0, target_boxes[2], target_boxes[3]]])
@@ -134,10 +132,7 @@ def label_assignment_with_anchorbox(img_h, img_w, anchor_size, target_boxes, num
     return label_assignment_results
 
 
-def label_assignment_without_anchorbox(img_h, img_w, target_boxes, strides, scale_range=None):
-    assert len(strides) == len(scale_range)
-    img_h = img_h
-    img_w = img_w
+def label_assignment_without_anchorbox(target_boxes, strides):
     # no anchor box
     scale_ind = 0
     anchor_ind = 0
@@ -146,36 +141,18 @@ def label_assignment_without_anchorbox(img_h, img_w, target_boxes, strides, scal
     # get the corresponding stride
     stride = strides[scale_ind]
 
-    if scale_range is None:
-        # compute the grid cell
-        xc_s = target_boxes[0] / stride
-        yc_s = target_boxes[1] / stride
-        grid_x = int(xc_s)
-        grid_y = int(yc_s)
-        
-        label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
-    else:
-        box_area = target_boxes[2] * target_boxes[3]
-        img_area = img_w * img_h
-        area_ratio = box_area / img_area
-        for si, s in enumerate(strides):
-            sr = scale_range[si]
-            if area_ratio >= sr[0] and area_ratio < sr[1]:
-                scale_ind = si
-                anchor_ind = 0
-                # compute the grid cell
-                xc_s = target_boxes[0] / s
-                yc_s = target_boxes[1] / s
-                grid_x = int(xc_s)
-                grid_y = int(yc_s)
-        
-                label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
-                break
+    # compute the grid cell
+    xc_s = target_boxes[0] / stride
+    yc_s = target_boxes[1] / stride
+    grid_x = int(xc_s)
+    grid_y = int(yc_s)
+    
+    label_assignment_results.append([grid_x, grid_y, scale_ind, anchor_ind])
             
     return label_assignment_results
 
 
-def gt_creator(img_size, strides, label_lists, anchor_size=None, scale_range=None, multi_anchor=False, center_sample=False):
+def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=False, center_sample=False):
     """creator gt"""
     # prepare
     batch_size = len(label_lists)
@@ -211,8 +188,6 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, scale_range=Non
             if anchor_size is not None:
                 # use anchor box
                 label_assignment_results = label_assignment_with_anchorbox(
-                                                img_h=img_h,
-                                                img_w=img_w,
                                                 anchor_size=anchor_size,
                                                 target_boxes=target_boxes,
                                                 num_anchors=KA,
@@ -224,8 +199,7 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, scale_range=Non
                                                 img_h=img_h,
                                                 img_w=img_w,
                                                 target_boxes=target_boxes,
-                                                strides=strides,
-                                                scale_range=scale_range)
+                                                strides=strides)
 
             # make labels
             for result in label_assignment_results:
