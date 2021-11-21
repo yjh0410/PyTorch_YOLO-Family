@@ -45,9 +45,9 @@ On the COCO-val:
 
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>       </th><td bgcolor=white> Backbone </td><td bgcolor=white> Size </td><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny</th><td bgcolor=white> CSPDarkNet-Tiny </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano</th><td bgcolor=white> ShuffleNetv2-1.0x </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white> 1.65 </td><td bgcolor=white> 1.86M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano</th><td bgcolor=white> ShuffleNetv2-1.0x </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>    </td><td bgcolor=white> </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny</th><td bgcolor=white> CSPDarkNet-Tiny </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td><td bgcolor=white>  41.96   </td><td bgcolor=white> 44.54M </td></tr>
 
@@ -68,11 +68,11 @@ I will upload some visualization results:
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white>     </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 42.4 </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 8.9 </td><td bgcolor=white> 26.1 </td><td bgcolor=white> 38.8 </td><td bgcolor=white> 2.16 </td><td bgcolor=white> 7.66M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white> 25.7 </td><td bgcolor=white> 44.4 </td><td bgcolor=white> 25.9 </td><td bgcolor=white> 11.7 </td><td bgcolor=white> 27.8 </td><td bgcolor=white> 36.7 </td><td bgcolor=white> 3.64 </td><td bgcolor=white> 7.66M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
 
 </table></tbody>
 

@@ -1,0 +1,64 @@
+Setting Arguments.. :  Namespace(batch_size=16, center_sample=True, cuda=True, dataset='coco', distributed=False, ema=True, eval_epoch=10, img_size=512, local_rank=0, lr=0.001, lr_epoch=[100, 150], max_epoch=200, mosaic=True, multi_anchor=False, multi_scale=True, multi_scale_range=[10, 16], no_warmup=False, num_gpu=1, num_workers=8, resume=None, root='/mnt/share/ssd2/dataset', save_folder='weights/', start_epoch=0, sybn=False, tfboard=False, version='yolo_nano', vis=False, wp_epoch=2)
+----------------------------------------------------------
+use cuda
+Model:  yolo_nano
+loading annotations into memory...
+Done (t=7.74s)
+creating index...
+index created!
+use Mosaic Augmentation ...
+loading annotations into memory...
+Done (t=1.03s)
+creating index...
+index created!
+Training model on: coco
+The dataset size: 118287
+----------------------------------------------------------
+Use backbone: shufflenetv2_1.0x
+model size is  1.0x
+init weights...
+=> loading pretrained model https://download.pytorch.org/models/shufflenetv2_x1-5666bf0f80.pth
+[INFO] Register count_convNd() for <class 'torch.nn.modules.conv.Conv2d'>.
+[INFO] Register count_bn() for <class 'torch.nn.modules.batchnorm.BatchNorm2d'>.
+[INFO] Register zero_ops() for <class 'torch.nn.modules.activation.ReLU'>.
+[91m[WARN] Cannot find rule for <class 'torch.nn.modules.container.Sequential'>. Treat it as zero Macs and zero Params.[00m
+[INFO] Register zero_ops() for <class 'torch.nn.modules.pooling.MaxPool2d'>.
+[91m[WARN] Cannot find rule for <class 'backbone.shufflenetv2.ShuffleV2Block'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'backbone.shufflenetv2.ShuffleNetV2'>. Treat it as zero Macs and zero Params.[00m
+[INFO] Register count_relu() for <class 'torch.nn.modules.activation.LeakyReLU'>.
+[91m[WARN] Cannot find rule for <class 'utils.modules.Conv'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'utils.modules.SPP'>. Treat it as zero Macs and zero Params.[00m
+[91m[WARN] Cannot find rule for <class 'models.yolo_nano.YOLONano'>. Treat it as zero Macs and zero Params.[00m
+FLOPs :  1.64986752  B
+Params :  1.864113  M
+[Epoch 1/200][Iter 0/7392][lr 0.000000][Loss: obj 37.42 || cls 293.74 || reg 91.05 || size 512 || time: 2.64]
+[Epoch 1/200][Iter 10/7392][lr 0.000000][Loss: obj 42.76 || cls 367.28 || reg 115.75 || size 448 || time: 2.08]
+[Epoch 1/200][Iter 20/7392][lr 0.000000][Loss: obj 18.67 || cls 161.22 || reg 51.53 || size 320 || time: 1.90]
+[Epoch 1/200][Iter 30/7392][lr 0.000000][Loss: obj 20.90 || cls 189.38 || reg 61.92 || size 416 || time: 1.73]
+[Epoch 1/200][Iter 40/7392][lr 0.000000][Loss: obj 31.46 || cls 278.05 || reg 88.84 || size 416 || time: 1.51]
+[Epoch 1/200][Iter 50/7392][lr 0.000000][Loss: obj 26.64 || cls 227.59 || reg 73.16 || size 352 || time: 1.99]
+[Epoch 1/200][Iter 60/7392][lr 0.000000][Loss: obj 18.15 || cls 149.76 || reg 47.02 || size 320 || time: 1.33]
+[Epoch 1/200][Iter 70/7392][lr 0.000000][Loss: obj 20.15 || cls 187.21 || reg 61.43 || size 448 || time: 1.41]
+[Epoch 1/200][Iter 80/7392][lr 0.000000][Loss: obj 28.20 || cls 230.75 || reg 73.69 || size 416 || time: 1.76]
+[Epoch 1/200][Iter 90/7392][lr 0.000000][Loss: obj 25.37 || cls 197.58 || reg 60.69 || size 512 || time: 1.52]
+[Epoch 1/200][Iter 100/7392][lr 0.000000][Loss: obj 15.79 || cls 123.34 || reg 38.82 || size 448 || time: 1.81]
+[Epoch 1/200][Iter 110/7392][lr 0.000000][Loss: obj 31.12 || cls 214.34 || reg 66.36 || size 512 || time: 1.87]
+[Epoch 1/200][Iter 120/7392][lr 0.000000][Loss: obj 39.33 || cls 328.22 || reg 103.96 || size 512 || time: 1.89]
+[Epoch 1/200][Iter 130/7392][lr 0.000000][Loss: obj 18.36 || cls 179.12 || reg 59.21 || size 384 || time: 2.32]
+[Epoch 1/200][Iter 140/7392][lr 0.000000][Loss: obj 23.04 || cls 194.24 || reg 62.62 || size 352 || time: 1.52]
+[Epoch 1/200][Iter 150/7392][lr 0.000000][Loss: obj 24.26 || cls 194.77 || reg 60.78 || size 480 || time: 1.88]
+[Epoch 1/200][Iter 160/7392][lr 0.000000][Loss: obj 23.98 || cls 233.06 || reg 76.87 || size 320 || time: 1.66]
+[Epoch 1/200][Iter 170/7392][lr 0.000000][Loss: obj 28.02 || cls 245.86 || reg 78.96 || size 416 || time: 1.46]
+[Epoch 1/200][Iter 180/7392][lr 0.000000][Loss: obj 24.83 || cls 231.29 || reg 74.60 || size 384 || time: 1.86]
+[Epoch 1/200][Iter 190/7392][lr 0.000000][Loss: obj 29.61 || cls 265.95 || reg 86.56 || size 480 || time: 1.59]
+[Epoch 1/200][Iter 200/7392][lr 0.000000][Loss: obj 39.43 || cls 296.99 || reg 90.83 || size 448 || time: 1.86]
+[Epoch 1/200][Iter 210/7392][lr 0.000000][Loss: obj 17.88 || cls 167.48 || reg 56.21 || size 416 || time: 1.57]
+[Epoch 1/200][Iter 220/7392][lr 0.000000][Loss: obj 27.24 || cls 271.80 || reg 88.56 || size 352 || time: 1.66]
+[Epoch 1/200][Iter 230/7392][lr 0.000000][Loss: obj 32.44 || cls 277.97 || reg 89.48 || size 384 || time: 1.77]
+[Epoch 1/200][Iter 240/7392][lr 0.000000][Loss: obj 30.12 || cls 232.49 || reg 72.97 || size 448 || time: 1.93]
+[Epoch 1/200][Iter 250/7392][lr 0.000000][Loss: obj 28.01 || cls 229.84 || reg 72.47 || size 384 || time: 1.76]
+[Epoch 1/200][Iter 260/7392][lr 0.000000][Loss: obj 29.73 || cls 288.99 || reg 96.19 || size 352 || time: 1.79]
+[Epoch 1/200][Iter 270/7392][lr 0.000000][Loss: obj 29.72 || cls 238.28 || reg 74.49 || size 448 || time: 1.61]
+[Epoch 1/200][Iter 280/7392][lr 0.000000][Loss: obj 23.06 || cls 187.54 || reg 58.37 || size 416 || time: 2.13]
+[Epoch 1/200][Iter 290/7392][lr 0.000000][Loss: obj 27.03 || cls 243.90 || reg 78.83 || size 320 || time: 1.58]
+[Epoch 1/200][Iter 300/7392][lr 0.000000][Loss: obj 28.21 || cls 194.47 || reg 59.78 || size 416 || time: 1.40]
