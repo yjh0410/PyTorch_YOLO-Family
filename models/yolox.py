@@ -2,13 +2,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone.cspdarknet import cspdarknet_tiny
+from backbone.cspdarknet import cspdarknet53
 from utils.modules import Conv, UpSample, BottleneckCSP, DilatedEncoder
 from utils import box_ops
 from utils import loss
 
 
-class YOLOTiny(nn.Module):
+class YOLOX(nn.Module):
     def __init__(self, 
                  device, 
                  img_size=640, 
@@ -18,7 +18,7 @@ class YOLOTiny(nn.Module):
                  nms_thresh=0.60, 
                  anchor_size=None):
 
-        super(YOLOTiny, self).__init__()
+        super(YOLOX, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
@@ -26,37 +26,35 @@ class YOLOTiny(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
-        self.num_anchors = self.anchor_size.size(1)
-        self.grid_cell, self.anchors_wh = self.create_grid(img_size)
+        self.grid_cell = self.create_grid(img_size)
 
         # backbone
-        print('backbone: CSPDarkNet-Tiny ...')
-        self.backbone = cspdarknet_tiny(pretrained=trainable)
-        c3, c4, c5 = 128, 256, 512
+        print('backbone: CSPDarkNet ...')
+        self.backbone = cspdarknet53(pretrained=trainable)
+        c3, c4, c5 = 256, 512, 1024
 
         # head
         self.head_conv_0 = DilatedEncoder(c5, c5//2)  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=1, shortcut=False)
+        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
 
         # P3/8-small
         self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
         self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=1, shortcut=False)
+        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=3, shortcut=False)
 
         # P4/16-medium
         self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
-        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=1, shortcut=False)
+        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=3, shortcut=False)
 
         # P8/32-large
         self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
-        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=1, shortcut=False)
+        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=3, shortcut=False)
 
         # det conv
-        self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_2 = nn.Conv2d(c4, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_3 = nn.Conv2d(c5, self.num_anchors * (1 + self.num_classes + 4), 1)
+        self.head_det_1 = nn.Conv2d(c3, 1 + self.num_classes + 4, kernel_size=1)
+        self.head_det_2 = nn.Conv2d(c4, 1 + self.num_classes + 4, kernel_size=1)
+        self.head_det_3 = nn.Conv2d(c5, 1 + self.num_classes + 4, kernel_size=1)
 
         if self.trainable:
             # init bias
@@ -67,14 +65,13 @@ class YOLOTiny(nn.Module):
         # init bias
         init_prob = 0.01
         bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
-        nn.init.constant_(self.head_det_1.bias[..., :self.num_anchors], bias_value)
-        nn.init.constant_(self.head_det_2.bias[..., :self.num_anchors], bias_value)
-        nn.init.constant_(self.head_det_3.bias[..., :self.num_anchors], bias_value)
+        nn.init.constant_(self.head_det_1.bias[..., 0], bias_value)
+        nn.init.constant_(self.head_det_2.bias[..., 0], bias_value)
+        nn.init.constant_(self.head_det_3.bias[..., 0], bias_value)
 
 
     def create_grid(self, img_size):
         total_grid_xy = []
-        total_anchor_wh = []
         w, h = img_size, img_size
         for ind, s in enumerate(self.stride):
             # generate grid cells
@@ -82,24 +79,21 @@ class YOLOTiny(nn.Module):
             grid_y, grid_x = torch.meshgrid([torch.arange(fmp_h), torch.arange(fmp_w)])
             # [H, W, 2] -> [HW, 2]
             grid_xy = torch.stack([grid_x, grid_y], dim=-1).float().view(-1, 2)
-            # [HW, 2] -> [1, HW, 1, 2]   
-            grid_xy = grid_xy[None, :, None, :].to(self.device)
-            # [1, HW, 1, 2]
-            anchor_wh = self.anchor_size[ind].repeat(fmp_h*fmp_w, 1, 1).unsqueeze(0).to(self.device)
+            # [HW, 2] -> [1, HW, 2]   
+            grid_xy = grid_xy.unsqueeze(0).to(self.device)
 
             total_grid_xy.append(grid_xy)
-            total_anchor_wh.append(anchor_wh)
 
-        return total_grid_xy, total_anchor_wh
+        return total_grid_xy
 
 
     def set_grid(self, img_size):
         self.img_size = img_size
-        self.grid_cell, self.anchors_wh = self.create_grid(img_size)
+        self.grid_cell = self.create_grid(img_size)
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS YOLOTiny."""
+        """"Pure Python NMS YOLOX."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
@@ -166,7 +160,6 @@ class YOLOTiny(nn.Module):
 
     def forward(self, x, targets=None):
         B = x.size(0)
-        KA = self.num_anchors
         C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
@@ -202,16 +195,16 @@ class YOLOTiny(nn.Module):
         box_pred_list = []
 
         for i, pred in enumerate(preds):
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
-            obj_pred_i = pred[:, :KA, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
-            cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-            # [B, KA*(1 + C + 4 + 1), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
-            reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
+            # [B, 1 + C + 4, H, W] -> [B, 1, H, W] -> [B, H, W, 1] ->  [B, HW, 1]
+            obj_pred_i = pred[:, :1, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
+            # [B, 1 + C + 4, H, W] -> [B, C, H, W] -> [B, H, W, C] -> [B, H*W, C]
+            cls_pred_i = pred[:, 1:(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
+            # [B, 1 + C + 4, H, W] -> [B, 4, H, W] -> [B, H, W, 4] -> [B, HW, 4]
+            reg_pred_i = pred[:, (1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
             # txtytwth -> xywh
             xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
-            wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
-            xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1).view(B, -1, 4)
+            wh_pred_i = reg_pred_i[..., 2:].exp() * self.stride[i]
+            xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1)
             # xywh -> x1y1x2y2
             x1y1_pred_i = xywh_pred_i[..., :2] - xywh_pred_i[..., 2:] / 2
             x2y2_pred_i = xywh_pred_i[..., :2] + xywh_pred_i[..., 2:] / 2
@@ -227,7 +220,7 @@ class YOLOTiny(nn.Module):
         
         # train
         if self.trainable:
-            # decode bbox: [B, HW*KA, 4]
+            # decode bbox: [B, HW, 4]
             x1y1x2y2_pred = (box_pred / self.img_size).view(-1, 4)
             x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
 
@@ -249,9 +242,9 @@ class YOLOTiny(nn.Module):
         else:
             with torch.no_grad():
                 # batch size = 1
-                # [B, H*W*KA, C] -> [H*W*KA, C]
+                # [B, H*W, C] -> [H*W, C]
                 scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
-                # [B, H*W*KA, 4] -> [H*W*KA, 4]
+                # [B, H*W, 4] -> [H*W, 4]
                 bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
 
                 # 将预测放在cpu处理上，以便进行后处理

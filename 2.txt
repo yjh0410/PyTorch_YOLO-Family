@@ -1,1 +1,3 @@
 nohup: 忽略输入
+/home/k545/object-detection/PyTorch_YOLO-Family/models/yolo_tiny.py:125: RuntimeWarning: invalid value encountered in true_divide
+  ovr = inter / (areas[i] + areas[order[1:]] - inter)

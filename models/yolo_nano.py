@@ -203,9 +203,9 @@ class YOLONano(nn.Module):
         p5 = self.smooth_3(p5 + F.interpolate(p4, scale_factor=0.5))
 
         # det head
-        pred_s = self.head_det_1(p3)
-        pred_m = self.head_det_2(p4)
-        pred_l = self.head_det_3(p5)
+        pred_s = self.head_det_1(self.head_conv_1(p3))
+        pred_m = self.head_det_2(self.head_conv_2(p4))
+        pred_l = self.head_det_3(self.head_conv_3(p5))
 
         preds = [pred_s, pred_m, pred_l]
         obj_pred_list = []

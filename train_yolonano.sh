@@ -10,5 +10,6 @@ python train.py \
         --ema \
         --max_epoch 200 \
         --lr_epoch 100 150 \
+        --mosaic \
         --center_sample
         

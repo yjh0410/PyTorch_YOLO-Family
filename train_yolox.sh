@@ -5,7 +5,7 @@ python train.py \
         --batch_size 16 \
         --img_size 640 \
         --multi_scale_range 10 20 \
-        -v yolov4 \
+        -v yolox \
         -ms \
         --ema \
         --max_epoch 250 \

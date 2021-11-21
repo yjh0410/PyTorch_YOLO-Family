@@ -66,7 +66,7 @@ def parse_args():
 
     # model
     parser.add_argument('-v', '--version', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                        help='yolov1, yolov2, yolov3, yolov4, yolox, yolo_tiny, yolo_nano')
 
     # dataset
     parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
@@ -140,6 +140,9 @@ def train():
     elif model_name == 'yolov4':
         from models.yolov4 import YOLOv4 as yolo_net
 
+    elif model_name == 'yolox':
+        from models.yolox import YOLOX as yolo_net
+
     elif model_name == 'yolo_tiny':
         from models.yolo_tiny import YOLOTiny as yolo_net
 
@@ -163,7 +166,8 @@ def train():
     print("----------------------------------------------------------")
 
     # build model
-    anchor_size = None if args.version == 'yolov1' else cfg['anchor_size']
+    anchor_size = None if args.version in ['yolov1', 'yolox'] else cfg['anchor_size']
+    scale_range = [[0., 0.05], [0.05, 0.15], [0.15, 1e4]] if args.version in ['yolox'] else None
     net = yolo_net(device=device, 
                    img_size=train_size, 
                    num_classes=num_classes, 
@@ -273,6 +277,8 @@ def train():
                                     strides=net.stride, 
                                     label_lists=targets, 
                                     anchor_size=anchor_size, 
+                                    scale_range=scale_range,
+                                    multi_anchor=args.multi_anchor,
                                     center_sample=args.center_sample)
             # to device
             images = images.to(device)
