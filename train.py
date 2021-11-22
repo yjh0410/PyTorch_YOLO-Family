@@ -403,6 +403,7 @@ def build_dataset(args, train_size, val_size, device):
         dataset = COCODataset(
                     data_dir=data_dir,
                     img_size=train_size,
+                    image_set='train2017',
                     transform=TrainTransforms(train_size),
                     color_augment=ColorTransforms(train_size),
                     mosaic=args.mosaic)

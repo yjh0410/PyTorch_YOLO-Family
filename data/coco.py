@@ -36,7 +36,6 @@ class COCODataset(Dataset):
     def __init__(self, 
                  data_dir=None, 
                  image_set='train2017',
-                 json_file='instances_train2017.json',
                  img_size=640,
                  transform=None,
                  color_augment=None, 
@@ -50,9 +49,14 @@ class COCODataset(Dataset):
             img_size (int): target image size after pre-processing
             debug (bool): if True, only one data id is selected from the dataset
         """
-        self.data_dir = data_dir
+        if image_set == 'train2017':
+            self.json_file='instances_train2017.json'
+        elif image_set == 'val2017':
+            self.json_file='instances_val2017.json'
+        elif image_set == 'test2017':
+            self.json_file='image_info_test-dev2017.json'
         self.image_set = image_set
-        self.json_file = json_file
+        self.data_dir = data_dir
         self.coco = COCO(os.path.join(self.data_dir, 'annotations', self.json_file))
         self.ids = self.coco.getImgIds()
         self.img_size = img_size

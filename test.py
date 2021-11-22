@@ -210,8 +210,7 @@ if __name__ == '__main__':
         dataset = COCODataset(
                     data_dir=data_dir,
                     img_size=args.img_size,
-                    image_set='val2017',
-                    json_file='instances_val2017.json')
+                    image_set='val2017')
     
     else:
         print('unknow dataset !! Only support voc and coco !!')

@@ -29,7 +29,16 @@ In this project, you can enjoy:
 - a new YOLO-Nano !
 
 # Weights
-I will upload all weight files to Google Drive.
+You can download all weights including my DarkNet-53, CSPDarkNet-53 and YOLO weights from the following links.
+
+## Google Drive
+Link: Hold on ...
+
+## BaiDuYun Disk
+
+Link：https://pan.baidu.com/s/1Cin9R52wfubD4xZUHHCRjg 
+
+Password：aigz
 
 # Experiments
 ## Tricks
