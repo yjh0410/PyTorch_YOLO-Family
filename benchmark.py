@@ -38,7 +38,7 @@ parser.add_argument('--cuda', action='store_true', default=False,
 args = parser.parse_args()
 
 
-def test(net, device, testset, transform):
+def test(net, device, img_size, testset, transform):
     # Step-1: Compute FLOPs and Params
     FLOPs_and_Params(net, img_size, device)
 
@@ -153,10 +153,12 @@ if __name__ == '__main__':
 
     # fuse conv bn
     if args.fuse_conv_bn:
+        print('fuse conv and bn ...')
         model = fuse_conv_bn(model)
 
     # run
     test(net=model, 
+        img_size=args.img_size,
         device=device, 
         testset=dataset,
         transform=ValTransforms(args.img_size)
