@@ -1,10 +1,12 @@
 import argparse
 import numpy as np
 import time
+import os
 import torch
 import torch.backends.cudnn as cudnn
 
 from data import config
+import data
 from data.transforms import ValTransforms
 from data.coco import COCODataset, coco_class_index, coco_class_labels
 from utils.com_flops_params import FLOPs_and_Params
@@ -91,19 +93,16 @@ if __name__ == '__main__':
     else:
         device = torch.device("cpu")
 
-    # img size
-    img_size = args.img_size
-
     # dataset
     print('test on coco-val ...')
+    data_dir = os.path.join(args.root, 'COCO')
     class_names = coco_class_labels
     class_indexs = coco_class_index
     num_classes = 80
     dataset = COCODataset(
-                data_dir=args.root,
-                json_file='instances_val2017.json',
-                name='val2017',
-                img_size=img_size)
+                data_dir=data_dir,
+                image_set='val2017',
+                img_size=args.img_size)
 
     model_name = args.version
     print('Model: ', model_name)
@@ -160,5 +159,5 @@ if __name__ == '__main__':
     test(net=model, 
         device=device, 
         testset=dataset,
-        transform=ValTransforms(img_size)
+        transform=ValTransforms(args.img_size)
         )
