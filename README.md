@@ -222,7 +222,8 @@ python test.py -d [select a dataset: voc or coco] \
                -v [select a model] \
                --trained_model [ Please input the path to model dir. ] \
                --img_size 640 \
-                --root path/to/dataset/
+               --root path/to/dataset/ \
+               --show
 ```
 
 # Evaluation
@@ -232,7 +233,7 @@ python eval.py -d [select a dataset: voc or coco-val] \
                -v [select a model] \
                --trained_model [ Please input the path to model dir. ] \
                --img_size 640 \
-                --root path/to/dataset/
+               --root path/to/dataset/
 ```
 
 # Evaluation on COCO-test-dev
