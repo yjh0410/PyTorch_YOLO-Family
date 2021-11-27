@@ -56,69 +56,6 @@ class ConvertFromInts(object):
         return image.astype(np.float32), boxes, labels, scale, offset
 
 
-class Normalize(object):
-    def __init__(self, mean=None, std=None):
-        self.mean = np.array(mean, dtype=np.float32)
-        self.std = np.array(std, dtype=np.float32)
-
-    def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
-        image = image.astype(np.float32)
-        image /= 255.
-        image -= self.mean
-        image /= self.std
-
-        return image, boxes, labels, scale, offset
-
-
-class Resize(object):
-    def __init__(self, size=640, mean=None):
-        self.size = size
-        self.mean = np.array([v*255 for v in mean])
-
-    def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
-        h0, w0, _ = image.shape
-
-        if h0 > w0:
-            # resize
-            r = w0 / h0
-            image = cv2.resize(image, (int(r * self.size), self.size)).astype(np.float32)
-            # zero padding
-            h, w, _ = image.shape
-            image_ = np.ones([h, h, 3]) * self.mean
-            dw = h - w
-            left = dw // 2
-            image_[:, left:left+w, :] = image
-            offset = np.array([[ left / h, 0.,  left / h, 0.]])
-            scale =  np.array([[w / h, 1., w / h, 1.]])
-
-        elif h0 < w0:
-            # resize
-            r = h0 / w0
-            image = cv2.resize(image, (self.size, int(r * self.size))).astype(np.float32)
-            # zero padding
-            h, w, _ = image.shape
-            image_ = np.ones([w, w, 3]) * self.mean
-            dh = w - h
-            top = dh // 2
-            image_[top:top+h, :, :] = image
-            offset = np.array([[0., top / w, 0., top / w]])
-            scale = np.array([1., h / w, 1., h / w])
-
-        else:
-            # resize
-            if h0 == self.size:
-                image_ = image
-            else:
-                image_ = cv2.resize(image, (self.size, self.size)).astype(np.float32)
-            offset = np.zeros([1, 4])
-            scale =  1.
-
-        if boxes is not None:
-            boxes = boxes * scale + offset
-        
-        return image_, boxes, labels, scale, offset
-
-
 class ToAbsoluteCoords(object):
     def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
         height, width, channels = image.shape
@@ -139,6 +76,30 @@ class ToPercentCoords(object):
         boxes[:, 3] /= height
 
         return image, boxes, labels, scale, offset
+
+
+# ColorJitter
+class ColorJitter(object):
+    def __init__(self):
+        self.pd = [
+            RandomContrast(),
+            ConvertColor(transform='HSV'),
+            RandomSaturation(),
+            RandomHue(),
+            ConvertColor(current='HSV', transform='BGR'),
+            RandomContrast()
+        ]
+        self.rand_brightness = RandomBrightness()
+
+    def __call__(self, image, boxes, labels, scale=None, offset=None):
+        im = image.copy()
+        im, boxes, labels, scale, offset = self.rand_brightness(im, boxes, labels, scale, offset)
+        if random.randint(2):
+            distort = Compose(self.pd[:-1])
+        else:
+            distort = Compose(self.pd[1:])
+        im, boxes, labels, scale, offset = distort(im, boxes, labels, scale, offset)
+        return im, boxes, labels, scale, offset
 
 
 class RandomSaturation(object):
@@ -165,20 +126,6 @@ class RandomHue(object):
             image[:, :, 0] += random.uniform(-self.delta, self.delta)
             image[:, :, 0][image[:, :, 0] > 360.0] -= 360.0
             image[:, :, 0][image[:, :, 0] < 0.0] += 360.0
-        return image, boxes, labels, scale, offset
-
-
-class RandomLightingNoise(object):
-    def __init__(self):
-        self.perms = ((0, 1, 2), (0, 2, 1),
-                      (1, 0, 2), (1, 2, 0),
-                      (2, 0, 1), (2, 1, 0))
-
-    def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
-        if random.randint(2):
-            swap = self.perms[random.randint(len(self.perms))]
-            shuffle = SwapChannels(swap)  # shuffle channels
-            image = shuffle(image)
         return image, boxes, labels, scale, offset
 
 
@@ -225,6 +172,7 @@ class RandomBrightness(object):
         return image, boxes, labels, scale, offset
 
 
+# RandomCrop
 class RandomSampleCrop(object):
     """Crop
     Arguments:
@@ -330,7 +278,8 @@ class RandomSampleCrop(object):
                 return current_image, current_boxes, current_labels, scale, offset
 
 
-class RandomMirror(object):
+# RandomHFlip
+class RandomHFlip(object):
     def __call__(self, image, boxes, classes, scale=None, offset=None):
         _, width, _ = image.shape
         if random.randint(2):
@@ -340,57 +289,72 @@ class RandomMirror(object):
         return image, boxes, classes, scale, offset
 
 
-class SwapChannels(object):
-    """Transforms a tensorized image by swapping the channels in the order
-     specified in the swap tuple.
-    Args:
-        swaps (int triple): final order of channels
-            eg: (2, 1, 0)
-    """
+# Normalize image
+class Normalize(object):
+    def __init__(self, mean=None, std=None):
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std = np.array(std, dtype=np.float32)
 
-    def __init__(self, swaps):
-        self.swaps = swaps
+    def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
+        image = image.astype(np.float32)
+        image /= 255.
+        image -= self.mean
+        image /= self.std
 
-    def __call__(self, image):
-        """
-        Args:
-            image (Tensor): image tensor to be transformed
-        Return:
-            a tensor with channels swapped according to swap
-        """
-        # if torch.is_tensor(image):
-        #     image = image.data.cpu().numpy()
-        # else:
-        #     image = np.array(image)
-        image = image[:, :, self.swaps]
-        return image
+        return image, boxes, labels, scale, offset
 
 
-class PhotometricDistort(object):
-    def __init__(self):
-        self.pd = [
-            RandomContrast(),
-            ConvertColor(transform='HSV'),
-            RandomSaturation(),
-            RandomHue(),
-            ConvertColor(current='HSV', transform='BGR'),
-            RandomContrast()
-        ]
-        self.rand_brightness = RandomBrightness()
-        # self.rand_light_noise = RandomLightingNoise()
+# Resize
+class Resize(object):
+    def __init__(self, size=640, mean=None):
+        self.size = size
+        self.mean = np.array([v*255 for v in mean])
 
-    def __call__(self, image, boxes, labels, scale=None, offset=None):
-        im = image.copy()
-        im, boxes, labels, scale, offset = self.rand_brightness(im, boxes, labels, scale, offset)
-        if random.randint(2):
-            distort = Compose(self.pd[:-1])
+    def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
+        h0, w0, _ = image.shape
+
+        if h0 > w0:
+            # resize
+            r = w0 / h0
+            image = cv2.resize(image, (int(r * self.size), self.size)).astype(np.float32)
+            # zero padding
+            h, w, _ = image.shape
+            image_ = np.ones([h, h, 3]) * self.mean
+            dw = h - w
+            left = dw // 2
+            image_[:, left:left+w, :] = image
+            offset = np.array([[ left / h, 0.,  left / h, 0.]])
+            scale =  np.array([[w / h, 1., w / h, 1.]])
+
+        elif h0 < w0:
+            # resize
+            r = h0 / w0
+            image = cv2.resize(image, (self.size, int(r * self.size))).astype(np.float32)
+            # zero padding
+            h, w, _ = image.shape
+            image_ = np.ones([w, w, 3]) * self.mean
+            dh = w - h
+            top = dh // 2
+            image_[top:top+h, :, :] = image
+            offset = np.array([[0., top / w, 0., top / w]])
+            scale = np.array([1., h / w, 1., h / w])
+
         else:
-            distort = Compose(self.pd[1:])
-        im, boxes, labels, scale, offset = distort(im, boxes, labels, scale, offset)
-        return im, boxes, labels, scale, offset
-        # return self.rand_light_noise(im, boxes, labels, scale, offset)
+            # resize
+            if h0 == self.size:
+                image_ = image
+            else:
+                image_ = cv2.resize(image, (self.size, self.size)).astype(np.float32)
+            offset = np.zeros([1, 4])
+            scale =  1.
+
+        if boxes is not None:
+            boxes = boxes * scale + offset
+        
+        return image_, boxes, labels, scale, offset
 
 
+# convert ndarray image to tensor type
 class ToTensor(object):
     def __call__(self, image, boxes=None, labels=None, scale=None, offset=None):
         # to rgb
@@ -407,9 +371,9 @@ class TrainTransforms(object):
         self.augment = Compose([
             ConvertFromInts(),
             ToAbsoluteCoords(),
-            PhotometricDistort(),
+            ColorJitter(),
             RandomSampleCrop(),
-            RandomMirror(),
+            RandomHFlip(),
             ToPercentCoords(),
             Resize(self.size, self.mean),
             Normalize(self.mean, self.std),
@@ -429,8 +393,8 @@ class ColorTransforms(object):
         self.augment = Compose([
             ConvertFromInts(),
             ToAbsoluteCoords(),
-            PhotometricDistort(),
-            RandomMirror(),
+            ColorJitter(),
+            RandomHFlip(),
             ToPercentCoords(),
             Resize(self.size, self.mean),
             Normalize(self.mean, self.std),
