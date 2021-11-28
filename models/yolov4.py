@@ -254,11 +254,11 @@ class YOLOv4(nn.Module):
                 # [B, H*W*KA, 4] -> [H*W*KA, 4]
                 bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
 
-                # 将预测放在cpu处理上，以便进行后处理
+                # to cpu
                 scores = scores.to('cpu').numpy()
                 bboxes = bboxes.to('cpu').numpy()
 
-                # 后处理
+                # post-process
                 bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
 
                 return bboxes, scores, cls_inds
