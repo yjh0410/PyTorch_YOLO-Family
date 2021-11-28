@@ -196,8 +196,6 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
             else:
                 # no anchor box
                 label_assignment_results = label_assignment_without_anchorbox(
-                                                img_h=img_h,
-                                                img_w=img_w,
                                                 target_boxes=target_boxes,
                                                 strides=strides)
 
