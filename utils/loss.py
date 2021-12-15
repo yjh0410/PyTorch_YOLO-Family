@@ -1,4 +1,3 @@
-import numpy
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -9,11 +8,6 @@ class MSEWithLogitsLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, logits, targets, gt_pos):
-        """
-            logits: (tensor) [B, HW,]
-            targets: (tensor) [B, HW,]
-            gt_pos: (tensor) [B, HW]
-        """
         inputs = logits.sigmoid()
         # mse loss
         loss = F.mse_loss(input=inputs, 
@@ -25,9 +19,6 @@ class MSEWithLogitsLoss(nn.Module):
 
         if self.reduction == 'mean':
             batch_size = logits.size(0)
-            # loss = loss.sum() / batch_size
-            num_pos = gt_pos.sum(-1)
-            loss = loss.sum(-1) / num_pos
             loss = loss.sum() / batch_size
 
         elif self.reduction == 'sum':
@@ -42,24 +33,19 @@ def loss(pred_obj, pred_cls, pred_giou, targets):
     cls_loss_function = nn.CrossEntropyLoss(reduction='none')
 
     # gt
-    gt_obj = targets[..., 0].float()  # [B, HW,]
-    gt_pos = targets[..., 1].float()  # [B, HW,]
-    gt_cls = targets[..., 2].long()   # [B, HW,]
-    num_pos = gt_pos.sum(-1)          # [B,]
+    gt_obj = targets[..., 0].float()
+    gt_pos = targets[..., 1].float()
+    gt_cls = targets[..., 2].long()
 
     batch_size = pred_obj.size(0)
     # obj loss
     obj_loss = conf_loss_function(pred_obj[..., 0], gt_obj, gt_pos)
     
     # cls loss
-    # cls_loss = (cls_loss_function(pred_cls.permute(0, 2, 1), gt_cls) * gt_pos).sum() / batch_size
-    cls_loss = cls_loss_function(pred_cls.permute(0, 2, 1), gt_cls) * gt_pos
-    cls_loss = (cls_loss.sum(-1) / num_pos).sum() / batch_size
+    cls_loss = (cls_loss_function(pred_cls.permute(0, 2, 1), gt_cls) * gt_pos).sum() / batch_size
     
     # reg loss
-    # reg_loss = ((1. - pred_giou) * gt_pos).sum() / batch_size
-    reg_loss = (1. - pred_giou) * gt_pos
-    reg_loss = (reg_loss.sum(-1) / num_pos).sum() / batch_size
+    reg_loss = ((1. - pred_giou) * gt_pos).sum() / batch_size
 
     # total loss
     total_loss = 1.0 * obj_loss + 1.0 * cls_loss + 1.0 * reg_loss
