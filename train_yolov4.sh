@@ -7,9 +7,10 @@ python train.py \
         --multi_scale_range 10 20 \
         -v yolov4 \
         -ms \
-        --ema \
         --max_epoch 250 \
         --lr_epoch 130 180 \
         --mosaic \
-        --center_sample
+        --center_sample \
+        --accumulate 4 \
+        --ema
         

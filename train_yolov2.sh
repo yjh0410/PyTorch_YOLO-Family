@@ -7,5 +7,6 @@ python train.py \
         --multi_scale_range 10 20 \
         -v yolov2 \
         -ms \
+        --accumulate 4 \
         --ema
         

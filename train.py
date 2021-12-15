@@ -87,6 +87,8 @@ def parse_args():
                         help='use multiple anchor boxes as the positive samples')
     parser.add_argument('--center_sample', action='store_true', default=False,
                         help='use center sample for labels')
+    parser.add_argument('--accumulate', type=int, default=1,
+                        help='accumulate gradient')
 
     # DDP train
     parser.add_argument('-dist', '--distributed', action='store_true', default=False,
@@ -294,14 +296,16 @@ def train():
             if torch.isnan(total_loss):
                 continue
 
+            total_loss = total_loss / args.accumulate
             # Backward and Optimize
-            total_loss.backward()        
-            optimizer.step()
-            optimizer.zero_grad()
+            total_loss.backward()
+            if ni % args.accumulate == 0:
+                optimizer.step()
+                optimizer.zero_grad()
 
-            # ema
-            if args.ema:
-                ema.update(model)
+                # ema
+                if args.ema:
+                    ema.update(model)
 
             # display
             if iter_i % 10 == 0:
