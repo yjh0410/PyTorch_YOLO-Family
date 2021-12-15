@@ -375,7 +375,7 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
     return model
  
 if __name__ == '__main__':
-    x = torch.ones(2, 3, 32, 32)
+    x = torch.ones(2, 3, 224, 224)
     model = pretrain_mae_base_patch16_224(pretrained=False)
     y = model(x)
     print(y)
