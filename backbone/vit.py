@@ -364,11 +364,6 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
         print('Loading the vit-base ...')
         model.load_state_dict(checkpoint['model'], strict=False)
 
-        checkpoint = load_state_dict_from_url(model.default_cfg['url'], map_location='cpu', check_hash=True)
-        # checkpoint = torch.load(
-        #     kwargs["init_ckpt"], map_location="cpu"
-        # )
-        model.load_state_dict(checkpoint, strict=False)
     return model
  
 if __name__ == '__main__':
