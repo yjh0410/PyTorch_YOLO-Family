@@ -449,31 +449,7 @@ class PretrainVisionTransformer(nn.Module):
 
         return x
 
-@register_model
-def pretrain_mae_small_patch16_224(pretrained=False, **kwargs):
-    model = PretrainVisionTransformer(
-        img_size=224,
-        patch_size=16,
-        encoder_embed_dim=384,
-        encoder_depth=12,
-        encoder_num_heads=6,
-        encoder_num_classes=0,
-        decoder_num_classes=768,
-        decoder_embed_dim=192,
-        decoder_depth=4,
-        decoder_num_heads=3,
-        mlp_ratio=4,
-        qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        checkpoint = torch.load(
-            kwargs["init_ckpt"], map_location="cpu"
-        )
-        model.load_state_dict(checkpoint["model"])
-    return model
-
+        
 @register_model
 def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
     model = PretrainVisionTransformer(
@@ -493,39 +469,12 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
         **kwargs)
     model.default_cfg = _cfg()
     if pretrained:
-        state_dict = load_state_dict_from_url(model.default_cfg['url'], progress=True, map_location='cpu')
+        checkpoint = load_state_dict_from_url(model.default_cfg['url'], map_location='cpu', check_hash=True)
         # checkpoint = torch.load(
         #     kwargs["init_ckpt"], map_location="cpu"
         # )
-        model.load_state_dict(state_dict)
+        model.load_state_dict(checkpoint, strict=False)
     return model
  
-
-@register_model
-def pretrain_mae_large_patch16_224(pretrained=False, **kwargs):
-    model = PretrainVisionTransformer(
-        img_size=224,
-        patch_size=16, 
-        encoder_embed_dim=1024, 
-        encoder_depth=24, 
-        encoder_num_heads=16,
-        encoder_num_classes=0,
-        decoder_num_classes=768,
-        decoder_embed_dim=512,
-        decoder_depth=8,
-        decoder_num_heads=8,
-        mlp_ratio=4, 
-        qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), 
-        **kwargs)
-    model.default_cfg = _cfg()
-    if pretrained:
-        state_dict = load_state_dict_from_url(model.default_cfg['url'], progress=True, map_location='cpu')
-        # checkpoint = torch.load(
-        #     kwargs["init_ckpt"], map_location="cpu"
-        # )
-        model.load_state_dict(state_dict)
-    return model
-
 if __name__ == '__main__':
     model = pretrain_mae_base_patch16_224(pretrained=True)
