@@ -478,6 +478,10 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
  
 if __name__ == '__main__':
     x = torch.ones(2, 3, 32, 32)
+    model = pretrain_mae_base_patch16_224(pretrained=False)
+    y = model(x)
+    print(y)
+
     model = pretrain_mae_base_patch16_224(pretrained=True)
     y = model(x)
     print(y)
