@@ -333,6 +333,11 @@ class PretrainVisionTransformer(nn.Module):
     def forward(self, x): 
         fmap_list = []
         x = self.encoder(x) # [B, N, C]
+
+        fmp_h = self.encoder.patch_embed.img_size[0] // self.encoder.patch_embed.patch_size[0]
+        fmp_w = self.encoder.patch_embed.img_size[1] // self.encoder.patch_embed.patch_size[1]
+        # [B, N, C] -> [B, H, W, C]
+        x = x.view(x.size(0), fmp_h, fmp_w, x.size(-1))
         fmap_list.append(x)
         
         return fmap_list
