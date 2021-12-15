@@ -345,9 +345,9 @@ class PretrainVisionTransformer(nn.Module):
 
         
 @register_model
-def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
+def pretrain_mae_base_patch16_224(img_size=224, pretrained=False, **kwargs):
     model = PretrainVisionTransformer(
-        img_size=224,
+        img_size=img_size,
         patch_size=16, 
         encoder_embed_dim=768, 
         encoder_depth=12, 
@@ -368,10 +368,6 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
  
 if __name__ == '__main__':
     x = torch.ones(2, 3, 224, 224)
-    model = pretrain_mae_base_patch16_224(pretrained=False)
-    y = model(x)
-    print(y)
-
     model = pretrain_mae_base_patch16_224(pretrained=True)
     y = model(x)
-    print(y)
+    print(y.size())
