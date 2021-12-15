@@ -168,7 +168,7 @@ class YOLOv1(nn.Module):
         B = x.size(0)
         C = self.num_classes
         # backbone
-        x = self.backbone(x)
+        x = self.backbone(x)[-1]
 
         # neck
         x = self.neck(x)

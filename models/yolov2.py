@@ -34,7 +34,7 @@ class YOLOv2(nn.Module):
 
         # build grid cell
         self.grid_xy, self.anchor_wh = self.create_grid(img_size)
-        
+
         # neck
         self.neck = DilatedEncoder(c1=c5, c2=p5)
 
@@ -174,7 +174,7 @@ class YOLOv2(nn.Module):
         KA = self.num_anchors
         C = self.num_classes
         # backbone
-        x = self.backbone(x)
+        x = self.backbone(x)[-1]
 
         # neck
         x = self.neck(x)
