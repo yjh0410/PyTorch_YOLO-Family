@@ -42,7 +42,7 @@ def build_backbone(model_name='r18', pretrained=False, img_size=224):
         feature_channels = [116, 232, 464]
         strides = [8, 16, 32]
     elif model_name == 'vit_base_16':
-        print('Backbone: ShuffleNet ...')
+        print('Backbone: ViT_Base_16 ...')
         model = vit_base_patch16_224(img_size=img_size, pretrained=pretrained)
         feature_channels = [None, None, 768]
         strides = [None, None, 16]

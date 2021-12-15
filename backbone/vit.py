@@ -337,7 +337,7 @@ class PretrainVisionTransformer(nn.Module):
         fmp_h = self.encoder.patch_embed.img_size[0] // self.encoder.patch_embed.patch_size[0]
         fmp_w = self.encoder.patch_embed.img_size[1] // self.encoder.patch_embed.patch_size[1]
         # [B, N, C] -> [B, C, N] -> [B, C, H, W]
-        x = x.permute(0, 2, 1).contiguous(0).view(x.size(0), x.size(-1), fmp_h, fmp_w)
+        x = x.permute(0, 2, 1).contiguous().view(x.size(0), x.size(-1), fmp_h, fmp_w)
         fmap_list.append(x)
         
         return fmap_list
