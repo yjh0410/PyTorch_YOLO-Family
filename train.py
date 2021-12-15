@@ -142,6 +142,9 @@ def train():
     elif model_name == 'yolov4':
         from models.yolov4 import YOLOv4 as yolo_net
 
+    elif model_name == 'yolo_tr':
+        from models.yolo_tr import YOLOTR as yolo_net
+
     elif model_name == 'yolo_tiny':
         from models.yolo_tiny import YOLOTiny as yolo_net
 

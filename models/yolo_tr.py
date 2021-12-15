@@ -7,7 +7,7 @@ from utils import box_ops
 from utils import loss
 
 
-class YOLOv2(nn.Module):
+class YOLOTR(nn.Module):
     def __init__(self, 
                  device, 
                  img_size=None, 
@@ -16,7 +16,7 @@ class YOLOv2(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.6, 
                  anchor_size=None):
-        super(YOLOv2, self).__init__()
+        super(YOLOTR, self).__init__()
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
@@ -27,8 +27,9 @@ class YOLOv2(nn.Module):
         self.num_anchors = len(anchor_size)
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='r50', 
-                                                                  pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name='vit_base_16', 
+                                                                  pretrained=trainable,
+                                                                  img_size=img_size)
         self.stride = [strides[-1]]
         c5 = feature_channels[-1]
         p5 = 512
