@@ -203,7 +203,8 @@ if __name__ == '__main__':
         num_classes = 20
         dataset = VOCDetection(
                         data_dir=data_dir,
-                        img_size=args.img_size)
+                        img_size=args.img_size,
+                        image_sets=[('2007', 'test')])
 
     elif args.dataset == 'coco':
         data_dir = os.path.join(args.root, 'COCO')
