@@ -27,7 +27,7 @@ class YOLOv2(nn.Module):
         self.num_anchors = len(anchor_size)
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='r50', pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name='vit_base_16', pretrained=trainable)
         self.stride = [strides[-1]]
         c5 = feature_channels[-1]
         p5 = 512

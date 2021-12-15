@@ -331,9 +331,11 @@ class PretrainVisionTransformer(nn.Module):
         return {'pos_embed', 'cls_token', 'mask_token'}
 
     def forward(self, x): 
+        fmap_list = []
         x = self.encoder(x) # [B, N, C]
+        fmap_list.append(x)
         
-        return x
+        return fmap_list
 
         
 @register_model
