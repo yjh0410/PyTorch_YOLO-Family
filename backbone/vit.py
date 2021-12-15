@@ -1,77 +1,120 @@
-""" Vision Transformer (ViT) in PyTorch
-
-A PyTorch implement of Vision Transformers as described in:
-
-'An Image Is Worth 16 x 16 Words: Transformers for Image Recognition at Scale'
-    - https://arxiv.org/abs/2010.11929
-
-`How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers`
-    - https://arxiv.org/abs/2106.10270
-
-The official jax code is released and available at https://github.com/google-research/vision_transformer
-
-DeiT model defs and weights from https://github.com/facebookresearch/deit,
-paper `DeiT: Data-efficient Image Transformers` - https://arxiv.org/abs/2012.12877
-
-Acknowledgments:
-* The paper authors for releasing code and weights, thanks!
-* I fixed my class token impl based on Phil Wang's https://github.com/lucidrains/vit-pytorch ... check it out
-for some einops/einsum fun
-* Simple transformer style inspired by Andrej Karpathy's https://github.com/karpathy/minGPT
-* Bert reference code checks against Huggingface Transformers and Tensorflow Bert
-
-Hacked together by / Copyright 2021 Ross Wightman
-"""
+# --------------------------------------------------------
+# Based on BEiT, timm, DINO and DeiT code bases
+# https://github.com/microsoft/unilm/tree/master/beit
+# https://github.com/rwightman/pytorch-image-models/tree/master/timm
+# https://github.com/facebookresearch/deit
+# https://github.com/facebookresearch/dino
+# --------------------------------------------------------'
 import math
-import logging
-from functools import partial
-from collections import OrderedDict
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
-from timm.models.helpers import build_model_with_cfg, named_apply, adapt_input_conv
-from timm.models.layers import PatchEmbed, Mlp, DropPath, patch_embed, trunc_normal_, lecun_normal_
-from timm.models.registry import register_model
+from functools import partial
 
-_logger = logging.getLogger(__name__)
+from timm.models.layers import drop_path, to_2tuple
+from timm.models.registry import register_model
+from timm.models.layers import trunc_normal_ as __call_trunc_normal_
+from timm.models.helpers import build_model_with_cfg, load_state_dict_from_url
+
+
+# --------------------------------------------------------
+# Based on BEiT, timm, DINO and DeiT code bases
+# https://github.com/microsoft/unilm/tree/master/beit
+# https://github.com/rwightman/pytorch-image-models/tree/master/timm
+# https://github.com/facebookresearch/deit
+# https://github.com/facebookresearch/dino
+# --------------------------------------------------------'
 
 
 def _cfg(url='', **kwargs):
     return {
-        'url': url,
+        'url': 'https://drive.google.com/drive/folders/182F5SLwJnGVngkzguTelja4PztYLTXfa'
+                'pretrain_mae_vit_base_mask_0.75_400e.pth',
         'num_classes': 1000, 'input_size': (3, 224, 224), 'pool_size': None,
-        'crop_pct': .9, 'interpolation': 'bicubic', 'fixed_input_size': True,
-        'mean': IMAGENET_INCEPTION_MEAN, 'std': IMAGENET_INCEPTION_STD,
-        'first_conv': 'patch_embed.proj', 'classifier': 'head',
+        'crop_pct': .9, 'interpolation': 'bicubic',
+        'mean': (0.5, 0.5, 0.5), 'std': (0.5, 0.5, 0.5),
         **kwargs
     }
 
 
+class DropPath(nn.Module):
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
+    """
+    def __init__(self, drop_prob=None):
+        super(DropPath, self).__init__()
+        self.drop_prob = drop_prob
+
+    def forward(self, x):
+        return drop_path(x, self.drop_prob, self.training)
+    
+    def extra_repr(self) -> str:
+        return 'p={}'.format(self.drop_prob)
+
+
+class Mlp(nn.Module):
+    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
+        super().__init__()
+        out_features = out_features or in_features
+        hidden_features = hidden_features or in_features
+        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.act = act_layer()
+        self.fc2 = nn.Linear(hidden_features, out_features)
+        self.drop = nn.Dropout(drop)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.act(x)
+        # x = self.drop(x)
+        # commit this for the orignal BERT implement 
+        x = self.fc2(x)
+        x = self.drop(x)
+        return x
+
+
 class Attention(nn.Module):
-    def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
+    def __init__(
+            self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0.,
+            proj_drop=0., attn_head_dim=None):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        self.scale = head_dim ** -0.5
+        if attn_head_dim is not None:
+            head_dim = attn_head_dim
+        all_head_dim = head_dim * self.num_heads
+        self.scale = qk_scale or head_dim ** -0.5
 
-        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=False)
+        if qkv_bias:
+            self.q_bias = nn.Parameter(torch.zeros(all_head_dim))
+            self.v_bias = nn.Parameter(torch.zeros(all_head_dim))
+        else:
+            self.q_bias = None
+            self.v_bias = None
+
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim)
+        self.proj = nn.Linear(all_head_dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        qkv_bias = None
+        if self.q_bias is not None:
+            qkv_bias = torch.cat((self.q_bias, torch.zeros_like(self.v_bias, requires_grad=False), self.v_bias))
+        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        qkv = F.linear(input=x, weight=self.qkv.weight, bias=qkv_bias)
+        qkv = qkv.reshape(B, N, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
 
-        attn = (q @ k.transpose(-2, -1)) * self.scale
+        q = q * self.scale
+        attn = (q @ k.transpose(-2, -1))
+
+        
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        x = (attn @ v).transpose(1, 2).reshape(B, N, -1)
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -79,349 +122,410 @@ class Attention(nn.Module):
 
 class Block(nn.Module):
 
-    def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+    def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
+                 drop_path=0., init_values=None, act_layer=nn.GELU, norm_layer=nn.LayerNorm,
+                 attn_head_dim=None):
         super().__init__()
         self.norm1 = norm_layer(dim)
-        self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
+        self.attn = Attention(
+            dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
+            attn_drop=attn_drop, proj_drop=drop, attn_head_dim=attn_head_dim)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
+        if init_values > 0:
+            self.gamma_1 = nn.Parameter(init_values * torch.ones((dim)),requires_grad=True)
+            self.gamma_2 = nn.Parameter(init_values * torch.ones((dim)),requires_grad=True)
+        else:
+            self.gamma_1, self.gamma_2 = None, None
+
     def forward(self, x):
-        x = x + self.drop_path(self.attn(self.norm1(x)))
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
+        if self.gamma_1 is None:
+            x = x + self.drop_path(self.attn(self.norm1(x)))
+            x = x + self.drop_path(self.mlp(self.norm2(x)))
+        else:
+            x = x + self.drop_path(self.gamma_1 * self.attn(self.norm1(x)))
+            x = x + self.drop_path(self.gamma_2 * self.mlp(self.norm2(x)))
         return x
 
 
-class VisionTransformer(nn.Module):
-    """ Vision Transformer
-
-    A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`
-        - https://arxiv.org/abs/2010.11929
-
-    Includes distillation token & head support for `DeiT: Data-efficient Image Transformers`
-        - https://arxiv.org/abs/2012.12877
+class PatchEmbed(nn.Module):
+    """ Image to Patch Embedding
     """
+    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+        super().__init__()
+        img_size = to_2tuple(img_size)
+        patch_size = to_2tuple(patch_size)
+        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
+        self.patch_shape = (img_size[0] // patch_size[0], img_size[1] // patch_size[1])
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.num_patches = num_patches
 
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, embed_dim=768, depth=12,
-                 num_heads=12, mlp_ratio=4., qkv_bias=True, representation_size=None, distilled=False,
-                 drop_rate=0., attn_drop_rate=0., drop_path_rate=0., embed_layer=PatchEmbed, norm_layer=None,
-                 act_layer=None, weight_init=''):
-        """
-        Args:
-            img_size (int, tuple): input image size
-            patch_size (int, tuple): patch size
-            in_chans (int): number of input channels
-            num_classes (int): number of classes for classification head
-            embed_dim (int): embedding dimension
-            depth (int): depth of transformer
-            num_heads (int): number of attention heads
-            mlp_ratio (int): ratio of mlp hidden dim to embedding dim
-            qkv_bias (bool): enable bias for qkv if True
-            representation_size (Optional[int]): enable and set representation layer (pre-logits) to this value if set
-            distilled (bool): model includes a distillation token and head as in DeiT models
-            drop_rate (float): dropout rate
-            attn_drop_rate (float): attention dropout rate
-            drop_path_rate (float): stochastic depth rate
-            embed_layer (nn.Module): patch embedding layer
-            norm_layer: (nn.Module): normalization layer
-            weight_init: (str): weight init scheme
-        """
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+
+    def forward(self, x, **kwargs):
+        B, C, H, W = x.shape
+        # FIXME look at relaxing size constraints
+        assert H == self.img_size[0] and W == self.img_size[1], \
+            f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+        x = self.proj(x).flatten(2).transpose(1, 2)
+        return x
+    
+# sin-cos position encoding
+# https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/master/transformer/Models.py#L31
+def get_sinusoid_encoding_table(n_position, d_hid): 
+    ''' Sinusoid position encoding table ''' 
+    # TODO: make it with torch instead of numpy 
+    def get_position_angle_vec(position): 
+        return [position / np.power(10000, 2 * (hid_j // 2) / d_hid) for hid_j in range(d_hid)] 
+
+    sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(n_position)]) 
+    sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2]) # dim 2i 
+    sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2]) # dim 2i+1 
+
+    return torch.FloatTensor(sinusoid_table).unsqueeze(0) 
+
+
+def trunc_normal_(tensor, mean=0., std=1.):
+    __call_trunc_normal_(tensor, mean=mean, std=std, a=-std, b=std)
+
+
+__all__ = [
+    'pretrain_mae_base_patch16_224', 
+    'pretrain_mae_large_patch16_224', 
+]
+
+
+class PretrainVisionTransformerEncoder(nn.Module):
+    """ Vision Transformer with support for patch or hybrid CNN input stage
+    """
+    def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=0, embed_dim=768, depth=12,
+                 num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
+                 drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None,
+                 use_learnable_pos_emb=False):
         super().__init__()
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
-        self.num_tokens = 2 if distilled else 1
-        norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
-        act_layer = act_layer or nn.GELU
 
-        self.patch_embed = embed_layer(
+        self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
 
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.dist_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if distilled else None
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim), requires_grad=False)
-        self.pos_drop = nn.Dropout(p=drop_rate)
+        # TODO: Add the cls token
+        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        if use_learnable_pos_emb:
+            self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
+        else:
+            # sine-cosine positional embeddings 
+            self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
-        self.blocks = nn.Sequential(*[
+        self.blocks = nn.ModuleList([
             Block(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, drop=drop_rate,
-                attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer, act_layer=act_layer)
+                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer,
+                init_values=init_values)
             for i in range(depth)])
-        self.norm = norm_layer(embed_dim)
+        self.norm =  norm_layer(embed_dim)
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-        # Representation layer
-        if representation_size and not distilled:
-            self.num_features = representation_size
-            self.pre_logits = nn.Sequential(OrderedDict([
-                ('fc', nn.Linear(embed_dim, representation_size)),
-                ('act', nn.Tanh())
-            ]))
-        else:
-            self.pre_logits = nn.Identity()
+        if use_learnable_pos_emb:
+            trunc_normal_(self.pos_embed, std=.02)
 
-        # Classifier head(s)
-        self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
-        self.head_dist = None
-        if distilled:
-            self.head_dist = nn.Linear(self.embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
+        # trunc_normal_(self.cls_token, std=.02)
+        self.apply(self._init_weights)
 
-        self.init_weights(weight_init)
-
-
-    def init_weights(self, mode=''):
-        assert mode in ('jax', 'jax_nlhb', 'nlhb', '')
-        head_bias = -math.log(self.num_classes) if 'nlhb' in mode else 0.
-        trunc_normal_(self.pos_embed, std=.02)
-        if self.dist_token is not None:
-            trunc_normal_(self.dist_token, std=.02)
-        if mode.startswith('jax'):
-            # leave cls token as zeros to match jax impl
-            named_apply(partial(_init_vit_weights, head_bias=head_bias, jax_impl=True), self)
-        else:
-            trunc_normal_(self.cls_token, std=.02)
-            self.apply(_init_vit_weights)
 
     def _init_weights(self, m):
-        # this fn left here for compat with downstream users
-        _init_vit_weights(m)
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
 
-    @torch.jit.ignore()
-    def load_pretrained(self, checkpoint_path, prefix=''):
-        _load_weights(self, checkpoint_path, prefix)
+    def get_num_layers(self):
+        return len(self.blocks)
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return {'pos_embed', 'cls_token', 'dist_token'}
+        return {'pos_embed', 'cls_token'}
 
     def get_classifier(self):
-        if self.dist_token is None:
-            return self.head
-        else:
-            return self.head, self.head_dist
+        return self.head
 
-    def forward(self, x):
+    def reset_classifier(self, num_classes, global_pool=''):
+        self.num_classes = num_classes
+        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+
+    def forward_features(self, x, mask):
         x = self.patch_embed(x)
-        x = self.pos_drop(x + self.pos_embed)
-        x = self.blocks(x)
-        x = self.norm(x)
+        
+        # cls_tokens = self.cls_token.expand(batch_size, -1, -1) 
+        # x = torch.cat((cls_tokens, x), dim=1)
+        x = x + self.pos_embed.type_as(x).to(x.device).clone().detach()
+
+        B, _, C = x.shape
+        x_vis = x[~mask].reshape(B, -1, C) # ~mask means visible
+
+        for blk in self.blocks:
+            x_vis = blk(x_vis)
+
+        x_vis = self.norm(x_vis)
+        return x_vis
+
+    def forward(self, x, mask):
+        x = self.forward_features(x, mask)
+        x = self.head(x)
         return x
 
-
-def _init_vit_weights(module: nn.Module, name: str = '', head_bias: float = 0., jax_impl: bool = False):
-    """ ViT weight initialization
-    * When called without n, head_bias, jax_impl args it will behave exactly the same
-      as my original init for compatibility with prev hparam / downstream use cases (ie DeiT).
-    * When called w/ valid n (module name) and jax_impl=True, will (hopefully) match JAX impl
+class PretrainVisionTransformerDecoder(nn.Module):
+    """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-    if isinstance(module, nn.Linear):
-        if name.startswith('head'):
-            nn.init.zeros_(module.weight)
-            nn.init.constant_(module.bias, head_bias)
-        elif name.startswith('pre_logits'):
-            lecun_normal_(module.weight)
-            nn.init.zeros_(module.bias)
+    def __init__(self, patch_size=16, num_classes=768, embed_dim=768, depth=12,
+                 num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
+                 drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None, num_patches=196,
+                 ):
+        super().__init__()
+        self.num_classes = num_classes
+        assert num_classes == 3 * patch_size ** 2
+        self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
+        self.patch_size = patch_size
+
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        self.blocks = nn.ModuleList([
+            Block(
+                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer,
+                init_values=init_values)
+            for i in range(depth)])
+        self.norm =  norm_layer(embed_dim)
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+
+        self.apply(self._init_weights)
+
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def get_num_layers(self):
+        return len(self.blocks)
+
+    @torch.jit.ignore
+    def no_weight_decay(self):
+        return {'pos_embed', 'cls_token'}
+
+    def get_classifier(self):
+        return self.head
+
+    def reset_classifier(self, num_classes, global_pool=''):
+        self.num_classes = num_classes
+        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+
+    def forward(self, x, return_token_num):
+        for blk in self.blocks:
+            x = blk(x)
+
+        if return_token_num > 0:
+            x = self.head(self.norm(x[:, -return_token_num:])) # only return the mask tokens predict pixels
         else:
-            if jax_impl:
-                nn.init.xavier_uniform_(module.weight)
-                if module.bias is not None:
-                    if 'mlp' in name:
-                        nn.init.normal_(module.bias, std=1e-6)
-                    else:
-                        nn.init.zeros_(module.bias)
-            else:
-                trunc_normal_(module.weight, std=.02)
-                if module.bias is not None:
-                    nn.init.zeros_(module.bias)
-    elif jax_impl and isinstance(module, nn.Conv2d):
-        # NOTE conv was left to pytorch default in my original init
-        lecun_normal_(module.weight)
-        if module.bias is not None:
-            nn.init.zeros_(module.bias)
-    elif isinstance(module, (nn.LayerNorm, nn.GroupNorm, nn.BatchNorm2d)):
-        nn.init.zeros_(module.bias)
-        nn.init.ones_(module.weight)
+            x = self.head(self.norm(x)) # [B, N, 3*16^2]
 
+        return x
 
-@torch.no_grad()
-def _load_weights(model: VisionTransformer, checkpoint_path: str, prefix: str = ''):
-    """ Load weights from .npz checkpoints for official Google Brain Flax implementation
+class PretrainVisionTransformer(nn.Module):
+    """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-    import numpy as np
+    def __init__(self,
+                 img_size=224, 
+                 patch_size=16, 
+                 encoder_in_chans=3, 
+                 encoder_num_classes=0, 
+                 encoder_embed_dim=768, 
+                 encoder_depth=12,
+                 encoder_num_heads=12, 
+                 decoder_num_classes=768, 
+                 decoder_embed_dim=512, 
+                 decoder_depth=8,
+                 decoder_num_heads=8, 
+                 mlp_ratio=4., 
+                 qkv_bias=False, 
+                 qk_scale=None, 
+                 drop_rate=0., 
+                 attn_drop_rate=0.,
+                 drop_path_rate=0., 
+                 norm_layer=nn.LayerNorm, 
+                 init_values=0.,
+                 use_learnable_pos_emb=False,
+                 num_classes=0, # avoid the error from create_fn in timm
+                 in_chans=0, # avoid the error from create_fn in timm
+                 ):
+        super().__init__()
+        self.encoder = PretrainVisionTransformerEncoder(
+            img_size=img_size, 
+            patch_size=patch_size, 
+            in_chans=encoder_in_chans, 
+            num_classes=encoder_num_classes, 
+            embed_dim=encoder_embed_dim, 
+            depth=encoder_depth,
+            num_heads=encoder_num_heads, 
+            mlp_ratio=mlp_ratio, 
+            qkv_bias=qkv_bias, 
+            qk_scale=qk_scale, 
+            drop_rate=drop_rate, 
+            attn_drop_rate=attn_drop_rate,
+            drop_path_rate=drop_path_rate, 
+            norm_layer=norm_layer, 
+            init_values=init_values,
+            use_learnable_pos_emb=use_learnable_pos_emb)
 
-    def _n2p(w, t=True):
-        if w.ndim == 4 and w.shape[0] == w.shape[1] == w.shape[2] == 1:
-            w = w.flatten()
-        if t:
-            if w.ndim == 4:
-                w = w.transpose([3, 2, 0, 1])
-            elif w.ndim == 3:
-                w = w.transpose([2, 0, 1])
-            elif w.ndim == 2:
-                w = w.transpose([1, 0])
-        return torch.from_numpy(w)
+        self.decoder = PretrainVisionTransformerDecoder(
+            patch_size=patch_size, 
+            num_patches=self.encoder.patch_embed.num_patches,
+            num_classes=decoder_num_classes, 
+            embed_dim=decoder_embed_dim, 
+            depth=decoder_depth,
+            num_heads=decoder_num_heads, 
+            mlp_ratio=mlp_ratio, 
+            qkv_bias=qkv_bias, 
+            qk_scale=qk_scale, 
+            drop_rate=drop_rate, 
+            attn_drop_rate=attn_drop_rate,
+            drop_path_rate=drop_path_rate, 
+            norm_layer=norm_layer, 
+            init_values=init_values)
 
-    w = np.load(checkpoint_path)
-    if not prefix and 'opt/target/embedding/kernel' in w:
-        prefix = 'opt/target/'
+        self.encoder_to_decoder = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=False)
 
-    if hasattr(model.patch_embed, 'backbone'):
-        # hybrid
-        backbone = model.patch_embed.backbone
-        stem_only = not hasattr(backbone, 'stem')
-        stem = backbone if stem_only else backbone.stem
-        stem.conv.weight.copy_(adapt_input_conv(stem.conv.weight.shape[1], _n2p(w[f'{prefix}conv_root/kernel'])))
-        stem.norm.weight.copy_(_n2p(w[f'{prefix}gn_root/scale']))
-        stem.norm.bias.copy_(_n2p(w[f'{prefix}gn_root/bias']))
-        if not stem_only:
-            for i, stage in enumerate(backbone.stages):
-                for j, block in enumerate(stage.blocks):
-                    bp = f'{prefix}block{i + 1}/unit{j + 1}/'
-                    for r in range(3):
-                        getattr(block, f'conv{r + 1}').weight.copy_(_n2p(w[f'{bp}conv{r + 1}/kernel']))
-                        getattr(block, f'norm{r + 1}').weight.copy_(_n2p(w[f'{bp}gn{r + 1}/scale']))
-                        getattr(block, f'norm{r + 1}').bias.copy_(_n2p(w[f'{bp}gn{r + 1}/bias']))
-                    if block.downsample is not None:
-                        block.downsample.conv.weight.copy_(_n2p(w[f'{bp}conv_proj/kernel']))
-                        block.downsample.norm.weight.copy_(_n2p(w[f'{bp}gn_proj/scale']))
-                        block.downsample.norm.bias.copy_(_n2p(w[f'{bp}gn_proj/bias']))
-        embed_conv_w = _n2p(w[f'{prefix}embedding/kernel'])
-    else:
-        embed_conv_w = adapt_input_conv(
-            model.patch_embed.proj.weight.shape[1], _n2p(w[f'{prefix}embedding/kernel']))
-    model.patch_embed.proj.weight.copy_(embed_conv_w)
-    model.patch_embed.proj.bias.copy_(_n2p(w[f'{prefix}embedding/bias']))
-    model.cls_token.copy_(_n2p(w[f'{prefix}cls'], t=False))
-    pos_embed_w = _n2p(w[f'{prefix}Transformer/posembed_input/pos_embedding'], t=False)
-    if pos_embed_w.shape != model.pos_embed.shape:
-        pos_embed_w = resize_pos_embed(  # resize pos embedding when different size from pretrained weights
-            pos_embed_w, model.pos_embed, getattr(model, 'num_tokens', 1), model.patch_embed.grid_size)
-    # we remove the cls tokens
-    model.pos_embed.copy_(pos_embed_w[:, 1:])
-    model.norm.weight.copy_(_n2p(w[f'{prefix}Transformer/encoder_norm/scale']))
-    model.norm.bias.copy_(_n2p(w[f'{prefix}Transformer/encoder_norm/bias']))
-    if isinstance(model.head, nn.Linear) and model.head.bias.shape[0] == w[f'{prefix}head/bias'].shape[-1]:
-        model.head.weight.copy_(_n2p(w[f'{prefix}head/kernel']))
-        model.head.bias.copy_(_n2p(w[f'{prefix}head/bias']))
-    if isinstance(getattr(model.pre_logits, 'fc', None), nn.Linear) and f'{prefix}pre_logits/bias' in w:
-        model.pre_logits.fc.weight.copy_(_n2p(w[f'{prefix}pre_logits/kernel']))
-        model.pre_logits.fc.bias.copy_(_n2p(w[f'{prefix}pre_logits/bias']))
-    for i, block in enumerate(model.blocks.children()):
-        block_prefix = f'{prefix}Transformer/encoderblock_{i}/'
-        mha_prefix = block_prefix + 'MultiHeadDotProductAttention_1/'
-        block.norm1.weight.copy_(_n2p(w[f'{block_prefix}LayerNorm_0/scale']))
-        block.norm1.bias.copy_(_n2p(w[f'{block_prefix}LayerNorm_0/bias']))
-        block.attn.qkv.weight.copy_(torch.cat([
-            _n2p(w[f'{mha_prefix}{n}/kernel'], t=False).flatten(1).T for n in ('query', 'key', 'value')]))
-        block.attn.qkv.bias.copy_(torch.cat([
-            _n2p(w[f'{mha_prefix}{n}/bias'], t=False).reshape(-1) for n in ('query', 'key', 'value')]))
-        block.attn.proj.weight.copy_(_n2p(w[f'{mha_prefix}out/kernel']).flatten(1))
-        block.attn.proj.bias.copy_(_n2p(w[f'{mha_prefix}out/bias']))
-        for r in range(2):
-            getattr(block.mlp, f'fc{r + 1}').weight.copy_(_n2p(w[f'{block_prefix}MlpBlock_3/Dense_{r}/kernel']))
-            getattr(block.mlp, f'fc{r + 1}').bias.copy_(_n2p(w[f'{block_prefix}MlpBlock_3/Dense_{r}/bias']))
-        block.norm2.weight.copy_(_n2p(w[f'{block_prefix}LayerNorm_2/scale']))
-        block.norm2.bias.copy_(_n2p(w[f'{block_prefix}LayerNorm_2/bias']))
+        self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim))
+
+        self.pos_embed = get_sinusoid_encoding_table(self.encoder.patch_embed.num_patches, decoder_embed_dim)
+
+        trunc_normal_(self.mask_token, std=.02)
 
 
-def resize_pos_embed(posemb, posemb_new, num_tokens=1, gs_new=()):
-    # Rescale the grid of position embeddings when loading from state_dict. Adapted from
-    # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
-    _logger.info('Resized position embedding: %s to %s', posemb.shape, posemb_new.shape)
-    ntok_new = posemb_new.shape[1]
-    if num_tokens:
-        posemb_tok, posemb_grid = posemb[:, :num_tokens], posemb[0, num_tokens:]
-        ntok_new -= num_tokens
-    else:
-        posemb_tok, posemb_grid = posemb[:, :0], posemb[0]
-    gs_old = int(math.sqrt(len(posemb_grid)))
-    if not len(gs_new):  # backwards compatibility
-        gs_new = [int(math.sqrt(ntok_new))] * 2
-    assert len(gs_new) >= 2
-    _logger.info('Position embedding grid-size from %s to %s', [gs_old, gs_old], gs_new)
-    posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
-    posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode='bilinear', align_corners=False)
-    posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)
-    posemb = torch.cat([posemb_tok, posemb_grid], dim=1)
-    return posemb
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
 
+    def get_num_layers(self):
+        return len(self.blocks)
 
-def checkpoint_filter_fn(state_dict, model):
-    """ convert patch embedding weight from manual patchify + linear proj to conv"""
-    out_dict = {}
-    if 'model' in state_dict:
-        # For deit models
-        state_dict = state_dict['model']
-    for k, v in state_dict.items():
-        if 'patch_embed.proj.weight' in k and len(v.shape) < 4:
-            # For old models that I trained prior to conv based patchification
-            O, I, H, W = model.patch_embed.proj.weight.shape
-            v = v.reshape(O, -1, H, W)
-        elif k == 'pos_embed' and v.shape != model.pos_embed.shape:
-            # To resize pos embedding when using model at different size from pretrained weights
-            v = resize_pos_embed(
-                v, model.pos_embed, getattr(model, 'num_tokens', 1), model.patch_embed.grid_size)
-        out_dict[k] = v
-    return out_dict
+    @torch.jit.ignore
+    def no_weight_decay(self):
+        return {'pos_embed', 'cls_token', 'mask_token'}
 
+    def forward(self, x, mask):
+        
+        x_vis = self.encoder(x, mask) # [B, N_vis, C_e]
+        x_vis = self.encoder_to_decoder(x_vis) # [B, N_vis, C_d]
 
-def _create_vision_transformer(variant, pretrained=False, default_cfg=None, **kwargs):
-    default_cfg = default_cfg
-    if kwargs.get('features_only', None):
-        raise RuntimeError('features_only not implemented for Vision Transformer models.')
+        B, N, C = x_vis.shape
+        
+        # we don't unshuffle the correct visible token order, 
+        # but shuffle the pos embedding accorddingly.
+        expand_pos_embed = self.pos_embed.expand(B, -1, -1).type_as(x).to(x.device).clone().detach()
+        pos_emd_vis = expand_pos_embed[~mask].reshape(B, -1, C)
+        pos_emd_mask = expand_pos_embed[mask].reshape(B, -1, C)
+        x_full = torch.cat([x_vis + pos_emd_vis, self.mask_token + pos_emd_mask], dim=1)
+        # notice: if N_mask==0, the shape of x is [B, N_mask, 3 * 16 * 16]
+        x = self.decoder(x_full, pos_emd_mask.shape[1]) # [B, N_mask, 3 * 16 * 16]
 
-    # NOTE this extra code to support handling of repr size for in21k pretrained models
-    default_num_classes = default_cfg['num_classes']
-    num_classes = kwargs.get('num_classes', default_num_classes)
-    repr_size = kwargs.pop('representation_size', None)
-    if repr_size is not None and num_classes != default_num_classes:
-        # Remove representation layer if fine-tuning. This may not always be the desired action,
-        # but I feel better than doing nothing by default for fine-tuning. Perhaps a better interface?
-        _logger.warning("Removing representation layer for fine-tuning.")
-        repr_size = None
+        return x
 
-    model = build_model_with_cfg(
-        VisionTransformer, variant, pretrained,
-        default_cfg=default_cfg,
-        representation_size=repr_size,
-        pretrained_filter_fn=checkpoint_filter_fn,
-        pretrained_custom_load='npz' in default_cfg['url'],
-        **kwargs)
-    return model
-
-
-# ViT-Base
 @register_model
-def vit_base_patch16_224(pretrained=False, input_size=224, **kwargs):
-    """ ViT-Base model (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
-    We load the MAE pretrained weight to initialize ViT.
-    """
-    cfgs = _cfg(
-        url='https://drive.google.com/drive/folders/182F5SLwJnGVngkzguTelja4PztYLTXfa/'
-            'pretrain_mae_vit_base_mask_0.75_400e.pth',
-        input_size=(3, input_size, input_size), crop_pct=1.0)
-    model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = _create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, default_cfg=cfgs, **model_kwargs)
+def pretrain_mae_small_patch16_224(pretrained=False, **kwargs):
+    model = PretrainVisionTransformer(
+        img_size=224,
+        patch_size=16,
+        encoder_embed_dim=384,
+        encoder_depth=12,
+        encoder_num_heads=6,
+        encoder_num_classes=0,
+        decoder_num_classes=768,
+        decoder_embed_dim=192,
+        decoder_depth=4,
+        decoder_num_heads=3,
+        mlp_ratio=4,
+        qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),
+        **kwargs)
+    model.default_cfg = _cfg()
+    if pretrained:
+        checkpoint = torch.load(
+            kwargs["init_ckpt"], map_location="cpu"
+        )
+        model.load_state_dict(checkpoint["model"])
     return model
 
+@register_model
+def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
+    model = PretrainVisionTransformer(
+        img_size=224,
+        patch_size=16, 
+        encoder_embed_dim=768, 
+        encoder_depth=12, 
+        encoder_num_heads=12,
+        encoder_num_classes=0,
+        decoder_num_classes=768,
+        decoder_embed_dim=384,
+        decoder_depth=4,
+        decoder_num_heads=6,
+        mlp_ratio=4, 
+        qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), 
+        **kwargs)
+    model.default_cfg = _cfg()
+    if pretrained:
+        state_dict = load_state_dict_from_url(model.default_cfg['url'], progress=True, map_location='cpu')
+        # checkpoint = torch.load(
+        #     kwargs["init_ckpt"], map_location="cpu"
+        # )
+        model.load_state_dict(state_dict)
+    return model
+ 
 
-# build ViT
-def build_vit(pretrained=False, model='vit_base16', input_size=224, ):
-    if model == 'vit_base16':
-        print("Loading vit_base_patch16_224 ...")
-        return vit_base_patch16_224(pretrained=pretrained, input_size=input_size), 768, 16
-    else:
-        print('Unknown ViT version !!!')
-        exit(0)
-
+@register_model
+def pretrain_mae_large_patch16_224(pretrained=False, **kwargs):
+    model = PretrainVisionTransformer(
+        img_size=224,
+        patch_size=16, 
+        encoder_embed_dim=1024, 
+        encoder_depth=24, 
+        encoder_num_heads=16,
+        encoder_num_classes=0,
+        decoder_num_classes=768,
+        decoder_embed_dim=512,
+        decoder_depth=8,
+        decoder_num_heads=8,
+        mlp_ratio=4, 
+        qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), 
+        **kwargs)
+    model.default_cfg = _cfg()
+    if pretrained:
+        state_dict = load_state_dict_from_url(model.default_cfg['url'], progress=True, map_location='cpu')
+        # checkpoint = torch.load(
+        #     kwargs["init_ckpt"], map_location="cpu"
+        # )
+        model.load_state_dict(state_dict)
+    return model
 
 if __name__ == '__main__':
-    input_size = 512
-    x = torch.ones(2, 3, input_size, input_size)
-    vit = vit_base_patch16_224(pretrained=True, input_size=512)
-    y = vit(x)
-    # print(y.size())
+    model = pretrain_mae_base_patch16_224(pretrained=True)
