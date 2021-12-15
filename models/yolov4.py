@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone.cspdarknet import cspdarknet53
+from backbone import build_backbone
 from utils.modules import Conv, UpSample, BottleneckCSP, DilatedEncoder
 from utils import box_ops
 from utils import loss
@@ -22,18 +22,19 @@ class YOLOv4(nn.Module):
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
-        self.stride = [8, 16, 32]
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
-        self.num_anchors = self.anchor_size.size(1)
-        self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # backbone
-        print('backbone: CSPDarkNet ...')
-        self.backbone = cspdarknet53(pretrained=trainable)
-        c3, c4, c5 = 256, 512, 1024
+        self.backbone, feature_channels, strides = build_backbone(model_name='cspd53', pretrained=trainable)
+        self.stride = strides
+        self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
+        self.num_anchors = self.anchor_size.size(1)
+        c3, c4, c5 = feature_channels
+
+        # build grid cell
+        self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # head
         self.head_conv_0 = DilatedEncoder(c5, c5//2)  # 10

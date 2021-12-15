@@ -5,7 +5,6 @@
 # https://github.com/facebookresearch/deit
 # https://github.com/facebookresearch/dino
 # --------------------------------------------------------'
-import math
 import os
 import numpy as np
 import torch
@@ -17,13 +16,11 @@ from functools import partial
 from timm.models.layers import drop_path, to_2tuple
 from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_ as __call_trunc_normal_
-from timm.models.helpers import build_model_with_cfg, load_state_dict_from_url
 
 
 def _cfg(url='', **kwargs):
     return {
-        'url': 'https://drive.google.com/drive/folders/182F5SLwJnGVngkzguTelja4PztYLTXfa/'
-                'pretrain_mae_vit_base_mask_0.75_400e.pth',
+        'url': url,
         'num_classes': 1000, 'input_size': (3, 224, 224), 'pool_size': None,
         'crop_pct': .9, 'interpolation': 'bicubic',
         'mean': (0.5, 0.5, 0.5), 'std': (0.5, 0.5, 0.5),
@@ -258,18 +255,16 @@ class PretrainVisionTransformerEncoder(nn.Module):
     def forward_features(self, x):
         x = self.patch_embed(x)
         
-        # cls_tokens = self.cls_token.expand(batch_size, -1, -1) 
-        # x = torch.cat((cls_tokens, x), dim=1)
         x = x + self.pos_embed.type_as(x).to(x.device).clone().detach()
 
         B, _, C = x.shape
-        x_vis = x.reshape(B, -1, C) # ~mask means visible
+        x = x.reshape(B, -1, C)
 
         for blk in self.blocks:
-            x_vis = blk(x_vis)
+            x = blk(x)
 
-        x_vis = self.norm(x_vis)
-        return x_vis
+        x = self.norm(x)
+        return x
 
     def forward(self, x):
         x = self.forward_features(x)
@@ -335,17 +330,14 @@ class PretrainVisionTransformer(nn.Module):
     def no_weight_decay(self):
         return {'pos_embed', 'cls_token', 'mask_token'}
 
-    def forward(self, x):
+    def forward(self, x): 
+        x = self.encoder(x) # [B, N, C]
         
-        x_vis = self.encoder(x) # [B, N_vis, C_e]
-
-        B, N, C = x_vis.shape
-        
-        return x_vis
+        return x
 
         
 @register_model
-def pretrain_mae_base_patch16_224(img_size=224, pretrained=False, **kwargs):
+def vit_base_patch16_224(img_size=224, pretrained=False, **kwargs):
     model = PretrainVisionTransformer(
         img_size=img_size,
         patch_size=16, 
@@ -360,7 +352,7 @@ def pretrain_mae_base_patch16_224(img_size=224, pretrained=False, **kwargs):
     model.default_cfg = _cfg()
     if pretrained:
         path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        checkpoint = torch.load(path_to_dir + '/weights/vit/pretrain_mae_vit_base_mask_0.75_400e.pth')
+        checkpoint = torch.load(path_to_dir + '/weights/vit/pretrain_mae_vit_base_mask_0.75_400e.pth', map_location='cpu')
         print('Loading the vit-base ...')
         model.load_state_dict(checkpoint['model'], strict=False)
 
@@ -368,6 +360,6 @@ def pretrain_mae_base_patch16_224(img_size=224, pretrained=False, **kwargs):
  
 if __name__ == '__main__':
     x = torch.ones(2, 3, 224, 224)
-    model = pretrain_mae_base_patch16_224(pretrained=True)
+    model = vit_base_patch16_224(pretrained=True)
     y = model(x)
     print(y.size())
