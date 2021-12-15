@@ -6,6 +6,7 @@
 # https://github.com/facebookresearch/dino
 # --------------------------------------------------------'
 import math
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -17,15 +18,6 @@ from timm.models.layers import drop_path, to_2tuple
 from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_ as __call_trunc_normal_
 from timm.models.helpers import build_model_with_cfg, load_state_dict_from_url
-
-
-# --------------------------------------------------------
-# Based on BEiT, timm, DINO and DeiT code bases
-# https://github.com/microsoft/unilm/tree/master/beit
-# https://github.com/rwightman/pytorch-image-models/tree/master/timm
-# https://github.com/facebookresearch/deit
-# https://github.com/facebookresearch/dino
-# --------------------------------------------------------'
 
 
 def _cfg(url='', **kwargs):
@@ -367,6 +359,11 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
         **kwargs)
     model.default_cfg = _cfg()
     if pretrained:
+        path_to_dir = os.path.dirname(os.path.abspath(__file__))
+        checkpoint = torch.load(path_to_dir + '/weights/vit/pretrain_mae_vit_base_mask_0.75_400e.pth')
+        print('Loading the vit-base ...')
+        model.load_state_dict(checkpoint['model'], strict=False)
+
         checkpoint = load_state_dict_from_url(model.default_cfg['url'], map_location='cpu', check_hash=True)
         # checkpoint = torch.load(
         #     kwargs["init_ckpt"], map_location="cpu"
