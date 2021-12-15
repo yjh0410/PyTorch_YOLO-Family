@@ -11,6 +11,6 @@ python train.py \
         --lr_epoch 130 180 \
         --mosaic \
         --center_sample \
-        --accumulate 4 \
+        --accumulate 1 \
         --ema
         
