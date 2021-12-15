@@ -30,7 +30,7 @@ from timm.models.helpers import build_model_with_cfg, load_state_dict_from_url
 
 def _cfg(url='', **kwargs):
     return {
-        'url': 'https://drive.google.com/drive/folders/182F5SLwJnGVngkzguTelja4PztYLTXfa'
+        'url': 'https://drive.google.com/drive/folders/182F5SLwJnGVngkzguTelja4PztYLTXfa/'
                 'pretrain_mae_vit_base_mask_0.75_400e.pth',
         'num_classes': 1000, 'input_size': (3, 224, 224), 'pool_size': None,
         'crop_pct': .9, 'interpolation': 'bicubic',
