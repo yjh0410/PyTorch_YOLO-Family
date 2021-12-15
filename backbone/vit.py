@@ -473,7 +473,7 @@ def pretrain_mae_base_patch16_224(pretrained=False, **kwargs):
         # checkpoint = torch.load(
         #     kwargs["init_ckpt"], map_location="cpu"
         # )
-        model.load_state_dict(checkpoint, strict=False)
+        model.load_state_dict(checkpoint)
     return model
  
 if __name__ == '__main__':
