@@ -34,7 +34,7 @@ In this project, you can enjoy:
 - Train YOLO with 4x schedule(48 epoch.), rather than 150 even more epochs.
 
 # Weights
-You can download all weights including my DarkNet-53, CSPDarkNet-53 and YOLO weights from the following links.
+You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and YOLO weights from the following links.
 
 ## Google Drive
 Link: Hold on ...
@@ -62,6 +62,8 @@ On the COCO-val:
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano</th><td bgcolor=white> ShuffleNetv2-1.0x </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 40.0 </td><td bgcolor=white> 20.5 </td><td bgcolor=white> 7.4 </td><td bgcolor=white> 22.7 </td><td bgcolor=white> 32.3 </td><td bgcolor=white> 1.65 </td><td bgcolor=white> 1.86M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny</th><td bgcolor=white> CSPDarkNet-Tiny </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR</th><td bgcolor=white> ViT-B </td><td bgcolor=white> 384 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white> 44.54M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td><td bgcolor=white>  41.96   </td><td bgcolor=white> 44.54M </td></tr>
 
@@ -99,6 +101,18 @@ I will upload some visualization results:
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white> 25.7 </td><td bgcolor=white> 44.4 </td><td bgcolor=white> 25.9 </td><td bgcolor=white> 11.7 </td><td bgcolor=white> 27.8 </td><td bgcolor=white> 36.7 </td><td bgcolor=white> 3.64 </td><td bgcolor=white> 7.66M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+
+</table></tbody>
+
+## YOLO-TR
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-224</th><td bgcolor=white>     </td><td bgcolor=white> 25.4 </td><td bgcolor=white> 41.5 </td><td bgcolor=white> 26.0 </td><td bgcolor=white> 4.2   </td><td bgcolor=white> 25.0 </td><td bgcolor=white> 49.8 </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-320</th><td bgcolor=white>     </td><td bgcolor=white> 30.1 </td><td bgcolor=white> 47.8 </td><td bgcolor=white> 30.9 </td><td bgcolor=white> 7.8   </td><td bgcolor=white> 31.9 </td><td bgcolor=white> 53.3 </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-384</th><td bgcolor=white>     </td><td bgcolor=white> 33.1 </td><td bgcolor=white> 52.2 </td><td bgcolor=white> 34.0 </td><td bgcolor=white> 10.8  </td><td bgcolor=white> 35.9 </td><td bgcolor=white> 54.9 </td></tr>
 
 </table></tbody>
 
@@ -187,10 +201,12 @@ Just run ```sh data/scripts/COCO2017.sh```. You will get COCO train2017, val2017
 
 
 # Train
+For example:
+
 ```Shell
 python train.py --cuda \
-                -d [select a dataset: voc or coco] \
-                -v [select a model] \
+                -d coco \
+                -v yolov1 \
                 -ms \
                 --ema \
                 --batch_size 16 \
@@ -205,7 +221,8 @@ sh train_yolov1.sh
 If you have multi gpus like 8, and you put 4 images on each gpu:
 ```Shell
 python -m torch.distributed.launch --nproc_per_node=8 train.py -d coco \
-                                                               --cuda -v [select a model] \
+                                                               --cuda \
+                                                               -v yolov1 \
                                                                -ms \
                                                                --ema \
                                                                -dist \
@@ -221,22 +238,26 @@ I have upload all training log files. For example, `1-v1.txt` contains all the o
 It is strongly recommended that you open the training shell file to check how I train each YOLO detector.
 
 # Test
+For example:
+
 ```Shell
-python test.py -d [select a dataset: voc or coco] \
+python test.py -d coco \
                --cuda \
-               -v [select a model] \
-               --trained_model [ Please input the path to model dir. ] \
+               -v yolov1 \
+               --weight path/to/weight \
                --img_size 640 \
                --root path/to/dataset/ \
                --show
 ```
 
 # Evaluation
+For example
+
 ```Shell
-python eval.py -d [select a dataset: voc or coco-val] \
+python eval.py -d coco-val \
                --cuda \
-               -v [select a model] \
-               --trained_model [ Please input the path to model dir. ] \
+               -v yolov1 \
+               --weight path/to/weight \
                --img_size 640 \
                --root path/to/dataset/
 ```
@@ -246,8 +267,8 @@ To run on COCO_test-dev(You must be sure that you have downloaded test2017):
 ```Shell
 python eval.py -d coco-test \
                --cuda \
-               -v [select a model] \
-               --trained_model [ Please input the path to model dir. ] \
+               -v yolov1 \
+               --weight path/to/weight \
                --img_size 640 \
                 --root path/to/dataset/
 ```
