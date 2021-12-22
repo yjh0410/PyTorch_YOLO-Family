@@ -63,7 +63,7 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny</th><td bgcolor=white> CSPDarkNet-Tiny </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR</th><td bgcolor=white> ViT-B </td><td bgcolor=white> 384 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white> 44.54M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR</th><td bgcolor=white> ViT-B </td><td bgcolor=white> 384 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td><td bgcolor=white>  41.96   </td><td bgcolor=white> 44.54M </td></tr>
 
