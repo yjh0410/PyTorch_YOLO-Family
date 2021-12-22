@@ -108,11 +108,11 @@ I will upload some visualization results:
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-224</th><td bgcolor=white>     </td><td bgcolor=white> 25.4 </td><td bgcolor=white> 41.5 </td><td bgcolor=white> 26.0 </td><td bgcolor=white> 4.2   </td><td bgcolor=white> 25.0 </td><td bgcolor=white> 49.8 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-224</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-320</th><td bgcolor=white>     </td><td bgcolor=white> 30.1 </td><td bgcolor=white> 47.8 </td><td bgcolor=white> 30.9 </td><td bgcolor=white> 7.8   </td><td bgcolor=white> 31.9 </td><td bgcolor=white> 53.3 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-384</th><td bgcolor=white>     </td><td bgcolor=white> 33.1 </td><td bgcolor=white> 52.2 </td><td bgcolor=white> 34.0 </td><td bgcolor=white> 10.8  </td><td bgcolor=white> 35.9 </td><td bgcolor=white> 54.9 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-384</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
 </table></tbody>
 
