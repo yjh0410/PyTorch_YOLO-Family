@@ -29,7 +29,7 @@ parser.add_argument('--save_folder', default='det_results/', type=str,
 # model
 parser.add_argument('-v', '--version', default='yolov1',
                     help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
-parser.add_argument('--trained_model', default='weight/',
+parser.add_argument('--weight', default='weight/',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--conf_thresh', default=0.1, type=float,
                     help='NMS threshold')
@@ -236,7 +236,7 @@ if __name__ == '__main__':
                    anchor_size=anchor_size)
 
     # load weight
-    model.load_state_dict(torch.load(args.trained_model, map_location=device), strict=False)
+    model.load_state_dict(torch.load(args.weight, map_location=device), strict=False)
     model.to(device).eval()
     print('Finished loading model!')
 

@@ -29,7 +29,7 @@ parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
 # basic
 parser.add_argument('-size', '--img_size', default=640, type=int or list,
                     help='img_size')
-parser.add_argument('--trained_model', default=None,
+parser.add_argument('--weight', default=None,
                     type=str, help='Trained state_dict file path to open')
 # cuda
 parser.add_argument('--cuda', action='store_true', default=False, 
@@ -143,11 +143,11 @@ if __name__ == '__main__':
                    anchor_size=anchor_size)
 
     # load weight
-    if args.trained_model:
-        model.load_state_dict(torch.load(args.trained_model, map_location=device))
+    if args.weight:
+        model.load_state_dict(torch.load(args.weight, map_location=device))
         print('Finished loading model!')
     else:
-        print('The path to trained_model file is None !')
+        print('The path to weight file is None !')
         exit(0)
     model = model.to(device).eval()
 

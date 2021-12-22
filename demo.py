@@ -33,7 +33,7 @@ def parse_args():
                         help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
     parser.add_argument('--num_queries', type=int, default=4, 
                         help='number of queris of YOLOQ')
-    parser.add_argument('--trained_model', default='weights/',
+    parser.add_argument('--weight', default='weights/',
                         type=str, help='Trained state_dict file path to open')
     parser.add_argument('-size', '--img_size', default=640, type=int,
                         help='img_size')
@@ -253,7 +253,7 @@ def run():
                    anchor_size=anchor_size)
 
     # load weight
-    model.load_state_dict(torch.load(args.trained_model, map_location=device), strict=False)
+    model.load_state_dict(torch.load(args.weight, map_location=device), strict=False)
     model.to(device).eval()
     print('Finished loading model!')
 
