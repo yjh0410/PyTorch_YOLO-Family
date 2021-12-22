@@ -20,7 +20,6 @@ class YOLOv1(nn.Module):
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
-        self.stride = [32]
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
@@ -33,7 +32,7 @@ class YOLOv1(nn.Module):
         p5 = 512
 
         # build grid cell
-        self.grid_xy, self.anchor_wh = self.create_grid(img_size)
+        self.grid_xy = self.create_grid(img_size)
         
         # neck
         self.neck = DilatedEncoder(c1=c5, c2=p5)
