@@ -23,7 +23,6 @@ class YOLOv1(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.grid_xy = self.create_grid(img_size)
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name='r50', pretrained=trainable)
