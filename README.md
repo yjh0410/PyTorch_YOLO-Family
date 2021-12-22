@@ -28,6 +28,11 @@ In this project, you can enjoy:
 - a new YOLO-Tiny !
 - a new YOLO-Nano !
 
+
+# Future work
+- Speed up the convergence.
+- Train YOLO with 4x schedule(48 epoch.), rather than 150 even more epochs.
+
 # Weights
 You can download all weights including my DarkNet-53, CSPDarkNet-53 and YOLO weights from the following links.
 
