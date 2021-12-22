@@ -3,7 +3,7 @@ python train.py \
         -d coco \
         --root /mnt/share/ssd2/dataset \
         --batch_size 16 \
-        --img_size 320 \
+        --img_size 224 \
         -v yolo_tr \
         -ms \
         --accumulate 1 \
