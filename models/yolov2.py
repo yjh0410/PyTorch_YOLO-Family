@@ -96,13 +96,13 @@ class YOLOv2(nn.Module):
         x2 = dets[:, 2]  #xmax
         y2 = dets[:, 3]  #ymax
 
-        areas = (x2 - x1) * (y2 - y1)                 # the size of bbox
-        order = scores.argsort()[::-1]                        # sort bounding boxes by decreasing order
+        areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]
 
-        keep = []                                             # store the final bounding boxes
+        keep = []
         while order.size > 0:
-            i = order[0]                                      #the index of the bbox with highest confidence
-            keep.append(i)                                    #save it to keep
+            i = order[0]
+            keep.append(i)
             # compute iou
             xx1 = np.maximum(x1[i], x1[order[1:]])
             yy1 = np.maximum(y1[i], y1[order[1:]])
@@ -159,7 +159,7 @@ class YOLOv2(nn.Module):
         """reg_pred: [B, N, KA, 4]"""
         B = reg_pred.size(0)
         # txtytwth -> xywh, and normalize
-        xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
+        xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
         wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
         xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
         # xywh -> x1y1x2y2

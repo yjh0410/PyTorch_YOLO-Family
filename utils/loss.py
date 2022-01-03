@@ -18,8 +18,9 @@ class MSEWithLogitsLoss(nn.Module):
         loss = pos_loss + neg_loss
 
         if self.reduction == 'mean':
-            batch_size = logits.size(0)
-            loss = loss.sum() / batch_size
+            # batch_size = logits.size(0)
+            # loss = loss.sum() / batch_size
+            loss = loss.sum() / gt_pos.sum()
 
         elif self.reduction == 'sum':
             loss = loss.sum()
@@ -42,10 +43,10 @@ def loss(pred_obj, pred_cls, pred_giou, targets):
     obj_loss = conf_loss_function(pred_obj[..., 0], gt_obj, gt_pos)
     
     # cls loss
-    cls_loss = (cls_loss_function(pred_cls.permute(0, 2, 1), gt_cls) * gt_pos).sum() / batch_size
+    cls_loss = (cls_loss_function(pred_cls.permute(0, 2, 1), gt_cls) * gt_pos).sum() / gt_pos.sum()
     
     # reg loss
-    reg_loss = ((1. - pred_giou) * gt_pos).sum() / batch_size
+    reg_loss = ((1. - pred_giou) * gt_pos).sum() / gt_pos.sum()
 
     # total loss
     total_loss = 1.0 * obj_loss + 1.0 * cls_loss + 1.0 * reg_loss
