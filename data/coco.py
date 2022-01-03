@@ -4,7 +4,11 @@ import random
 
 from torch.utils.data import Dataset
 import cv2
-from pycocotools.coco import COCO
+
+try:
+    from pycocotools.coco import COCO
+except:
+    print("It seems that the COCOAPI is not installed.")
 
 
 

@@ -2,32 +2,37 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone import build_backbone
-from utils.modules import Conv, UpSample, BottleneckCSP, DilatedEncoder
 from utils import box_ops
 from utils import loss
 
+from ..backbone import build_backbone
+from ..neck import build_neck
+from ..basic.conv import Conv 
+from ..basic.upsample import UpSample
+from ..basic.bottleneck_csp import BottleneckCSP
 
-class YOLOv4(nn.Module):
+
+class YOLOTiny(nn.Module):
     def __init__(self, 
-                 device, 
+                 cfg=None,
+                 device=None, 
                  img_size=640, 
                  num_classes=80, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.60, 
-                 anchor_size=None):
-
-        super(YOLOv4, self).__init__()
+                 nms_thresh=0.60):
+        super(YOLOTiny, self).__init__()
+        self.cfg = cfg
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        anchor_size = cfg["anchor_size"]
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='cspd53', pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name='csp_dtiny', pretrained=trainable)
         self.stride = strides
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
@@ -37,22 +42,22 @@ class YOLOv4(nn.Module):
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # head
-        self.head_conv_0 = DilatedEncoder(c5, c5//2)  # 10
+        self.head_conv_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2)  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
+        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=1, shortcut=False)
 
         # P3/8-small
         self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
         self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=3, shortcut=False)
+        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=1, shortcut=False)
 
         # P4/16-medium
         self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
-        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=3, shortcut=False)
+        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=1, shortcut=False)
 
         # P8/32-large
         self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
-        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=3, shortcut=False)
+        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=1, shortcut=False)
 
         # det conv
         self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
@@ -100,7 +105,7 @@ class YOLOv4(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS YOLOv4."""
+        """"Pure Python NMS YOLOTiny."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax

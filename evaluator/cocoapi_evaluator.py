@@ -2,7 +2,10 @@ import json
 import tempfile
 import torch
 from data.coco import *
-from pycocotools.cocoeval import COCOeval
+try:
+    from pycocotools.coco import COCO
+except:
+    print("It seems that the COCOAPI is not installed.")
 
 
 class COCOAPIEvaluator():

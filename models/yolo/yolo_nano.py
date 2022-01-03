@@ -3,32 +3,36 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from backbone import build_backbone
-from utils.modules import SPP, Conv
+from ..backbone import build_backbone
+from ..neck import build_neck
+from ..basic.conv import Conv
 from utils import box_ops
 from utils import loss
 
 
 class YOLONano(nn.Module):
     def __init__(self, 
-                 device, 
+                 cfg=None,
+                 device=None, 
                  img_size=640, 
                  num_classes=80, 
                  trainable=False, 
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
                  anchor_size=None):
-
         super(YOLONano, self).__init__()
+        self.cfg = cfg
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        anchor_size = cfg["anchor_size"]
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='sfnet', pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
+                                                                  pretrained=trainable)
         self.stride = strides
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
@@ -38,7 +42,7 @@ class YOLONano(nn.Module):
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # neck
-        self.neck = SPP(c1=c5, c2=c5)
+        self.neck = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5)
 
         # FPN+PAN
         self.conv1x1_0 = Conv(c3, 96, k=1)

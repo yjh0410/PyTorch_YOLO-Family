@@ -1,60 +1,65 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from utils.modules import Conv, DilatedEncoder
-from backbone import build_backbone
+
 from utils import box_ops
 from utils import loss
+
+from ..basic.conv import Conv 
+from ..neck import build_neck
+from ..backbone import build_backbone
+
 
 
 class YOLOv2(nn.Module):
     def __init__(self, 
-                 device, 
+                 cfg=None,
+                 device=None, 
                  img_size=None, 
                  num_classes=20, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.6, 
-                 anchor_size=None):
+                 nms_thresh=0.6):
         super(YOLOv2, self).__init__()
+        self.cfg = cfg
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        self.anchor_size = torch.tensor(anchor_size)
-        self.num_anchors = len(anchor_size)
+        self.anchor_size = torch.tensor(cfg["anchor_size"])
+        self.num_anchors = len(cfg["anchor_size"])
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='r50', 
+        self.backbone, feature_channels, strides = build_backbone(model_name=cfg['backbone'], 
                                                                   pretrained=trainable)
         self.stride = [strides[-1]]
-        c5 = feature_channels[-1]
-        p5 = 512
+        feature_dim = feature_channels[-1]
+        head_dim = 512
 
         # build grid cell
         self.grid_xy, self.anchor_wh = self.create_grid(img_size)
 
         # neck
-        self.neck = DilatedEncoder(c1=c5, c2=p5)
+        self.neck = build_neck(model=cfg['neck'], in_ch=feature_dim, out_ch=head_dim)
 
         # head
         self.cls_feat = nn.Sequential(
-            Conv(p5, p5, k=3, p=1, s=1),
-            Conv(p5, p5, k=3, p=1, s=1)
+            Conv(head_dim, head_dim, k=3, p=1, s=1),
+            Conv(head_dim, head_dim, k=3, p=1, s=1)
         )
         self.reg_feat = nn.Sequential(
-            Conv(p5, p5, k=3, p=1, s=1),
-            Conv(p5, p5, k=3, p=1, s=1),
-            Conv(p5, p5, k=3, p=1, s=1),
-            Conv(p5, p5, k=3, p=1, s=1)
+            Conv(head_dim, head_dim, k=3, p=1, s=1),
+            Conv(head_dim, head_dim, k=3, p=1, s=1),
+            Conv(head_dim, head_dim, k=3, p=1, s=1),
+            Conv(head_dim, head_dim, k=3, p=1, s=1)
         )
 
         # head
-        self.obj_pred = nn.Conv2d(p5, self.num_anchors * 1, kernel_size=1)
-        self.cls_pred = nn.Conv2d(p5, self.num_anchors * self.num_classes, kernel_size=1)
-        self.reg_pred = nn.Conv2d(p5, self.num_anchors * 4, kernel_size=1)
+        self.obj_pred = nn.Conv2d(head_dim, self.num_anchors * 1, kernel_size=1)
+        self.cls_pred = nn.Conv2d(head_dim, self.num_anchors * self.num_classes, kernel_size=1)
+        self.reg_pred = nn.Conv2d(head_dim, self.num_anchors * 4, kernel_size=1)
 
         if self.trainable:
             # init bias

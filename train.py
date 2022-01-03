@@ -13,9 +13,9 @@ import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from config.yolo_config import yolo_config
 from data.voc import VOCDetection
 from data.coco import COCODataset
-from data import config
 from data.transforms import TrainTransforms, ColorTransforms, ValTransforms
 
 from utils import distributed_utils
@@ -23,6 +23,8 @@ from utils import create_labels
 from utils.com_flops_params import FLOPs_and_Params
 from utils.misc import detection_collate
 from utils.misc import ModelEMA
+
+from models.yolo import build_model
 
 from evaluator.cocoapi_evaluator import COCOAPIEvaluator
 from evaluator.vocapi_evaluator import VOCAPIEvaluator
@@ -65,8 +67,12 @@ def parse_args():
                         help='visualize target.')
 
     # model
-    parser.add_argument('-v', '--version', default='yolov1',
+    parser.add_argument('-m', '--model', default='yolov1',
                         help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+    parser.add_argument('--conf_thresh', default=0.05, type=float,
+                        help='NMS threshold')
+    parser.add_argument('--nms_thresh', default=0.6, type=float,
+                        help='NMS threshold')
 
     # dataset
     parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
@@ -107,7 +113,7 @@ def train():
     print("----------------------------------------------------------")
 
     # path to save model
-    path_to_save = os.path.join(args.save_folder, args.dataset, args.version)
+    path_to_save = os.path.join(args.save_folder, args.dataset, args.model)
     os.makedirs(path_to_save, exist_ok=True)
 
     # set distributed
@@ -126,36 +132,11 @@ def train():
     else:
         device = torch.device("cpu")
 
-    model_name = args.version
+    model_name = args.model
     print('Model: ', model_name)
 
-    # load model and config file
-    if model_name == 'yolov1':
-        from models.yolov1 import YOLOv1 as yolo_net
-
-    elif model_name == 'yolov2':
-        from models.yolov2 import YOLOv2 as yolo_net
-
-    elif model_name == 'yolov3':
-        from models.yolov3 import YOLOv3 as yolo_net
-
-    elif model_name == 'yolov4':
-        from models.yolov4 import YOLOv4 as yolo_net
-
-    elif model_name == 'yolo_tr':
-        from models.yolo_tr import YOLOTR as yolo_net
-
-    elif model_name == 'yolo_tiny':
-        from models.yolo_tiny import YOLOTiny as yolo_net
-
-    elif model_name == 'yolo_nano':
-        from models.yolo_nano import YOLONano as yolo_net
-
-    else:
-        print('Unknown model name...')
-        exit(0)
-    # YOLO Config
-    cfg = config.yolo_cfg
+    # YOLO config
+    cfg = yolo_config[args.model]
     train_size = val_size = args.img_size
 
     # dataset and evaluator
@@ -168,12 +149,11 @@ def train():
     print("----------------------------------------------------------")
 
     # build model
-    anchor_size = None if args.version in ['yolov1'] else cfg['anchor_size']
-    net = yolo_net(device=device, 
-                   img_size=train_size, 
-                   num_classes=num_classes, 
-                   trainable=True, 
-                   anchor_size=anchor_size)
+    net = build_model(args=args, 
+                      cfg=cfg, 
+                      device=device, 
+                      num_classes=num_classes, 
+                      trainable=True)
     model = net
 
     # SyncBatchNorm
@@ -277,7 +257,7 @@ def train():
                                     img_size=train_size, 
                                     strides=net.stride, 
                                     label_lists=targets, 
-                                    anchor_size=anchor_size, 
+                                    anchor_size=cfg["anchor_size"], 
                                     multi_anchor=args.multi_anchor,
                                     center_sample=args.center_sample)
             # to device
@@ -340,7 +320,7 @@ def train():
                 print('No evaluator ...')
                 print('Saving state, epoch:', epoch + 1)
                 torch.save(model_eval.state_dict(), os.path.join(path_to_save, 
-                            args.version + '_' + repr(epoch + 1) + '.pth'))  
+                            args.model + '_' + repr(epoch + 1) + '.pth'))  
                 print('Keep training ...')
             else:
                 print('eval ...')
@@ -366,7 +346,7 @@ def train():
                         # save model
                         print('Saving state, epoch:', epoch + 1)
                         torch.save(model_eval.state_dict(), os.path.join(path_to_save, 
-                                    args.version + '_' + repr(epoch + 1) + '_' + str(round(best_map*100, 2)) + '.pth'))  
+                                    args.model + '_' + repr(epoch + 1) + '_' + str(round(best_map*100, 2)) + '.pth'))  
                     if args.tfboard:
                         if args.dataset == 'voc':
                             tblogger.add_scalar('07test/mAP', evaluator.map, epoch)

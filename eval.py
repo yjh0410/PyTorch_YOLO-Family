@@ -3,13 +3,13 @@ import os
 
 import torch
 
+from config.yolo_config import yolo_config
+from data.transforms import ValTransforms
+from models.yolo import build_model
+from utils.misc import TestTimeAugmentation
+
 from evaluator.vocapi_evaluator import VOCAPIEvaluator
 from evaluator.cocoapi_evaluator import COCOAPIEvaluator
-
-from data.transforms import ValTransforms
-from data import config
-
-from utils.misc import TestTimeAugmentation
 
 
 parser = argparse.ArgumentParser(description='YOLO Detection')
@@ -19,7 +19,7 @@ parser.add_argument('-size', '--img_size', default=640, type=int,
 parser.add_argument('--cuda', action='store_true', default=False,
                     help='Use cuda')
 # model
-parser.add_argument('-v', '--version', default='yolov1',
+parser.add_argument('-m', '--model', default='yolov1',
                     help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
 parser.add_argument('--weight', type=str,
                     default='weights/', 
@@ -38,7 +38,6 @@ parser.add_argument('-tta', '--test_aug', action='store_true', default=False,
                     help='use test augmentation.')
 
 args = parser.parse_args()
-
 
 
 def voc_test(model, data_dir, device, img_size):
@@ -105,49 +104,18 @@ if __name__ == '__main__':
     else:
         device = torch.device("cpu")
 
-
-    # model
-    model_name = args.version
-    print('Model: ', model_name)
-
-    # load model and config file
-    if model_name == 'yolov1':
-        from models.yolov1 import YOLOv1 as yolo_net
-
-    elif model_name == 'yolov2':
-        from models.yolov2 import YOLOv2 as yolo_net
-
-    elif model_name == 'yolov3':
-        from models.yolov3 import YOLOv3 as yolo_net
-
-    elif model_name == 'yolov4':
-        from models.yolov4 import YOLOv4 as yolo_net
-
-    elif model_name == 'yolo_tiny':
-        from models.yolo_tiny import YOLOTiny as yolo_net
-
-    elif model_name == 'yolo_nano':
-        from models.yolo_nano import YOLONano as yolo_net
-
-    else:
-        print('Unknown model name...')
-        exit(0)
     # YOLO Config
-    cfg = config.yolo_cfg
-
+    cfg = yolo_config[args.model]
     # build model
-    anchor_size = cfg['anchor_size']
-    model = yolo_net(device=device, 
-                   img_size=args.img_size, 
-                   num_classes=num_classes, 
-                   trainable=False,
-                   conf_thresh=args.conf_thresh,
-                   nms_thresh=args.nms_thresh, 
-                   anchor_size=anchor_size)
+    model = build_model(args=args, 
+                        cfg=cfg, 
+                        device=device, 
+                        num_classes=num_classes, 
+                        trainable=False)
 
     # load weight
-    model.load_state_dict(torch.load(args.weight, map_location=device), strict=False)
-    model.to(device).eval()
+    model.load_state_dict(torch.load(args.weight, map_location='cpu'), strict=False)
+    model = model.to(device).eval()
     print('Finished loading model!')
 
     # TTA

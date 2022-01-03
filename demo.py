@@ -5,9 +5,10 @@ import time
 import numpy as np
 import torch
 
+from config.yolo_config import yolo_config
 from data.coco import coco_class_labels, coco_class_index
 from data.transforms import ValTransforms
-from data import config
+from models.yolo import build_model
 
 
 
@@ -23,13 +24,15 @@ def parse_args():
                         type=str, help='The path to image files')
     parser.add_argument('--path_to_vid', default='data/demo/videos/',
                         type=str, help='The path to video files')
+    parser.add_argument('--path_to_save', default='det_resilts/images/',
+                        type=str, help='The path to save the detection results')
     parser.add_argument('--path_to_saveVid', default='data/video/result.avi',
                         type=str, help='The path to save the detection results video')
     parser.add_argument('-vs', '--visual_threshold', default=0.3,
                         type=float, help='visual threshold')
 
     # model
-    parser.add_argument('-v', '--version', default='yolov1',
+    parser.add_argument('-m', '--model', default='yolov1',
                         help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
     parser.add_argument('--num_queries', type=int, default=4, 
                         help='number of queris of YOLOQ')
@@ -98,7 +101,7 @@ def detect(net,
                 img_h, img_w = frame.shape[:2]
                 size = np.array([[img_w, img_h, img_w, img_h]])
                 # prepare
-                x, _, _, scale, offset = transform(frame)[0]
+                x, _, _, scale, offset = transform(frame)
                 x = x.unsqueeze(0).to(device)
                 # inference
                 t0 = time.time()
@@ -132,7 +135,7 @@ def detect(net,
             size = np.array([[img_w, img_h, img_w, img_h]])
             
             # prepare
-            x, _, _, scale, offset = transform(img)[0]
+            x, _, _, scale, offset = transform(img)
             x = x.unsqueeze(0).to(device)
             # inference
             t0 = time.time()
@@ -173,7 +176,7 @@ def detect(net,
                 img_h, img_w = frame.shape[:2]
                 size = np.array([[img_w, img_h, img_w, img_h]])
                 # prepare
-                x, _, _, scale, offset = transform(frame)[0]
+                x, _, _, scale, offset = transform(frame)
                 x = x.unsqueeze(0).to(device)
                 # inference
                 t0 = time.time()
@@ -213,48 +216,18 @@ def run():
     else:
         device = torch.device("cpu")
 
-    model_name = args.version
-    print('Model: ', model_name)
-
-
-    # load model and config file
-    if model_name == 'yolov1':
-        from models.yolov1 import YOLOv1 as yolo_net
-
-    elif model_name == 'yolov2':
-        from models.yolov2 import YOLOv2 as yolo_net
-
-    elif model_name == 'yolov3':
-        from models.yolov3 import YOLOv3 as yolo_net
-
-    elif model_name == 'yolov4':
-        from models.yolov4 import YOLOv4 as yolo_net
-
-    elif model_name == 'yolo_tiny':
-        from models.yolo_tiny import YOLOTiny as yolo_net
-
-    elif model_name == 'yolo_nano':
-        from models.yolo_nano import YOLONano as yolo_net
-
-    else:
-        print('Unknown model name...')
-        exit(0)
     # YOLO Config
-    cfg = config.yolo_cfg
-
+    cfg = yolo_config[args.model]
     # build model
-    anchor_size = cfg['anchor_size']
-    model = yolo_net(device=device, 
-                   img_size=args.img_size, 
-                   num_classes=80, 
-                   trainable=False,
-                   conf_thresh=args.conf_thresh,
-                   nms_thresh=args.nms_thresh, 
-                   anchor_size=anchor_size)
+    model = build_model(args=args, 
+                        cfg=cfg, 
+                        device=device, 
+                        num_classes=80, 
+                        trainable=False)
 
     # load weight
-    model.load_state_dict(torch.load(args.weight, map_location=device), strict=False)
-    model.to(device).eval()
+    model.load_state_dict(torch.load(args.weight, map_location='cpu'), strict=False)
+    model = model.to(device).eval()
     print('Finished loading model!')
 
     # run
@@ -265,7 +238,7 @@ def run():
             path_to_img=args.path_to_img,
             path_to_vid=args.path_to_vid,
             path_to_save=args.path_to_save,
-            thresh=args.visual_threshold)
+            vis_thresh=args.visual_threshold)
 
 
 if __name__ == '__main__':

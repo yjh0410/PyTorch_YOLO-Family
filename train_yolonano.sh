@@ -1,6 +1,6 @@
 python train.py \
         --cuda \
-        -v yolo_nano \
+        -m yolo_nano \
         -d coco \
         --root /mnt/share/ssd2/dataset \
         --batch_size 64 \

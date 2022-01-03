@@ -2,32 +2,39 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backbone import build_backbone
-from utils.modules import Conv, UpSample, ConvBlocks, DilatedEncoder
 from utils import box_ops
 from utils import loss
+
+from ..backbone import build_backbone
+from ..neck import build_neck
+from ..neck.conv_blocks import ConvBlocks
+from ..basic.conv import Conv 
+from ..basic.upsample import UpSample
 
 
 class YOLOv3(nn.Module):
     def __init__(self, 
-                 device, 
+                 cfg=None,
+                 device=None, 
                  img_size=640, 
                  num_classes=80, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.60, 
-                 anchor_size=None):
+                 nms_thresh=0.60):
 
         super(YOLOv3, self).__init__()
+        self.cfg = cfg
         self.device = device
         self.img_size = img_size
         self.num_classes = num_classes
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        anchor_size = cfg["anchor_size"]
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='d53', pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
+                                                                  pretrained=trainable)
         self.stride = strides
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
@@ -38,7 +45,7 @@ class YOLOv3(nn.Module):
         
         # head
         # P3/8-small
-        self.head_convblock_0 = DilatedEncoder(c5, c5//2) # ConvBlocks(c5, c5//2)
+        self.head_convblock_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2)
         self.head_conv_0 = Conv(c5//2, c4//2, k=1)
         self.head_upsample_0 = UpSample(scale_factor=2)
         self.head_conv_1 = Conv(c5//2, c5, k=3, p=1)

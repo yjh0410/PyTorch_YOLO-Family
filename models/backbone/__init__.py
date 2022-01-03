@@ -31,13 +31,13 @@ def build_backbone(model_name='r18', pretrained=False, img_size=224):
         model = cspdarknet53(pretrained=pretrained)
         feature_channels = [256, 512, 1024]
         strides = [8, 16, 32]
-    elif model_name == 'csp_dtiny':
+    elif model_name == 'cspd_tiny':
         print('Backbone: CSPDarkNet-Tiny ...')
         model = cspdarknet_tiny(pretrained=pretrained)
         feature_channels = [128, 256, 512]
         strides = [8, 16, 32]
-    elif model_name == 'sfnet':
-        print('Backbone: ShuffleNet ...')
+    elif model_name == 'sfnet_v2':
+        print('Backbone: ShuffleNet-V2 ...')
         model = shufflenetv2(pretrained=pretrained)
         feature_channels = [116, 232, 464]
         strides = [8, 16, 32]
