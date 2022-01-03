@@ -164,7 +164,7 @@ class YOLOv2(nn.Module):
         """reg_pred: [B, N, KA, 4]"""
         B = reg_pred.size(0)
         # txtytwth -> xywh, and normalize
-        xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
+        xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
         wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
         xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
         # xywh -> x1y1x2y2
