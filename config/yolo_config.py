@@ -84,7 +84,7 @@ yolo_config = {
         # backbone
         'backbone': 'vit_b',
         # neck
-        'neck': 'conv_blocks',
+        'neck': 'dilated_encoder',
         # anchor size: P5-640
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
