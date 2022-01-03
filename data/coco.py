@@ -189,7 +189,16 @@ class COCODataset(Dataset):
                 target_i_[:, 1] = (h * (target_i[:, 1]) + padh)
                 target_i_[:, 2] = (w * (target_i[:, 2]) + padw)
                 target_i_[:, 3] = (h * (target_i[:, 3]) + padh)     
-                
+                # check boxes
+                valid_tgt = []
+                for tgt in target_i_:
+                    x1, y1, x2, y2, label = tgt
+                    bw, bh = x2 - x1, y2 - y1
+                    if bw > 5. and bh > 5.:
+                        valid_tgt.append([x1, y1, x2, y2, label])
+                if len(valid_tgt) == 0:
+                    valid_tgt.append([0., 0., 0., 0., 0.])
+
                 mosaic_tg.append(target_i_)
         # check target
         if len(mosaic_tg) == 0:
