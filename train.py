@@ -37,7 +37,7 @@ def parse_args():
                         help='use cuda.')
     parser.add_argument('--batch_size', default=16, type=int, 
                         help='Batch size for training')
-    parser.add_argument('--lr', default=1e-3, type=float, 
+    parser.add_argument('--lr', default=2.5e-3, type=float, 
                         help='initial learning rate')
     parser.add_argument('--img_size', type=int, default=640,
                         help='The upper bound of warm-up')
