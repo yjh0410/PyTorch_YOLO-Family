@@ -30,8 +30,8 @@ In this project, you can enjoy:
 
 
 # Future work
-- Speed up the convergence.
-- Train YOLO with 4x schedule(48 epoch.), rather than 150 even more epochs.
+- Try to make my YOLO-v4 better.
+- Train my YOLOv1/YOLOv2 with ViT-Base (pretrained by MaskAutoencoder)
 
 # Weights
 You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and YOLO weights from the following links.
@@ -167,6 +167,14 @@ I will upload some visualization results:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4-640</th><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td></tr>
 </table></tbody>
+
+My YOLOv4 is worst than official YOLOv4.
+
+Maybe my CSPDarkNet-53 is not good.
+
+Maybe my Mosaic Augmentation is not good.
+
+Maybe my loss function is not good.
 
 # Dataset
 
