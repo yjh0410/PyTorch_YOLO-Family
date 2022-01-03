@@ -1,6 +1,6 @@
 from .spp import SPP
 from .dilated_encoder import DilatedEncoder
-from .conv_blocks import ConvBlocks
+from ..basic.conv import ConvBlocks
 
 
 def build_neck(model, in_ch, out_ch):

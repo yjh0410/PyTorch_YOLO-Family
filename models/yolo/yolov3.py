@@ -7,8 +7,7 @@ from utils import loss
 
 from ..backbone import build_backbone
 from ..neck import build_neck
-from ..neck.conv_blocks import ConvBlocks
-from ..basic.conv import Conv 
+from ..basic.conv import Conv, ConvBlocks
 from ..basic.upsample import UpSample
 
 
