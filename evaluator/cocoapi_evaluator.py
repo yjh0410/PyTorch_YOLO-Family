@@ -3,7 +3,7 @@ import tempfile
 import torch
 from data.coco import *
 try:
-    from pycocotools.coco import COCO
+    from pycocotools.cocoeval import COCOeval
 except:
     print("It seems that the COCOAPI is not installed.")
 
