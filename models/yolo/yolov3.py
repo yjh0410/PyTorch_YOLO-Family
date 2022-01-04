@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 
 from utils import box_ops
-from utils import loss
 
 from ..backbone import build_backbone
 from ..neck import build_neck
@@ -106,19 +105,19 @@ class YOLOv3(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS Baseline."""
+        """"Pure Python NMS YOLOv4."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
         y2 = dets[:, 3]  #ymax
 
-        areas = (x2 - x1) * (y2 - y1)                 # the size of bbox
-        order = scores.argsort()[::-1]                        # sort bounding boxes by decreasing order
+        areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]
 
-        keep = []                                             # store the final bounding boxes
+        keep = []
         while order.size > 0:
-            i = order[0]                                      #the index of the bbox with highest confidence
-            keep.append(i)                                    #save it to keep
+            i = order[0]
+            keep.append(i)
             # compute iou
             xx1 = np.maximum(x1[i], x1[order[1:]])
             yy1 = np.maximum(y1[i], y1[order[1:]])
@@ -171,8 +170,8 @@ class YOLOv3(nn.Module):
         return bboxes, scores, cls_inds
 
 
-    def forward(self, x, targets=None):
-        B = x.size(0)
+    @torch.no_grad()
+    def inference_single_image(self, x):
         KA = self.num_anchors
         C = self.num_classes
         # backbone
@@ -194,9 +193,9 @@ class YOLOv3(nn.Module):
         p3 = self.head_conv_4(p3)
 
         # det
-        pred_s = self.head_det_1(p3)
-        pred_m = self.head_det_2(p4)
-        pred_l = self.head_det_3(p5)
+        pred_s = self.head_det_1(p3)[0]
+        pred_m = self.head_det_2(p4)[0]
+        pred_l = self.head_det_3(p5)[0]
 
         preds = [pred_s, pred_m, pred_l]
         obj_pred_list = []
@@ -204,63 +203,113 @@ class YOLOv3(nn.Module):
         box_pred_list = []
 
         for i, pred in enumerate(preds):
-            # [B, KA*(1 + C + 4), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
-            obj_pred_i = pred[:, :KA, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-            # [B, KA*(1 + C + 4), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
-            cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-            # [B, KA*(1 + C + 4), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
-            reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
+            # [KA*(1 + C + 4), H, W] -> [KA*1, H, W] -> [H, W, KA*1] -> [HW*KA, 1]
+            obj_pred_i = pred[:KA, :, :].permute(1, 2, 0).contiguous().view(-1, 1)
+            # [KA*(1 + C + 4), H, W] -> [KA*C, H, W] -> [H, W, KA*C] -> [HW*KA, C]
+            cls_pred_i = pred[KA:KA*(1+C), :, :].permute(1, 2, 0).contiguous().view(-1, C)
+            # [KA*(1 + C + 4), H, W] -> [KA*4, H, W] -> [H, W, KA*4] -> [HW, KA, 4]
+            reg_pred_i = pred[KA*(1+C):, :, :].permute(1, 2, 0).contiguous().view(-1, KA, 4)
             # txtytwth -> xywh
-            xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
-            wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
-            xywh_pred_i = torch.cat([xy_pred_i, wh_pred_i], dim=-1).view(B, -1, 4)
-            # xywh -> x1y1x2y2
-            x1y1_pred_i = xywh_pred_i[..., :2] - xywh_pred_i[..., 2:] / 2
-            x2y2_pred_i = xywh_pred_i[..., :2] + xywh_pred_i[..., 2:] / 2
-            box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1)
+            xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+            wh_pred_i = reg_pred_i[None, ..., 2:].exp() * self.anchors_wh[i]
+            # xywh -> x1y1x2y2           
+            x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
+            x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
+            box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1)[0].view(-1, 4)
 
             obj_pred_list.append(obj_pred_i)
             cls_pred_list.append(cls_pred_i)
             box_pred_list.append(box_pred_i)
         
-        obj_pred = torch.cat(obj_pred_list, dim=1)
-        cls_pred = torch.cat(cls_pred_list, dim=1)
-        box_pred = torch.cat(box_pred_list, dim=1)
+        obj_pred = torch.cat(obj_pred_list, dim=0)
+        cls_pred = torch.cat(cls_pred_list, dim=0)
+        box_pred = torch.cat(box_pred_list, dim=0)
         
-        # train
-        if self.trainable:
-            # decode bbox: [B, HW*KA, 4]
-            x1y1x2y2_pred = (box_pred / self.img_size).view(-1, 4)
+        # normalize bbox
+        bboxes = torch.clamp(box_pred / self.img_size, 0., 1.)
+
+        # scores
+        scores = torch.sigmoid(obj_pred) * torch.softmax(cls_pred, dim=-1)
+
+        # to cpu
+        scores = scores.to('cpu').numpy()
+        bboxes = bboxes.to('cpu').numpy()
+
+        # post-process
+        bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
+
+        return bboxes, scores, cls_inds
+
+
+    def forward(self, x, targets=None):
+        if not self.trainable:
+            return self.inference_single_image(x)
+        else:
+            B = x.size(0)
+            KA = self.num_anchors
+            C = self.num_classes
+            # backbone
+            c3, c4, c5 = self.backbone(x)
+
+            # head
+            # p5/32
+            p5 = self.head_convblock_0(c5)
+            p5_up = self.head_upsample_0(self.head_conv_0(p5))
+            p5 = self.head_conv_1(p5)
+
+            # p4/16
+            p4 = self.head_convblock_1(torch.cat([c4, p5_up], dim=1))
+            p4_up = self.head_upsample_1(self.head_conv_2(p4))
+            p4 = self.head_conv_3(p4)
+
+            # P3/8
+            p3 = self.head_convblock_2(torch.cat([c3, p4_up], dim=1))
+            p3 = self.head_conv_4(p3)
+
+            # det
+            pred_s = self.head_det_1(p3)
+            pred_m = self.head_det_2(p4)
+            pred_l = self.head_det_3(p5)
+
+            preds = [pred_s, pred_m, pred_l]
+            obj_pred_list = []
+            cls_pred_list = []
+            box_pred_list = []
+
+            for i, pred in enumerate(preds):
+                # [B, KA*(1 + C + 4), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
+                obj_pred_i = pred[:, :KA, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
+                # [B, KA*(1 + C + 4), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
+                cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
+                # [B, KA*(1 + C + 4), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
+                reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
+                # txtytwth -> xywh
+                xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+                wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
+                # xywh -> x1y1x2y2
+                x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
+                x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
+                box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1).view(B, -1, 4)
+
+                obj_pred_list.append(obj_pred_i)
+                cls_pred_list.append(cls_pred_i)
+                box_pred_list.append(box_pred_i)
+            
+            obj_pred = torch.cat(obj_pred_list, dim=1)
+            cls_pred = torch.cat(cls_pred_list, dim=1)
+            box_pred = torch.cat(box_pred_list, dim=1)
+            
+            # normalize bbox
+            box_pred = box_pred / self.img_size
+
+            # compute giou between prediction bbox and target bbox
+            x1y1x2y2_pred = box_pred.view(-1, 4)
             x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
 
-            # giou: [B, HW*KA,]
+            # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
 
-            # we set giou as the target of the objectness prediction
-            targets = torch.cat([0.5 * (giou_pred.view(B, -1, 1).clone().detach() + 1.0), targets], dim=-1)
+            # we set giou as the target of the objectness
+            targets = torch.cat([0.5 * (giou_pred[..., None].clone().detach() + 1.0), targets], dim=-1)
 
-            # loss
-            obj_loss, cls_loss, reg_loss, total_loss = loss.loss(pred_obj=obj_pred,
-                                                                  pred_cls=cls_pred,
-                                                                  pred_giou=giou_pred,
-                                                                  targets=targets)
-
-            return obj_loss, cls_loss, reg_loss, total_loss
-
-        # test
-        else:
-            with torch.no_grad():
-                # batch size = 1
-                # [B, H*W*KA, C] -> [H*W*KA, C]
-                scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
-                # [B, H*W*KA, 4] -> [H*W*KA, 4]
-                bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
-
-                # to cpu
-                scores = scores.to('cpu').numpy()
-                bboxes = bboxes.to('cpu').numpy()
-
-                # post-process
-                bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
-
-                return bboxes, scores, cls_inds
+            return obj_pred, cls_pred, giou_pred, targets

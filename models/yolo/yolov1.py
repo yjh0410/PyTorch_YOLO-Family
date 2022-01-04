@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 
 from utils import box_ops
-from utils import loss
 
 from ..basic.conv import Conv 
 from ..neck import build_neck
@@ -96,7 +95,9 @@ class YOLOv1(nn.Module):
         # xywh -> x1y1x2y2
         x1y1_pred = xywh_pred[..., :2] - xywh_pred[..., 2:] / 2
         x2y2_pred = xywh_pred[..., :2] + xywh_pred[..., 2:] / 2
-        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1) * self.stride[0]
+        box_pred = torch.cat([x1y1_pred, x2y2_pred], dim=-1)
+        # rescale bbox
+        box_pred = box_pred * self.stride[0]
 
         return box_pred
 
@@ -108,13 +109,13 @@ class YOLOv1(nn.Module):
         x2 = dets[:, 2]  #xmax
         y2 = dets[:, 3]  #ymax
 
-        areas = (x2 - x1) * (y2 - y1)                 # the size of bbox
-        order = scores.argsort()[::-1]                        # sort bounding boxes by decreasing order
+        areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]
 
-        keep = []                                             # store the final bounding boxes
+        keep = []
         while order.size > 0:
-            i = order[0]                                      #the index of the bbox with highest confidence
-            keep.append(i)                                    #save it to keep
+            i = order[0]
+            keep.append(i)
             # compute iou
             xx1 = np.maximum(x1[i], x1[order[1:]])
             yy1 = np.maximum(y1[i], y1[order[1:]])
@@ -167,9 +168,8 @@ class YOLOv1(nn.Module):
         return bboxes, scores, cls_inds
 
 
-    def forward(self, x, targets=None):
-        B = x.size(0)
-        C = self.num_classes
+    @torch.no_grad()
+    def inference_single_image(self, x):
         # backbone
         x = self.backbone(x)[-1]
 
@@ -181,52 +181,72 @@ class YOLOv1(nn.Module):
         reg_feat = self.reg_feat(x)
 
         # pred
-        obj_pred = self.obj_pred(reg_feat)
-        cls_pred = self.cls_pred(cls_feat)
-        reg_pred = self.reg_pred(reg_feat)
+        obj_pred = self.obj_pred(reg_feat)[0]
+        cls_pred = self.cls_pred(cls_feat)[0]
+        reg_pred = self.reg_pred(reg_feat)[0]
 
-        # [B, 1, H, W] -> [B, H, W, 1] -> [B, H*W, 1]
-        obj_pred =obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-        # [B, C, H, W] -> [B, H, W, C] -> [B, H*W, C]
-        cls_pred =cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-        # [B, 4, H, W] -> [B, H, W, 4] -> [B, HW, 4]
-        reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 4)
-        box_pred = self.decode_bbox(reg_pred)
+        # [1, H, W] -> [1, HW] -> [HW, 1] -> [HW, 1]
+        obj_pred =obj_pred.flatten(1).permute(1, 0).contiguous()
+        # [C, H, W] -> [C, HW] -> [HW, C] -> [HW, C]
+        cls_pred =cls_pred.flatten(1).permute(1, 0).contiguous()
+        # [4, H, W] -> [4, HW] -> [HW, 4]
+        reg_pred = reg_pred.flatten(1).permute(1, 0).contiguous()
+        box_pred = self.decode_bbox(reg_pred[None])[0] # [B, HW, 4] -> [HW, 4]
+        # normalize bbox
+        bboxes = torch.clamp(box_pred / self.img_size, 0., 1.)
 
-        # train
-        if self.trainable:
-            # decode bbox: [B, HW*KA, 4]
-            x1y1x2y2_pred = (box_pred / self.img_size).view(-1, 4)
+        # scores
+        scores = torch.sigmoid(obj_pred) * torch.softmax(cls_pred, dim=-1)
+
+        # to cpu
+        scores = scores.to('cpu').numpy()
+        bboxes = bboxes.to('cpu').numpy()
+
+        # post-process
+        bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
+
+        return bboxes, scores, cls_inds
+
+
+    def forward(self, x, targets=None):
+        if not self.trainable:
+            return self.inference_single_image(x)
+        else:
+            B = x.size(0)
+            C = self.num_classes
+            # backbone
+            x = self.backbone(x)[-1]
+
+            # neck
+            x = self.neck(x)
+
+            # head
+            cls_feat = self.cls_feat(x)
+            reg_feat = self.reg_feat(x)
+
+            # pred
+            obj_pred = self.obj_pred(reg_feat)
+            cls_pred = self.cls_pred(cls_feat)
+            reg_pred = self.reg_pred(reg_feat)
+
+            # [B, 1, H, W] -> [B, 1, HW] -> [B, HW, 1]
+            obj_pred =obj_pred.flatten(2).permute(0, 2, 1).contiguous()
+            # [B, C, H, W] -> [B, C, HW] -> [B, HW, C]
+            cls_pred =cls_pred.flatten(2).permute(0, 2, 1).contiguous()
+            # [B, 4, H, W] -> [B, 4, HW] -> [B, HW, 4]
+            reg_pred = reg_pred.flatten(2).permute(0, 2, 1).contiguous()
+            box_pred = self.decode_bbox(reg_pred)
+            # normalize bbox
+            box_pred = box_pred / self.img_size
+
+            # compute giou between prediction bbox and target bbox
+            x1y1x2y2_pred = box_pred.view(-1, 4)
             x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
 
-            # giou: [B, HW*KA,]
+            # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
 
-            # we set giou as the target of the objectness prediction
-            targets = torch.cat([0.5 * (giou_pred.view(B, -1, 1).clone().detach() + 1.0), targets], dim=-1)
+            # we set giou as the target of the objectness
+            targets = torch.cat([0.5 * (giou_pred[..., None].clone().detach() + 1.0), targets], dim=-1)
 
-            # loss
-            obj_loss, cls_loss, reg_loss, total_loss = loss.loss(pred_obj=obj_pred,
-                                                                  pred_cls=cls_pred,
-                                                                  pred_giou=giou_pred,
-                                                                  targets=targets)
-
-            return obj_loss, cls_loss, reg_loss, total_loss
-
-        # test
-        else:
-            with torch.no_grad():
-                # batch size = 1
-                # [B, H*W*KA, C] -> [H*W*KA, C]
-                scores = torch.sigmoid(obj_pred)[0] * torch.softmax(cls_pred, dim=-1)[0]
-                # [B, H*W*KA, 4] -> [H*W*KA, 4]
-                bboxes = torch.clamp((box_pred / self.img_size)[0], 0., 1.)
-
-                # to cpu
-                scores = scores.to('cpu').numpy()
-                bboxes = bboxes.to('cpu').numpy()
-
-                # post-process
-                bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
-
-                return bboxes, scores, cls_inds
+            return obj_pred, cls_pred, giou_pred, targets

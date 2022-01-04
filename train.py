@@ -21,8 +21,10 @@ from data.transforms import TrainTransforms, ColorTransforms, ValTransforms
 from utils import distributed_utils
 from utils import create_labels
 from utils.com_flops_params import FLOPs_and_Params
+from utils.criterion import build_criterion
 from utils.misc import detection_collate
 from utils.misc import ModelEMA
+from utils.criterion import build_criterion
 
 from models.yolo import build_model
 
@@ -80,6 +82,14 @@ def parse_args():
     parser.add_argument('-d', '--dataset', default='coco',
                         help='coco, widerface, crowdhuman')
     
+    # Loss
+    parser.add_argument('--loss_obj_weight', default=1.0, type=float,
+                        help='weight of obj loss')
+    parser.add_argument('--loss_cls_weight', default=1.0, type=float,
+                        help='weight of cls loss')
+    parser.add_argument('--loss_reg_weight', default=1.0, type=float,
+                        help='weight of reg loss')
+
     # train trick
     parser.add_argument('--no_warmup', action='store_true', default=False,
                         help='do not use warmup')
@@ -143,6 +153,8 @@ def train():
     dataset, evaluator, num_classes = build_dataset(args, train_size, val_size, device)
     # dataloader
     dataloader = build_dataloader(args, dataset, detection_collate)
+    # criterioin
+    criterion = build_criterion(args, num_classes)
     
     print('Training model on:', args.dataset)
     print('The dataset size:', len(dataset))
@@ -264,13 +276,16 @@ def train():
             images = images.to(device)
             targets = targets.to(device)
 
-            # forward
-            obj_loss, cls_loss, reg_loss, total_loss = model(images, targets=targets)
+            # inference
+            pred_obj, pred_cls, pred_giou, targets = model(images, targets=targets)
+
+            # compute loss
+            loss_obj, loss_cls, loss_reg, total_loss = criterion(pred_obj, pred_cls, pred_giou, targets)
 
             loss_dict = dict(
-                obj_loss=obj_loss,
-                cls_loss=cls_loss,
-                reg_loss=reg_loss,
+                loss_obj=loss_obj,
+                loss_cls=loss_cls,
+                loss_reg=loss_reg,
                 total_loss=total_loss
             )
             loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
@@ -294,9 +309,9 @@ def train():
             if iter_i % 10 == 0:
                 if args.tfboard:
                     # viz loss
-                    tblogger.add_scalar('obj loss',  loss_dict_reduced['obj_loss'].item(),  ni)
-                    tblogger.add_scalar('cls loss',  loss_dict_reduced['cls_loss'].item(),  ni)
-                    tblogger.add_scalar('reg loss',  loss_dict_reduced['reg_loss'].item(),  ni)
+                    tblogger.add_scalar('loss obj',  loss_dict_reduced['loss_obj'].item(),  ni)
+                    tblogger.add_scalar('loss cls',  loss_dict_reduced['loss_cls'].item(),  ni)
+                    tblogger.add_scalar('loss reg',  loss_dict_reduced['loss_reg'].item(),  ni)
                 
                 t1 = time.time()
                 print('[Epoch %d/%d][Iter %d/%d][lr %.6f][Loss: obj %.2f || cls %.2f || reg %.2f || size %d || time: %.2f]'
@@ -305,9 +320,9 @@ def train():
                            iter_i, 
                            epoch_size, 
                            tmp_lr,
-                           loss_dict['obj_loss'].item(), 
-                           loss_dict['cls_loss'].item(), 
-                           loss_dict['reg_loss'].item(), 
+                           loss_dict['loss_obj'].item(), 
+                           loss_dict['loss_cls'].item(), 
+                           loss_dict['loss_reg'].item(), 
                            train_size, 
                            t1-t0),
                         flush=True)
