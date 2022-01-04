@@ -4,6 +4,7 @@ python train.py \
         -m yolov2 \
         --root /mnt/share/ssd2/dataset \
         --batch_size 16 \
+        --lr 0.001 \
         --img_size 640 \
         --max_epoch 200 \
         --lr_epoch 100 150 \
