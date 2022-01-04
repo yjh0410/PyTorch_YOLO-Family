@@ -21,7 +21,6 @@ class MSEWithLogitsLoss(nn.Module):
             # batch_size = logits.size(0)
             # loss = loss.sum() / batch_size
             loss = loss.sum() / target_pos.sum().clamp(1.0)
-            loss = loss.mean()
 
         elif self.reduction == 'sum':
             loss = loss.sum()
