@@ -18,9 +18,7 @@ class MSEWithLogitsLoss(nn.Module):
         loss = pos_loss + neg_loss
 
         if self.reduction == 'mean':
-            # batch_size = logits.size(0)
-            # loss = loss.sum() / batch_size
-            loss = loss.sum() / target_pos.sum().clamp(1.0)
+            loss = loss.mean()
 
         elif self.reduction == 'sum':
             loss = loss.sum()
@@ -36,7 +34,7 @@ class Criterion(nn.Module):
         self.loss_cls_weight = loss_cls_weight
         self.loss_reg_weight = loss_reg_weight
 
-        self.obj_loss_f = MSEWithLogitsLoss(reduction='mean')
+        self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
         self.cls_loss_f = nn.CrossEntropyLoss(reduction='none')
         self.reg_loss_f = None
 
@@ -106,10 +104,10 @@ class Criterion(nn.Module):
 
     def forward(self, pred_obj, pred_cls, pred_giou, targets):
         """
-            pred_obj: (Tensor) [B, HW, C]
-            pred_cls: (Tensor) [B, HW, 2]
-            pred_giou: (Tensor) [B, HW, 2]
-            targets: (Tensor) [B, HW, C+2+2+1]
+            pred_obj: (Tensor) [B, HW, 1]
+            pred_cls: (Tensor) [B, HW, C]
+            pred_giou: (Tensor) [B, HW,]
+            targets: (Tensor) [B, HW, 1+1++1+4]
         """
         # groundtruth
         target_obj = targets[..., 0].float()  # [B, HW,]
