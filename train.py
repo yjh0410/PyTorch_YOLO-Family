@@ -89,6 +89,9 @@ def parse_args():
                         help='weight of cls loss')
     parser.add_argument('--loss_reg_weight', default=1.0, type=float,
                         help='weight of reg loss')
+    parser.add_argument('--scale_loss', default='batch',
+                        help='batch: scale loss by batch size; '
+                             'pos: scale loss by number of positive samples')
 
     # train trick
     parser.add_argument('--no_warmup', action='store_true', default=False,
