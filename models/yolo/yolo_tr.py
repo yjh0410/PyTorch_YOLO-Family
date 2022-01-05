@@ -18,7 +18,8 @@ class YOLOTR(nn.Module):
                  num_classes=20, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.6):
+                 nms_thresh=0.6,
+                 center_sample=False):
         super(YOLOTR, self).__init__()
         self.cfg = cfg
         self.device = device
@@ -27,6 +28,7 @@ class YOLOTR(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        self.center_sample = center_sample
         self.anchor_size = torch.tensor(cfg["anchor_size"])
         self.num_anchors = len(cfg["anchor_size"])
 
@@ -163,8 +165,12 @@ class YOLOTR(nn.Module):
     def decode_bbox(self, reg_pred):
         """reg_pred: [B, N, KA, 4]"""
         B = reg_pred.size(0)
-        # txtytwth -> xywh, and normalize
-        xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
+        # txty -> cxcy
+        if self.center_sample:
+            xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
+        else:
+            xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
+        # twth -> wh
         wh_pred = reg_pred[..., 2:].exp() * self.anchor_wh
         xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1).view(B, -1, 4)
         # xywh -> x1y1x2y2
@@ -253,7 +259,7 @@ class YOLOTR(nn.Module):
 
             # compute giou between prediction bbox and target bbox
             x1y1x2y2_pred = box_pred.view(-1, 4)
-            x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
+            x1y1x2y2_gt = targets[..., -5:-1].view(-1, 4)
 
             # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)

@@ -17,7 +17,8 @@ class YOLOv1(nn.Module):
                  num_classes=20, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.6):
+                 nms_thresh=0.6,
+                 center_sample=False):
         super(YOLOv1, self).__init__()
         self.cfg = cfg
         self.device = device
@@ -26,6 +27,7 @@ class YOLOv1(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
+        self.center_sample = center_sample
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg['backbone'], 
@@ -89,7 +91,12 @@ class YOLOv1(nn.Module):
 
     def decode_bbox(self, reg_pred):
         """reg_pred: [B, N, 4]"""
-        xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
+        # txty -> xy
+        if self.center_sample:
+            xy_pred = reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy
+        else:
+            xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
+        # twth -> wh
         wh_pred = reg_pred[..., 2:].exp()
         xywh_pred = torch.cat([xy_pred, wh_pred], dim=-1)
         # xywh -> x1y1x2y2
@@ -241,7 +248,7 @@ class YOLOv1(nn.Module):
 
             # compute giou between prediction bbox and target bbox
             x1y1x2y2_pred = box_pred.view(-1, 4)
-            x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
+            x1y1x2y2_gt = targets[..., -5:-1].view(-1, 4)
 
             # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)

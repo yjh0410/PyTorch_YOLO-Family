@@ -24,6 +24,8 @@ parser.add_argument('--conf_thresh', default=0.1, type=float,
                     help='confidence threshold')
 parser.add_argument('--nms_thresh', default=0.45, type=float,
                     help='NMS threshold')
+parser.add_argument('--center_sample', action='store_true', default=False,
+                    help='center sample trick.')
 # data root
 parser.add_argument('--root', default='/mnt/share/ssd2/dataset',
                     help='data root')

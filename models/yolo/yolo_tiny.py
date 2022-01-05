@@ -19,7 +19,8 @@ class YOLOTiny(nn.Module):
                  num_classes=80, 
                  trainable=False, 
                  conf_thresh=0.001, 
-                 nms_thresh=0.60):
+                 nms_thresh=0.60,
+                 center_sample=False):
         super(YOLOTiny, self).__init__()
         self.cfg = cfg
         self.device = device
@@ -28,11 +29,12 @@ class YOLOTiny(nn.Module):
         self.trainable = trainable
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
-        anchor_size = cfg["anchor_size"]
+        self.center_sample = center_sample
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name='csp_dtiny', pretrained=trainable)
         self.stride = strides
+        anchor_size = cfg["anchor_size"]
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
         c3, c4, c5 = feature_channels
@@ -213,8 +215,12 @@ class YOLOTiny(nn.Module):
             cls_pred_i = pred[KA:KA*(1+C), :, :].permute(1, 2, 0).contiguous().view(-1, C)
             # [KA*(1 + C + 4), H, W] -> [KA*4, H, W] -> [H, W, KA*4] -> [HW, KA, 4]
             reg_pred_i = pred[KA*(1+C):, :, :].permute(1, 2, 0).contiguous().view(-1, KA, 4)
-            # txtytwth -> xywh
-            xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+            # txty -> xy
+            if self.center_sample:
+                xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+            else:
+                xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+            # twth -> wh
             wh_pred_i = reg_pred_i[None, ..., 2:].exp() * self.anchors_wh[i]
             # xywh -> x1y1x2y2           
             x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
@@ -292,8 +298,12 @@ class YOLOTiny(nn.Module):
                 cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
                 # [B, KA*(1 + C + 4), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
                 reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
-                # txtytwth -> xywh
-                xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+                # txty -> xy
+                if self.center_sample:
+                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+                else:
+                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+                # twth -> wh
                 wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
                 # xywh -> x1y1x2y2
                 x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
@@ -313,7 +323,7 @@ class YOLOTiny(nn.Module):
 
             # compute giou between prediction bbox and target bbox
             x1y1x2y2_pred = box_pred.view(-1, 4)
-            x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
+            x1y1x2y2_gt = targets[..., -5:-1].view(-1, 4)
 
             # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)

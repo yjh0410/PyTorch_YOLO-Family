@@ -17,7 +17,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolov2':
         print('Build YOLOv2 ...')
         model = YOLOv2(cfg=cfg,
@@ -26,7 +27,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolov3':
         print('Build YOLOv3 ...')
         model = YOLOv3(cfg=cfg,
@@ -35,7 +37,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolov3_spp':
         print('Build YOLOv3SPP ...')
         model = YOLOv3(cfg=cfg,
@@ -44,7 +47,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolov3_de':
         print('Build YOLOv3DE ...')
         model = YOLOv3(cfg=cfg,
@@ -53,7 +57,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolov4':
         print('Build YOLOv3SPP ...')
         model = YOLOv4(cfg=cfg,
@@ -62,7 +67,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolo_tiny':
         print('Build YOLO-Tiny ...')
         model = YOLOTiny(cfg=cfg,
@@ -71,7 +77,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolo_nano':
         print('Build YOLO-Nano ...')
         model = YOLONano(cfg=cfg,
@@ -80,7 +87,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     elif args.model == 'yolo_tr':
         print('Build YOLO-TR ...')
         model = YOLOTR(cfg=cfg,
@@ -89,6 +97,7 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         num_classes=num_classes, 
                         trainable=trainable,
                         conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh)
+                        nms_thresh=args.nms_thresh,
+                        center_sample=args.center_sample)
     
     return model

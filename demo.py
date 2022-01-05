@@ -44,6 +44,8 @@ def parse_args():
                         help='NMS threshold')
     parser.add_argument('--nms_thresh', default=0.45, type=float,
                         help='NMS threshold')
+    parser.add_argument('--center_sample', action='store_true', default=False,
+                        help='center sample trick.')
     
     return parser.parse_args()
                     
