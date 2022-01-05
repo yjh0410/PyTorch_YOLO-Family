@@ -12,6 +12,5 @@ python train.py \
         --multi_scale_range 10 20 \
         --scale_loss pos \
         --center_sample \
-        --no_warmup \
         --ema
                 
