@@ -20,7 +20,8 @@ parser.add_argument('--cuda', action='store_true', default=False,
                     help='Use cuda')
 # model
 parser.add_argument('-m', '--model', default='yolov1',
-                    help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                    help='yolov1, yolov2, yolov3, yolov3_spp, yolov3_de, '
+                            'yolov4, yolo_tiny, yolo_nano')
 parser.add_argument('--weight', type=str,
                     default='weights/', 
                     help='Trained state_dict file path to open')

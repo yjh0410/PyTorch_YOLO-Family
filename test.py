@@ -29,7 +29,8 @@ parser.add_argument('--save_folder', default='det_results/', type=str,
                     help='Dir to save results')
 # model
 parser.add_argument('-m', '--model', default='yolov1',
-                    help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                    help='yolov1, yolov2, yolov3, yolov3_spp, yolov3_de, '
+                            'yolov4, yolo_tiny, yolo_nano')
 parser.add_argument('--weight', default='weight/',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--conf_thresh', default=0.1, type=float,

@@ -24,7 +24,7 @@ def parse_args():
                         type=str, help='The path to image files')
     parser.add_argument('--path_to_vid', default='data/demo/videos/',
                         type=str, help='The path to video files')
-    parser.add_argument('--path_to_save', default='det_resilts/images/',
+    parser.add_argument('--path_to_save', default='det_results/images/',
                         type=str, help='The path to save the detection results')
     parser.add_argument('--path_to_saveVid', default='data/video/result.avi',
                         type=str, help='The path to save the detection results video')
@@ -33,7 +33,8 @@ def parse_args():
 
     # model
     parser.add_argument('-m', '--model', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                        help='yolov1, yolov2, yolov3, yolov3_spp, yolov3_de, '
+                             'yolov4, yolo_tiny, yolo_nano')
     parser.add_argument('--num_queries', type=int, default=4, 
                         help='number of queris of YOLOQ')
     parser.add_argument('--weight', default='weights/',

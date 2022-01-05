@@ -1,7 +1,7 @@
 python train.py \
         --cuda \
         -d coco \
-        -m yolov3 \
+        -m yolov3_spp \
         --root /mnt/share/ssd2/dataset \
         --batch_size 16 \
         --lr 0.001 \

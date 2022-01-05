@@ -17,7 +17,8 @@ from models.yolo import build_model
 parser = argparse.ArgumentParser(description='Benchmark')
 # Model
 parser.add_argument('-m', '--model', default='yolov1',
-                    help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                    help='yolov1, yolov2, yolov3, yolov3_spp, yolov3_de, '
+                            'yolov4, yolo_tiny, yolo_nano')
 parser.add_argument('--fuse_conv_bn', action='store_true', default=False,
                     help='fuse conv and bn')
 parser.add_argument('--conf_thresh', default=0.1, type=float,

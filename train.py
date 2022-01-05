@@ -70,7 +70,8 @@ def parse_args():
 
     # model
     parser.add_argument('-m', '--model', default='yolov1',
-                        help='yolov1, yolov2, yolov3, yolov4, yolo_tiny, yolo_nano')
+                        help='yolov1, yolov2, yolov3, yolov3_spp, yolov3_de, '
+                             'yolov4, yolo_tiny, yolo_nano')
     parser.add_argument('--conf_thresh', default=0.001, type=float,
                         help='NMS threshold')
     parser.add_argument('--nms_thresh', default=0.6, type=float,
