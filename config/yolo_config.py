@@ -50,7 +50,7 @@ yolo_config = {
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]]
     },
-    'yolov4': {
+    'yolov4_exp': {
         # backbone
         'backbone': 'cspd53',
         # neck
@@ -96,6 +96,7 @@ yolo_config = {
         'depth': 0.33,
         'width': 0.5,
         'depthwise': False,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_s',
         # neck
@@ -110,6 +111,7 @@ yolo_config = {
         'depth': 0.67,
         'width': 0.75,
         'depthwise': False,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_m',
         # neck
@@ -124,6 +126,7 @@ yolo_config = {
         'depth': 1.0,
         'width': 1.0,
         'depthwise': False,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_l',
         # neck
@@ -138,6 +141,7 @@ yolo_config = {
         'depth': 1.33,
         'width': 1.25,
         'depthwise': False,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_x',
         # neck
@@ -152,6 +156,7 @@ yolo_config = {
         'depth': 0.33,
         'width': 0.375,
         'depthwise': False,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_tiny',
         # neck
@@ -166,6 +171,7 @@ yolo_config = {
         'depth': 0.33,
         'width': 0.25,
         'depthwise': True,
+        'act': 'silu',
         # backbone
         'backbone': 'yolox_csp_nano',
         # neck

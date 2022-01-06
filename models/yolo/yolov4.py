@@ -49,22 +49,26 @@ class YOLOv4(nn.Module):
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # head
-        self.head_conv_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2)  # 10
+        self.head_conv_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2, act=cfg['act'])  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=nblocks, shortcut=False, \
+                                        depthwise=cfg['depthwise'], act=cfg['act'])
 
         # P3/8-small
-        self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
+        self.head_conv_1 = Conv(c4, c4//2, k=1, act=cfg['act'])  # 14
         self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=nblocks, shortcut=False, \
+                                        depthwise=cfg['depthwise'], act=cfg['act'])
 
         # P4/16-medium
-        self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
-        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2, act=cfg['act'])
+        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=nblocks, shortcut=False, \
+                                        depthwise=cfg['depthwise'], act=cfg['act'])
 
         # P8/32-large
-        self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
-        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2, act=cfg['act'])
+        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=nblocks, shortcut=False, \
+                                        depthwise=cfg['depthwise'], act=cfg['act'])
 
         # det conv
         self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)

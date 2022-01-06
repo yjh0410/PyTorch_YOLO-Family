@@ -148,9 +148,10 @@ def cspdarknet53(pretrained=False, **kwargs):
     """
     model = CSPDarknet53()
     if pretrained:
+        print('Loading the pretrained model ...')
         path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        print('Loading the cspdarknet53 ...')
-        model.load_state_dict(torch.load(path_to_dir + '/weights/cspdarknet53/cspdarknet53.pth'), strict=False)
+        checkpoint = torch.load(path_to_dir + '/weights/cspdarknet53/cspdarknet53.pth', map_location='cpu')
+        model.load_state_dict(checkpoint, strict=False)
     return model
 
 
@@ -162,9 +163,10 @@ def cspdarknet_tiny(pretrained=False, **kwargs):
     """
     model = CSPDarknetTiny()
     if pretrained:
+        print('Loading the pretrained model ...')
         path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        print('Loading the cspdarknet_tiny ...')
-        model.load_state_dict(torch.load(path_to_dir + '/weights/cspdarknet_tiny/cspdarknet_tiny.pth'), strict=False)
+        checkpoint = torch.load(path_to_dir + '/weights/cspdarknet_tiny/cspdarknet_tiny.pth', map_location='cpu')
+        model.load_state_dict(checkpoint, strict=False)
     return model
 
 

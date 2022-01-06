@@ -146,9 +146,6 @@ def train():
     else:
         device = torch.device("cpu")
 
-    model_name = args.model
-    print('Model: ', model_name)
-
     # YOLO config
     cfg = yolo_config[args.model]
     train_size = val_size = args.img_size

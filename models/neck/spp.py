@@ -9,19 +9,44 @@ class SPP(nn.Module):
     """
         Spatial Pyramid Pooling
     """
-    def __init__(self, c1, c2, e=0.5):
+    def __init__(self, c1, c2, e=0.5, kernel_sizes=[5, 9, 13], act='lrelu'):
         super(SPP, self).__init__()
         c_ = int(c1 * e)
-        self.cv1 = Conv(c1, c_, k=1)
-        self.cv2 = Conv(c_*4, c2, k=1)
+        self.cv1 = Conv(c1, c_, k=1, act=act)
+        self.m = nn.ModuleList(
+            [
+                nn.MaxPool2d(kernel_size=k, stride=1, padding=k // 2)
+                for k in kernel_sizes
+            ]
+        )
+        
+        self.cv2 = Conv(c_*(len(kernel_sizes) + 1), c2, k=1, act=act)
 
     def forward(self, x):
         x = self.cv1(x)
-        x_1 = torch.nn.functional.max_pool2d(x, 5, stride=1, padding=2)
-        x_2 = torch.nn.functional.max_pool2d(x, 9, stride=1, padding=4)
-        x_3 = torch.nn.functional.max_pool2d(x, 13, stride=1, padding=6)
-        x = torch.cat([x, x_1, x_2, x_3], dim=1)
+        x = torch.cat([x] + [m(x) for m in self.m], dim=1)
         x = self.cv2(x)
 
         return x
 
+
+class SPPBlock(nn.Module):
+    """
+        Spatial Pyramid Pooling Block
+    """
+    def __init__(self, c1, c2, e=0.5, kernel_sizes=[5, 9, 13], act='lrelu'):
+        super(SPPBlock, self).__init__()
+        c_ = int(c1 * e)
+        self.m = nn.Sequential(
+            Conv(c1, c2, k=1, act=act),
+            Conv(c2, c2*2, k=3, p=1, act=act),
+            SPP(c2*2, c2, e=e, kernel_sizes=kernel_sizes, act=act),
+            Conv(c2, c2*2, k=3, p=1, act=act),
+            Conv(c2*2, c2, k=1, act=act)
+        )
+
+        
+    def forward(self, x):
+        x = self.m(x)
+
+        return x

@@ -5,7 +5,7 @@ from ..basic.conv import Conv
 
 # Dilated Encoder
 class DilatedBottleneck(nn.Module):
-    def __init__(self, c, d=1, e=0.5, act=True):
+    def __init__(self, c, d=1, e=0.5, act='lrelu'):
         super(DilatedBottleneck, self).__init__()
         c_ = int(c * e)
         self.branch = nn.Sequential(
@@ -20,11 +20,11 @@ class DilatedBottleneck(nn.Module):
 
 class DilatedEncoder(nn.Module):
     """ DilateEncoder """
-    def __init__(self, c1, c2, act=True, dilation_list=[2, 4, 6, 8]):
+    def __init__(self, c1, c2, act='lrelu', dilation_list=[2, 4, 6, 8]):
         super(DilatedEncoder, self).__init__()
         self.projector = nn.Sequential(
-            Conv(c1, c2, k=1, act=False),
-            Conv(c2, c2, k=3, p=1, act=False)
+            Conv(c1, c2, k=1, act=None),
+            Conv(c2, c2, k=3, p=1, act=None)
         )
         encoders = []
         for d in dilation_list:

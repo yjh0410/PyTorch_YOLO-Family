@@ -10,7 +10,7 @@ from .yolo_tr import YOLOTR
 
 # build YOLO detector
 def build_model(args, cfg, device, num_classes=80, trainable=False):
-    yolov4_seris = ['yolov4_s', 'yolov4_m, yolov4_l, yolov4_x, yolov4_tiny, yolov4_nano']
+    yolov4_seris = ['yolov4_s', 'yolov4_m', 'yolov4_l', 'yolov4_x', 'yolov4_tiny', 'yolov4_nano']
     
     if args.model == 'yolov1':
         print('Build YOLOv1 ...')
@@ -104,6 +104,7 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         center_sample=args.center_sample)
     # Coming soon
     elif args.model in yolov4_seris:
+        print(args.model, yolov4_seris)
         print('Build YOLOv4-{} ...'.format(args.model[-1].upper()))
         model = YOLOv4(cfg=cfg,
                         device=device, 

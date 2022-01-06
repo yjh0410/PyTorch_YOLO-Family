@@ -175,6 +175,7 @@ def shufflenetv2(model_size='1.0x', pretrained=False, **kwargs):
     """
     model = ShuffleNetV2(model_size=model_size)
     if pretrained:
+        print('Loading the pretrained model ...')
         url = model_urls['shufflenetv2_{}'.format(model_size)]
         print('=> loading pretrained model {}'.format(url))
         model.load_state_dict(model_zoo.load_url(url), strict=False)
