@@ -5,11 +5,17 @@ from .conv import Conv
 
 class Bottleneck(nn.Module):
     # Standard bottleneck
-    def __init__(self, c1, c2, shortcut=True, g=1, d=1, e=0.5):  # ch_in, ch_out, shortcut, groups, expansion
+    def __init__(self, c1, c2, shortcut=True, d=1, e=0.5, depthwise=False):  # ch_in, ch_out, shortcut, groups, expansion
         super(Bottleneck, self).__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # hidden channels            
         self.cv1 = Conv(c1, c_, k=1)
-        self.cv2 = Conv(c_, c2, k=3, p=d, g=g, d=d)
+        if depthwise:
+            self.cv2 = nn.Sequential(
+                Conv(c_, c_, k=3, p=d, g=c_, d=d),
+                Conv(c_, c2, k=1)
+            )
+        else:
+            self.cv2 = Conv(c_, c2, k=3, p=d, d=d)
         self.add = shortcut and c1 == c2
 
     def forward(self, x):
@@ -17,13 +23,13 @@ class Bottleneck(nn.Module):
 
 
 class BottleneckCSP(nn.Module):
-    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+    def __init__(self, c1, c2, n=1, shortcut=True, e=0.5, depthwise=False):
         super(BottleneckCSP, self).__init__()
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, c_, k=1)
         self.cv2 = Conv(c1, c_, k=1)
         self.cv3 = Conv(2 * c_, c2, k=1)
-        self.m = nn.Sequential(*[Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)])
+        self.m = nn.Sequential(*[Bottleneck(c_, c_, shortcut, e=1.0, depthwise=depthwise) for _ in range(n)])
 
     def forward(self, x):
         return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))

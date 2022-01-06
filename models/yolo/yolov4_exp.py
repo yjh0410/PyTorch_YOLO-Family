@@ -11,7 +11,7 @@ from ..basic.upsample import UpSample
 from ..basic.bottleneck_csp import BottleneckCSP
 
 
-class YOLOv4(nn.Module):
+class YOLOv4EXP(nn.Module):
     def __init__(self, 
                  cfg=None,
                  device=None, 
@@ -22,7 +22,7 @@ class YOLOv4(nn.Module):
                  nms_thresh=0.60, 
                  center_sample=False):
 
-        super(YOLOv4, self).__init__()
+        super(YOLOv4EXP, self).__init__()
         self.cfg = cfg
         self.device = device
         self.img_size = img_size
@@ -31,9 +31,6 @@ class YOLOv4(nn.Module):
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
-        # dep_mul, wid_mul
-        self.dep_mul = cfg['depth']
-        self.wid_mul = cfg['width']
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
@@ -43,7 +40,6 @@ class YOLOv4(nn.Module):
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
         c3, c4, c5 = feature_channels
-        nblocks = int(3 * self.dep_mul)
 
         # build grid cell
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
@@ -51,20 +47,20 @@ class YOLOv4(nn.Module):
         # head
         self.head_conv_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2)  # 10
         self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
 
         # P3/8-small
         self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
         self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=3, shortcut=False)
 
         # P4/16-medium
         self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
-        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=3, shortcut=False)
 
         # P8/32-large
         self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
-        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=nblocks, shortcut=False, depthwise=cfg['depthwise'])
+        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=3, shortcut=False)
 
         # det conv
         self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
@@ -97,7 +93,7 @@ class YOLOv4(nn.Module):
             grid_xy = torch.stack([grid_x, grid_y], dim=-1).float().view(-1, 2)
             # [HW, 2] -> [1, HW, 1, 2]   
             grid_xy = grid_xy[None, :, None, :].to(self.device)
-            # [KA, 2] -> [HW, KA, 2] -> [1, HW, KA, 2]
+            # [1, HW, 1, 2]
             anchor_wh = self.anchor_size[ind].repeat(fmp_h*fmp_w, 1, 1).unsqueeze(0).to(self.device)
 
             total_grid_xy.append(grid_xy)
@@ -112,19 +108,19 @@ class YOLOv4(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS."""
+        """"Pure Python NMS YOLOv4EXP."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
         y2 = dets[:, 3]  #ymax
 
-        areas = (x2 - x1) * (y2 - y1)
-        order = scores.argsort()[::-1]
+        areas = (x2 - x1) * (y2 - y1)                 # the size of bbox
+        order = scores.argsort()[::-1]                        # sort bounding boxes by decreasing order
 
-        keep = []
+        keep = []                                             # store the final bounding boxes
         while order.size > 0:
-            i = order[0]
-            keep.append(i)
+            i = order[0]                                      #the index of the bbox with highest confidence
+            keep.append(i)                                    #save it to keep
             # compute iou
             xx1 = np.maximum(x1[i], x1[order[1:]])
             yy1 = np.maximum(y1[i], y1[order[1:]])

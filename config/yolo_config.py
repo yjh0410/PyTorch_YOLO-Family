@@ -90,4 +90,89 @@ yolo_config = {
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]]
     },
+    # The following YOLOv4 is coming soon ...
+    'yolov4_s': {
+        # model cfg params
+        'depth': 0.33,
+        'width': 0.5,
+        'depthwise': False,
+        # backbone
+        'backbone': 'yolox_csp_s',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
+    'yolov4_m': {
+        # model cfg params
+        'depth': 0.67,
+        'width': 0.75,
+        'depthwise': False,
+        # backbone
+        'backbone': 'yolox_csp_m',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
+    'yolov4_l': {
+        # model cfg params
+        'depth': 1.0,
+        'width': 1.0,
+        'depthwise': False,
+        # backbone
+        'backbone': 'yolox_csp_l',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
+    'yolov4_x': {
+        # model cfg params
+        'depth': 1.33,
+        'width': 1.25,
+        'depthwise': False,
+        # backbone
+        'backbone': 'yolox_csp_x',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
+    'yolov4_tiny': {
+        # model cfg params
+        'depth': 0.33,
+        'width': 0.375,
+        'depthwise': False,
+        # backbone
+        'backbone': 'yolox_csp_tiny',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
+    'yolov4_nano': {
+        # model cfg params
+        'depth': 0.33,
+        'width': 0.25,
+        'depthwise': True,
+        # backbone
+        'backbone': 'yolox_csp_nano',
+        # neck
+        'neck': 'spp',
+        # anchor size: P5-640
+        'anchor_size': [[10, 13],   [16, 30],   [33, 23],
+                        [30, 61],   [62, 45],   [59, 119],
+                        [116, 90],  [156, 198], [373, 326]]
+    },
 }
