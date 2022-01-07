@@ -11,7 +11,6 @@ python train.py \
         --multi_scale \
         --multi_scale_range 10 20 \
         --scale_loss pos \
-        --mosaic \
         --multi_anchor \
         --center_sample \
         --ema

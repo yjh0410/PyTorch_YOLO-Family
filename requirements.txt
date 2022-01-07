@@ -13,3 +13,5 @@ matplotlib
 numpy
 
 pycocotools
+
+timm
