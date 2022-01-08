@@ -378,7 +378,12 @@ def train():
                 model_eval.trainable = True
                 model_eval.set_grid(train_size)
                 model_eval.train()
-    
+
+        # close mosaic augmentation
+        if args.mosaic and args.max_epoch - epoch == 15:
+            print('close Mosaic Augmentation ...')
+            dataloader.dataset.mosaic = False
+
     if args.tfboard:
         tblogger.close()
 
