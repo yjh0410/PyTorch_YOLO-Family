@@ -208,7 +208,7 @@ if __name__ == '__main__':
                         cfg=cfg, 
                         device=device, 
                         num_classes=num_classes, 
-                        trainable=True)
+                        trainable=False)
 
     # load weight
     model.load_state_dict(torch.load(args.weight, map_location='cpu'), strict=False)
