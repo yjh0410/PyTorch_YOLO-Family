@@ -30,7 +30,7 @@ class YOLOv2(nn.Module):
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
-        self.anchor_size = torch.tensor(cfg["anchor_size"])
+        self.anchor_size = torch.tensor(cfg["anchor_size"])  # [KA, 2]
         self.num_anchors = len(cfg["anchor_size"])
 
         # backbone

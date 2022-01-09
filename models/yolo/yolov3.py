@@ -36,6 +36,7 @@ class YOLOv3(nn.Module):
                                                                   pretrained=trainable)
         self.stride = strides
         anchor_size = cfg["anchor_size"]
+        # [S, KA, 2], S is equal to number of stride
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
         self.num_anchors = self.anchor_size.size(1)
         c3, c4, c5 = feature_channels
