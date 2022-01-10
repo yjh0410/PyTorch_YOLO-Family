@@ -66,7 +66,7 @@ Tricks in this project:
 - [x] Model EMA
 - [x] GIoU
 - [x] Mosaic Augmentation for my YOLOv4-Exp
-- [x] Multiple positive samples(`--center_sample`) for my YOLOv4-Exp
+<!-- - [x] Multiple positive samples(`--center_sample`) for my YOLOv4-Exp -->
 
 
 On the COCO-val:
