@@ -69,8 +69,8 @@ Tricks in this project:
 - [x] Augmentations: Flip + Color jitter + RandomCrop + Multi-scale
 - [x] Model EMA
 - [x] GIoU
-- [x] Mosaic Augmentation for my YOLOv4
-- [x] Multiple positive samples for my YOLOv4
+- [x] Mosaic Augmentation for my YOLOv4-Exp
+- [x] Multiple positive samples(`--center_sample`) for my YOLOv4-Exp
 
 
 On the COCO-val:
@@ -305,6 +305,8 @@ python test.py -d coco \
                --root path/to/dataset/ \
                --show
 ```
+Note that if you try to run my YOLOv4-Exp, please add `--center_sample` because I use this trick in training phase.
+For more details, please check the code `models/yolo/yolov4_exp.py`
 
 # Evaluation
 For example
