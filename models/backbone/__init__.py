@@ -3,9 +3,6 @@ from .darknet import darknet53
 from .cspdarknet import cspdarknet53, cspdarknet_tiny
 from .shufflenetv2 import shufflenetv2
 from .vit import vit_base_patch16_224
-from .yolox_cspdarknet import (yolox_cspdarknet_s, yolox_cspdarknet_m, 
-                                yolox_cspdarknet_l, yolox_cspdarknet_x, 
-                                yolox_cspdarknet_tiny, yolox_cspdarknet_nano)
 
 
 def build_backbone(model_name='r18', pretrained=False, img_size=224):
@@ -50,36 +47,4 @@ def build_backbone(model_name='r18', pretrained=False, img_size=224):
         feature_channels = [None, None, 768]
         strides = [None, None, 16]
 
-    # Coming soon
-    elif model_name == 'yolox_csp_s':
-        print('Backbone: YOLOX-CSPDarkNet-S ...')
-        model = yolox_cspdarknet_s(pretrained=pretrained)
-        feature_channels = [128, 256, 512]
-        strides = [8, 16, 32]
-    elif model_name == 'yolox_csp_m':
-        print('Backbone: YOLOX-CSPDarkNet-M ...')
-        model = yolox_cspdarknet_m(pretrained=pretrained)
-        feature_channels = [192, 384, 768]
-        strides = [8, 16, 32]
-    elif model_name == 'yolox_csp_l':
-        print('Backbone: YOLOX-CSPDarkNet-L ...')
-        model = yolox_cspdarknet_l(pretrained=pretrained)
-        feature_channels = [256, 512, 1024]
-        strides = [8, 16, 32]
-    elif model_name == 'yolox_csp_x':
-        print('Backbone: YOLOX-CSPDarkNet-X ...')
-        model = yolox_cspdarknet_x(pretrained=pretrained)
-        feature_channels = [320, 640, 1280]
-        strides = [8, 16, 32]
-    elif model_name == 'yolox_csp_tiny':
-        print('Backbone: YOLOX-CSPDarkNet-Tiny ...')
-        model = yolox_cspdarknet_tiny(pretrained=pretrained)
-        feature_channels = [96, 192, 384]
-        strides = [8, 16, 32]
-    elif model_name == 'yolox_csp_nano':
-        print('Backbone: YOLOX-CSPDarkNet-Nano ...')
-        model = yolox_cspdarknet_nano(pretrained=pretrained)
-        feature_channels = [64, 128, 256]
-        strides = [8, 16, 32]
-        
     return model, feature_channels, strides

@@ -42,7 +42,7 @@ In this project, you can enjoy:
 - a new and stronger YOLOv1
 - a new and stronger YOLOv2
 - YOLOv3 with DilatedEncoder
-- YOLOv4 ~ (I'm try to make it better)
+- YOLOv4-Exp ~ (I'm try to make it better)
 - YOLO-Tiny
 - YOLO-Nano
 
@@ -89,7 +89,7 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE</th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4</th><td bgcolor=white> CSPDarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-Exp</th><td bgcolor=white> CSPDarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
 
 </table></tbody>
 
@@ -209,25 +209,8 @@ The DilatedEncoder is proposed by YOLOF.
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-640</th><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td></tr>
 </table></tbody>
 
-## YOLOv4
-Coming soon.
-
-<table><tbody>
-<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-SPP-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-SPP-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-SPP-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-SPP-608</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>   </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-SPP-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>   </td></tr>
-</table></tbody>
-
 ## YOLOv4-exp
-This is an experimental model. I am currently further optimizing my YOLOv4, using better CSPDarkNet and better training strategies.
+This is an experimental model, not the final version.
 
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
