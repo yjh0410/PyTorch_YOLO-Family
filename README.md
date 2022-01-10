@@ -1,17 +1,3 @@
-# Update 2022-01-06
-I have always used batchsize to scale loss: 
-
-`loss = loss.sum() / batch_size`
-
-However, recently, I think it is not optimal. To address this issue, 
-I scale loss by the number of total positive samples:
-
-`loss = loss.sum() / num_pos`
-
-After this optimization, I find some tricks which I used but not work can work now.
-Therefore, I am trying those tricks to make my YOLO better. Once I complete 
-these optimizations, I will immediately upload the latest weight files.
-
 # A new and strong YOLO family
 Recently, I rebuild my YOLO-Family project !!
 

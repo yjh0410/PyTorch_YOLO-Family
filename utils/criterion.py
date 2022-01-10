@@ -59,14 +59,9 @@ class Criterion(nn.Module):
         # obj loss: [B, HW,]
         loss_obj = self.obj_loss_f(pred_obj[..., 0], target_obj, target_pos)
 
-        # scale loss by number of total positive samples
-        if self.scale_loss == 'pos':
-            loss_obj = loss_obj.sum() / (target_pos.sum().clamp(1.0))
-        
         # scale loss by batch size
-        elif self.scale_loss == 'batch':
-            batch_size = pred_obj.size(0)
-            loss_obj = loss_obj.sum() / batch_size
+        batch_size = pred_obj.size(0)
+        loss_obj = loss_obj.sum() / batch_size
 
         return loss_obj
 
@@ -84,14 +79,9 @@ class Criterion(nn.Module):
         # valid loss. Here we only compute the loss of positive samples
         loss_cls = loss_cls * target_pos
 
-        # scale loss by number of total positive samples
-        if self.scale_loss == 'pos':
-            loss_cls = loss_cls.sum() / (target_pos.sum().clamp(1.0))
-
         # scale loss by batch size
-        elif self.scale_loss == 'batch':
-            batch_size = pred_cls.size(0)
-            loss_cls = loss_cls.sum() / batch_size
+        batch_size = pred_cls.size(0)
+        loss_cls = loss_cls.sum() / batch_size
 
         return loss_cls
 
@@ -107,14 +97,9 @@ class Criterion(nn.Module):
         # valid loss. Here we only compute the loss of positive samples
         loss_reg = loss_reg * target_pos
 
-        # scale loss by number of total positive samples
-        if self.scale_loss == 'pos':
-            loss_reg = loss_reg.sum() / (target_pos.sum().clamp(1.0))
-
         # scale loss by batch size
-        elif self.scale_loss == 'batch':
-            batch_size = pred_giou.size(0)
-            loss_reg = loss_reg.sum() / batch_size
+        batch_size = pred_giou.size(0)
+        loss_reg = loss_reg.sum() / batch_size
 
         return loss_reg
 

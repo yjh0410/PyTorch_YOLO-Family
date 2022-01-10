@@ -32,7 +32,7 @@ class YOLOTiny(nn.Module):
         self.center_sample = center_sample
 
         # backbone
-        self.backbone, feature_channels, strides = build_backbone(model_name='csp_dtiny', pretrained=trainable)
+        self.backbone, feature_channels, strides = build_backbone(model_name=cfg['backbone'], pretrained=trainable)
         self.stride = strides
         anchor_size = cfg["anchor_size"]
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()
