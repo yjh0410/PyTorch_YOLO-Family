@@ -8,8 +8,6 @@ python train.py \
         --img_size 224 \
         --max_epoch 150 \
         --lr_epoch 90 120 \
-        --scale_loss pos \
         --multi_anchor \
-        --center_sample \
         --ema
                 
