@@ -87,13 +87,21 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white>  15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td><td bgcolor=white>  42.10   </td><td bgcolor=white> 44.89M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE</th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3 </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-SPP </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4-Exp</th><td bgcolor=white> CSPDarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 40.5 </td><td bgcolor=white> 60.4 </td><td bgcolor=white> 43.5 </td><td bgcolor=white> 24.2 </td><td bgcolor=white> 44.8 </td><td bgcolor=white> 52.0 </td><td bgcolor=white>  60.55   </td><td bgcolor=white> 52.00M </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-Exp </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
 </table></tbody>
 
 The FPS of all YOLO detectors are measured on a one 2080ti GPU with 640 × 640 size.
+
+My CSPDarkNet53 is not good.
 
 # Visualization
 I will upload some visualization results:
