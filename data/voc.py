@@ -165,10 +165,16 @@ class VOCDetection(data.Dataset):
             h0, w0, _ = img_i.shape
 
             # resize
-            # keep aspect ratio
-            r = self.img_size / max(h0, w0)
-            if r != 1: 
-                img_i = cv2.resize(img_i, (int(w0 * r), int(h0 * r)))
+            scale_range = np.arange(50, 210, 10)
+            s = np.random.choice(scale_range) / 100.
+
+            if np.random.randint(2):
+                # keep aspect ratio
+                r = self.img_size / max(h0, w0)
+                if r != 1: 
+                    img_i = cv2.resize(img_i, (int(w0 * r * s), int(h0 * r * s)))
+            else:
+                img_i = cv2.resize(img_i, (int(self.img_size * s), int(self.img_size * s)))
             h, w, _ = img_i.shape
 
             # place img in img4
@@ -288,7 +294,7 @@ if __name__ == "__main__":
 
     img_size = 640
     dataset = VOCDetection(
-                data_dir='/mnt/share/ssd2/dataset/VOCdevkit/',
+                data_dir='d:/datasets/VOCdevkit/',
                 img_size=img_size,
                 transform=ValTransforms(img_size),
                 color_augment=ColorTransforms(img_size),

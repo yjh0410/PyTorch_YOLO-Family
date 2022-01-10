@@ -90,8 +90,12 @@ def darknet53(pretrained=False, **kwargs):
     """
     model = DarkNet_53()
     if pretrained:
-        print('Loading the pretrained model ...')
-        path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        checkpoint = torch.load(path_to_dir + '/weights/darknet53/darknet53.pth', map_location='cpu')
-        model.load_state_dict(checkpoint, strict=False)
+        try:
+            print('Loading the pretrained model ...')
+            path_to_dir = os.path.dirname(os.path.abspath(__file__))
+            checkpoint = torch.load(path_to_dir + '/weights/darknet53/darknet53.pth', map_location='cpu')
+            model.load_state_dict(checkpoint, strict=False)
+        except:
+            print('The pretrained weight can not be found ...')
+            pass
     return model

@@ -4,8 +4,6 @@ import os
 import argparse
 import time
 import random
-import cv2
-import numpy as np
 
 import torch
 import torch.optim as optim
@@ -20,6 +18,7 @@ from data.transforms import TrainTransforms, ColorTransforms, ValTransforms
 
 from utils import distributed_utils
 from utils import create_labels
+from utils.vis import vis_data, vis_targets
 from utils.com_flops_params import FLOPs_and_Params
 from utils.criterion import build_criterion
 from utils.misc import detection_collate
@@ -65,8 +64,10 @@ def parse_args():
                         help='use tensorboard')
     parser.add_argument('--save_folder', default='weights/', type=str, 
                         help='Gamma update for SGD')
-    parser.add_argument('--vis', action='store_true', default=False,
-                        help='visualize target.')
+    parser.add_argument('--vis_data', action='store_true', default=False,
+                        help='visualize images and labels.')
+    parser.add_argument('--vis_targets', action='store_true', default=False,
+                        help='visualize assignment.')
 
     # model
     parser.add_argument('-m', '--model', default='yolov1',
@@ -262,8 +263,8 @@ def train():
 
             targets = [label.tolist() for label in targets]
             # visualize target
-            if args.vis:
-                vis_data(images, targets, train_size)
+            if args.vis_data:
+                vis_data(images, targets)
                 continue
             # make labels
             targets = create_labels.gt_creator(
@@ -273,6 +274,11 @@ def train():
                                     anchor_size=cfg["anchor_size"], 
                                     multi_anchor=args.multi_anchor,
                                     center_sample=args.center_sample)
+            # visualize assignment
+            if args.vis_targets:
+                vis_targets(images, targets, cfg["anchor_size"], net.stride)
+                continue
+
             # to device
             images = images.to(device)
             targets = targets.to(device)
@@ -459,30 +465,6 @@ def build_dataloader(args, dataset, collate_fn=None):
 def set_lr(optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
-
-
-def vis_data(images, targets, img_size):
-    # vis data
-    mean=(0.406, 0.456, 0.485)
-    std=(0.225, 0.224, 0.229)
-    mean = np.array(mean, dtype=np.float32)
-    std = np.array(std, dtype=np.float32)
-
-    img = images[0].permute(1, 2, 0).cpu().numpy()[:, :, ::-1]
-    img = ((img * std + mean)*255).astype(np.uint8)
-    img = img.copy()
-
-    for box in targets[0]:
-        xmin, ymin, xmax, ymax = box[:-1]
-        # print(xmin, ymin, xmax, ymax)
-        xmin *= img_size
-        ymin *= img_size
-        xmax *= img_size
-        ymax *= img_size
-        cv2.rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255), 2)
-
-    cv2.imshow('img', img)
-    cv2.waitKey(0)
 
 
 if __name__ == '__main__':

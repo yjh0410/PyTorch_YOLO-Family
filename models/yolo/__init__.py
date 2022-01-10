@@ -1,7 +1,6 @@
 from .yolov1 import YOLOv1
 from .yolov2 import YOLOv2
 from .yolov3 import YOLOv3
-from .yolov4 import YOLOv4
 from .yolov4_exp import YOLOv4EXP
 from .yolo_tiny import YOLOTiny
 from .yolo_nano import YOLONano

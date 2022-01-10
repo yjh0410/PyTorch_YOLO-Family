@@ -32,6 +32,16 @@ pip install -r requirements.txt
 ```
 PyTorch >= 1.1.0 and Torchvision >= 0.3.0
 
+# Visualize positive samples
+You can run following command to visualize positiva sample:
+```Shell
+python train.py \
+        -d voc \
+        --root path/to/your/dataset \
+        --batch_size 2 \
+        -m yolov2 \
+        --vis_targets
+```
 
 # Come soon
 My better YOLO family

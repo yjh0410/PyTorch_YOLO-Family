@@ -148,10 +148,14 @@ def cspdarknet53(pretrained=False, **kwargs):
     """
     model = CSPDarknet53()
     if pretrained:
-        print('Loading the pretrained model ...')
-        path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        checkpoint = torch.load(path_to_dir + '/weights/cspdarknet53/cspdarknet53.pth', map_location='cpu')
-        model.load_state_dict(checkpoint, strict=False)
+        try:
+            print('Loading the pretrained model ...')
+            path_to_dir = os.path.dirname(os.path.abspath(__file__))
+            checkpoint = torch.load(path_to_dir + '/weights/cspdarknet53/cspdarknet53.pth', map_location='cpu')
+            model.load_state_dict(checkpoint, strict=False)
+        except:
+            print('The pretrained weight can not be found ...')
+            pass
     return model
 
 

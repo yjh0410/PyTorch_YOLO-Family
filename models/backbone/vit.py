@@ -358,11 +358,14 @@ def vit_base_patch16_224(img_size=224, pretrained=False, **kwargs):
         **kwargs)
     model.default_cfg = _cfg()
     if pretrained:
-        path_to_dir = os.path.dirname(os.path.abspath(__file__))
-        checkpoint = torch.load(path_to_dir + '/weights/vit/pretrain_mae_vit_base_mask_0.75_400e.pth', map_location='cpu')
-        print('Loading the vit-base ...')
-        model.load_state_dict(checkpoint['model'], strict=False)
-
+        try:
+            print('Loading the pretrained weights ...')
+            path_to_dir = os.path.dirname(os.path.abspath(__file__))
+            checkpoint = torch.load(path_to_dir + '/weights/vit/pretrain_mae_vit_base_mask_0.75_400e.pth', map_location='cpu')
+            model.load_state_dict(checkpoint['model'], strict=False)
+        except:
+            print('The pretrained weight can not be found ...')
+            pass
     return model
  
 if __name__ == '__main__':
