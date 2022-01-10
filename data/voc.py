@@ -165,13 +165,10 @@ class VOCDetection(data.Dataset):
             h0, w0, _ = img_i.shape
 
             # resize
-            if np.random.randint(2):
-                # keep aspect ratio
-                r = self.img_size / max(h0, w0)
-                if r != 1: 
-                    img_i = cv2.resize(img_i, (int(w0 * r), int(h0 * r)))
-            else:
-                img_i = cv2.resize(img_i, (int(self.img_size), int(self.img_size)))
+            # keep aspect ratio
+            r = self.img_size / max(h0, w0)
+            if r != 1: 
+                img_i = cv2.resize(img_i, (int(w0 * r), int(h0 * r)))
             h, w, _ = img_i.shape
 
             # place img in img4
