@@ -95,7 +95,8 @@ class VOCDetection(data.Dataset):
                  transform=None, 
                  color_augment=None,
                  target_transform=VOCAnnotationTransform(),
-                 mosaic=False):
+                 mosaic=False,
+                 mixup=False):
         self.root = data_dir
         self.img_size = img_size
         self.image_set = image_sets
@@ -110,9 +111,12 @@ class VOCDetection(data.Dataset):
         # augmentation
         self.transform = transform
         self.mosaic = mosaic
+        self.mixup = mixup
         self.color_augment = color_augment
         if self.mosaic:
             print('use Mosaic Augmentation ...')
+        if self.mixup:
+            print('use MixUp Augmentation ...')
 
 
     def __getitem__(self, index):
@@ -232,6 +236,14 @@ class VOCDetection(data.Dataset):
         if self.mosaic and np.random.randint(2):
             # mosaic
             img, target, height, width = self.load_mosaic(index)
+
+            # MixUp https://arxiv.org/pdf/1710.09412.pdf
+            if self.mixup and np.random.randint(2):
+                img2, target2, height, width = self.load_mosaic(random.randint(0, len(self.ids)))
+                r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
+                img = (img * r + img2 * (1 - r)).astype(np.uint8)
+                target = np.concatenate((target, target2), 0)
+
             # augment
             img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
 
@@ -298,7 +310,8 @@ if __name__ == "__main__":
                 img_size=img_size,
                 transform=ValTransforms(img_size),
                 color_augment=ColorTransforms(img_size),
-                mosaic=True)
+                mosaic=True,
+                mixup=True)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

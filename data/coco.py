@@ -43,7 +43,8 @@ class COCODataset(Dataset):
                  img_size=640,
                  transform=None,
                  color_augment=None, 
-                 mosaic=False):
+                 mosaic=False,
+                 mixup=False):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
         Args:
@@ -68,10 +69,12 @@ class COCODataset(Dataset):
         # augmentation
         self.transform = transform
         self.mosaic = mosaic
+        self.mixup = mixup
         self.color_augment = color_augment
         if self.mosaic:
             print('use Mosaic Augmentation ...')
-
+        if self.mixup:
+            print('use MixUp Augmentation ...')
 
     def __len__(self):
         return len(self.ids)
@@ -219,8 +222,16 @@ class COCODataset(Dataset):
             # mosaic
             img, target, height, width = self.load_mosaic(index)
 
+            # MixUp https://arxiv.org/pdf/1710.09412.pdf
+            if self.mixup and np.random.randint(2):
+                img2, target2, height, width = self.load_mosaic(random.randint(0, len(self.ids)))
+                r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
+                img = (img * r + img2 * (1 - r)).astype(np.uint8)
+                target = np.concatenate((target, target2), 0)
+
             # augment
             img, boxes, labels, scale, offset = self.color_augment(img, target[:, :4], target[:, 4])
+
         # load an image and target
         else:
             id_ = self.ids[index]
@@ -290,7 +301,8 @@ if __name__ == "__main__":
                 image_set='train2017',
                 transform=TrainTransforms(img_size),
                 color_augment=ColorTransforms(img_size),
-                mosaic=True)
+                mosaic=True,
+                mixup=True)
     
     np.random.seed(0)
     class_colors = [(np.random.randint(255),

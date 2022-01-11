@@ -108,6 +108,8 @@ def parse_args():
                         help='use ema training trick')
     parser.add_argument('--mosaic', action='store_true', default=False,
                         help='use Mosaic Augmentation trick')
+    parser.add_argument('--mixup', action='store_true', default=False,
+                        help='use MixUp Augmentation trick')
     parser.add_argument('--multi_anchor', action='store_true', default=False,
                         help='use multiple anchor boxes as the positive samples')
     parser.add_argument('--center_sample', action='store_true', default=False,
@@ -415,6 +417,10 @@ def train():
         if args.mosaic and args.max_epoch - epoch == 15:
             print('close Mosaic Augmentation ...')
             dataloader.dataset.mosaic = False
+        # close mixup augmentation
+        if args.mixup and args.max_epoch - epoch == 15:
+            print('close Mixup Augmentation ...')
+            dataloader.dataset.mixup = False
 
     if args.tfboard:
         tblogger.close()
@@ -429,7 +435,8 @@ def build_dataset(args, train_size, val_size, device):
                         img_size=train_size,
                         transform=TrainTransforms(train_size),
                         color_augment=ColorTransforms(train_size),
-                        mosaic=args.mosaic)
+                        mosaic=args.mosaic,
+                        mixup=args.mixup)
 
         evaluator = VOCAPIEvaluator(
                         data_dir=data_dir,
@@ -446,7 +453,8 @@ def build_dataset(args, train_size, val_size, device):
                     image_set='train2017',
                     transform=TrainTransforms(train_size),
                     color_augment=ColorTransforms(train_size),
-                    mosaic=args.mosaic)
+                    mosaic=args.mosaic,
+                    mixup=args.mixup)
 
         evaluator = COCOAPIEvaluator(
                         data_dir=data_dir,
