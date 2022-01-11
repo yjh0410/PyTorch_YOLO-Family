@@ -3,6 +3,7 @@ from __future__ import division
 import os
 import argparse
 import time
+import math
 import random
 
 import torch
@@ -38,7 +39,7 @@ def parse_args():
                         help='use cuda.')
     parser.add_argument('--batch_size', default=16, type=int, 
                         help='Batch size for training')
-    parser.add_argument('--lr', default=2.5e-3, type=float, 
+    parser.add_argument('--lr', default=1e-3, type=float, 
                         help='initial learning rate')
     parser.add_argument('--img_size', type=int, default=640,
                         help='The upper bound of warm-up')
@@ -63,11 +64,17 @@ def parse_args():
     parser.add_argument('--tfboard', action='store_true', default=False,
                         help='use tensorboard')
     parser.add_argument('--save_folder', default='weights/', type=str, 
-                        help='Gamma update for SGD')
+                        help='path to save weight')
     parser.add_argument('--vis_data', action='store_true', default=False,
                         help='visualize images and labels.')
     parser.add_argument('--vis_targets', action='store_true', default=False,
                         help='visualize assignment.')
+
+    # Optimizer & Schedule
+    parser.add_argument('--optimizer', default='sgd', type=str,
+                        help='sgd, adamw')
+    parser.add_argument('--lr_schedule', default='step', type=str,
+                        help='step, cos')
 
     # model
     parser.add_argument('-m', '--model', default='yolov1',
@@ -91,9 +98,6 @@ def parse_args():
                         help='weight of cls loss')
     parser.add_argument('--loss_reg_weight', default=1.0, type=float,
                         help='weight of reg loss')
-    parser.add_argument('--scale_loss', default='batch',
-                        help='batch: scale loss by batch size; '
-                             'pos: scale loss by number of positive samples')
 
     # train trick
     parser.add_argument('--no_warmup', action='store_true', default=False,
@@ -211,10 +215,17 @@ def train():
     # optimizer setup
     base_lr = args.lr
     tmp_lr = args.lr
-    optimizer = optim.SGD(model.parameters(), 
-                            lr=tmp_lr, 
-                            momentum=0.9,
-                            weight_decay=5e-4)
+    if args.optimizer == 'sgd':
+        print('use SGD with momentum ...')
+        optimizer = optim.SGD(model.parameters(), 
+                                lr=tmp_lr, 
+                                momentum=0.9,
+                                weight_decay=5e-4)
+    elif args.optimizer == 'adamw':
+        print('use AdamW ...')
+        optimizer = optim.AdamW(model.parameters(), 
+                                lr=tmp_lr, 
+                                weight_decay=1e-4)
 
     batch_size = args.batch_size
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
@@ -228,9 +239,23 @@ def train():
             dataloader.sampler.set_epoch(epoch)            
 
         # use step lr decay
-        if epoch in args.lr_epoch:
-            tmp_lr = tmp_lr * 0.1
-            set_lr(optimizer, tmp_lr)
+        if args.lr_schedule == 'step':
+            if epoch in args.lr_epoch:
+                tmp_lr = tmp_lr * 0.1
+                set_lr(optimizer, tmp_lr)
+        # use cos lr decay
+        elif args.lr_schedule == 'cos' and not warmup:
+            T_max = args.max_epoch - 15
+            lr_min = base_lr * 0.1 * 0.1
+            if epoch > T_max:
+                # Cos decay is done
+                print('Cosine annealing is over !!')
+                args.lr_schedule == None
+                tmp_lr = lr_min
+                set_lr(optimizer, tmp_lr)
+            else:
+                tmp_lr = lr_min + 0.5*(base_lr - lr_min)*(1 + math.cos(math.pi*epoch / T_max))
+                set_lr(optimizer, tmp_lr)
 
         # train one epoch
         for iter_i, (images, targets) in enumerate(dataloader):
@@ -243,6 +268,7 @@ def train():
 
             elif epoch == args.wp_epoch and iter_i == 0 and warmup:
                 # warmup is over
+                print('Warmup is over !!')
                 warmup = False
                 tmp_lr = base_lr
                 set_lr(optimizer, tmp_lr)
