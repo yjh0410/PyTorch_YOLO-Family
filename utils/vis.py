@@ -59,10 +59,12 @@ def vis_targets(images, targets, anchor_sizes=None, strides=[8, 16, 32]):
         img_h, img_w = image.shape[:2]
 
         target_i = targets[bi] # [HW*KA, 1+1+4+1]
+        N = 0
         for si, s in enumerate(strides):
             fmp_h, fmp_w = img_h // s, img_w // s
             HWKA = fmp_h * fmp_w * KA
-            targets_i_s = target_i[si*HWKA:(si+1)*HWKA]
+            targets_i_s = target_i[N:N+HWKA]
+            N += HWKA
             # [HW*KA, 1+1+4+1] -> [H, W, KA, 1+1+4+1]
             targets_i_s = targets_i_s.reshape(fmp_h, fmp_w, KA, -1)
             for j in range(fmp_h):
