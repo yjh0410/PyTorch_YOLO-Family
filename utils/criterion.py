@@ -103,7 +103,7 @@ class Criterion(nn.Module):
             pred_obj: (Tensor) [B, HW, 1]
             pred_cls: (Tensor) [B, HW, C]
             pred_giou: (Tensor) [B, HW,]
-            targets: (Tensor) [B, HW, 1+1+4]
+            targets: (Tensor) [B, HW, 1+1+1+4+1]
         """
         # groundtruth
         target_obj = targets[..., 0].float()     # [B, HW,]
