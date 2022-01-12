@@ -79,7 +79,7 @@ class Criterion(nn.Module):
         return loss_cls
 
 
-    def loss_giou(self, pred_giou, target_pos):
+    def loss_giou(self, pred_giou, target_pos, target_scale):
         """
             pred_giou: (FloatTensor) [B, HW, ]
             target_pos: (FloatTensor) [B, HW,]
@@ -87,6 +87,7 @@ class Criterion(nn.Module):
 
         # reg loss: [B, HW,]
         loss_reg = 1. - pred_giou
+        loss_reg = loss_reg * target_scale
         # valid loss. Here we only compute the loss of positive samples
         loss_reg = loss_reg * target_pos
 
@@ -105,9 +106,10 @@ class Criterion(nn.Module):
             targets: (Tensor) [B, HW, 1+1+4]
         """
         # groundtruth
-        target_obj = targets[..., 0].float()  # [B, HW,]
-        target_pos = targets[..., 1].float()  # [B, HW,]
-        target_cls = targets[..., 2].long()   # [B, HW,]
+        target_obj = targets[..., 0].float()     # [B, HW,]
+        target_pos = targets[..., 1].float()     # [B, HW,]
+        target_cls = targets[..., 2].long()      # [B, HW,]
+        target_scale = targets[..., -1].float()  # [B, HW,]
 
         # objectness loss
         loss_obj = self.loss_objectness(pred_obj, target_obj, target_pos)
@@ -116,7 +118,7 @@ class Criterion(nn.Module):
         loss_cls = self.loss_class(pred_cls, target_cls, target_pos)
 
         # regression loss
-        loss_reg = self.loss_giou(pred_giou, target_pos)
+        loss_reg = self.loss_giou(pred_giou, target_pos, target_scale)
 
         # total loss
         losses = self.loss_obj_weight * loss_obj + \

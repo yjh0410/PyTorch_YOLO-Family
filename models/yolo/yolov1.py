@@ -248,7 +248,7 @@ class YOLOv1(nn.Module):
 
             # compute giou between prediction bbox and target bbox
             x1y1x2y2_pred = box_pred.view(-1, 4)
-            x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
+            x1y1x2y2_gt = targets[..., 2:6].view(-1, 4)
 
             # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)

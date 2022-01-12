@@ -31,6 +31,7 @@ class YOLOv4EXP(nn.Module):
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
+        self.gs = cfg["gs"]  # grid sensitive
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
@@ -108,19 +109,19 @@ class YOLOv4EXP(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS YOLOv4EXP."""
+        """"Pure Python NMS."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
         y2 = dets[:, 3]  #ymax
 
-        areas = (x2 - x1) * (y2 - y1)                 # the size of bbox
-        order = scores.argsort()[::-1]                        # sort bounding boxes by decreasing order
+        areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]
 
-        keep = []                                             # store the final bounding boxes
+        keep = []
         while order.size > 0:
-            i = order[0]                                      #the index of the bbox with highest confidence
-            keep.append(i)                                    #save it to keep
+            i = order[0]
+            keep.append(i)
             # compute iou
             xx1 = np.maximum(x1[i], x1[order[1:]])
             yy1 = np.maximum(y1[i], y1[order[1:]])
@@ -302,9 +303,9 @@ class YOLOv4EXP(nn.Module):
                 reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
                 # txty -> xy
                 if self.center_sample:
-                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() * self.gs * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
                 else:
-                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+                    xy_pred_i = (reg_pred_i[..., :2].sigmoid() * self.gs + self.grid_cell[i]) * self.stride[i]
                 # twth -> wh
                 wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
                 # xywh -> x1y1x2y2
@@ -325,7 +326,7 @@ class YOLOv4EXP(nn.Module):
 
             # compute giou between prediction bbox and target bbox
             x1y1x2y2_pred = box_pred.view(-1, 4)
-            x1y1x2y2_gt = targets[..., -4:].view(-1, 4)
+            x1y1x2y2_gt = targets[..., 2:6].view(-1, 4)
 
             # giou: [B, HW,]
             giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
