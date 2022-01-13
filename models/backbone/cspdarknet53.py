@@ -30,6 +30,33 @@ def ConvNormActivation(inplanes,
     return nn.Sequential(*layers)
 
 
+def make_cspdark_layer(block,
+                       inplanes,
+                       planes,
+                       num_blocks,
+                       is_csp_first_stage,
+                       dilation=1):
+    downsample = ConvNormActivation(
+        inplanes=planes,
+        planes=planes if is_csp_first_stage else inplanes,
+        kernel_size=1,
+        stride=1,
+        padding=0
+    )
+
+    layers = []
+    for i in range(0, num_blocks):
+        layers.append(
+            block(
+                inplanes=inplanes,
+                planes=planes if is_csp_first_stage else inplanes,
+                downsample=downsample if i == 0 else None,
+                dilation=dilation
+            )
+        )
+    return nn.Sequential(*layers)
+
+
 class DarkBlock(nn.Module):
 
     def __init__(self,
@@ -163,33 +190,6 @@ class CrossStagePartialBlock(nn.Module):
         return out
 
 
-def make_cspdark_layer(block,
-                       inplanes,
-                       planes,
-                       num_blocks,
-                       is_csp_first_stage,
-                       dilation=1):
-    downsample = ConvNormActivation(
-        inplanes=planes,
-        planes=planes if is_csp_first_stage else inplanes,
-        kernel_size=1,
-        stride=1,
-        padding=0
-    )
-
-    layers = []
-    for i in range(0, num_blocks):
-        layers.append(
-            block(
-                inplanes=inplanes,
-                planes=planes if is_csp_first_stage else inplanes,
-                downsample=downsample if i == 0 else None,
-                dilation=dilation
-            )
-        )
-    return nn.Sequential(*layers)
-
-
 class CSPDarkNet53(nn.Module):
     """CSPDarkNet backbone.
     Refer to the paper for more details: https://arxiv.org/pdf/1804.02767
@@ -210,9 +210,13 @@ class CSPDarkNet53(nn.Module):
         self.with_csp = True
         self.inplanes = 32
 
-        self._make_stem_layer()
+        self.backbone = nn.ModuleDict()
+        self.layer_names = []
+        # First stem layer
+        self.backbone["conv1"] = nn.Conv2d(3, self.inplanes, kernel_size=3, padding=1, bias=False)
+        self.backbone["bn1"] = nn.BatchNorm2d(self.inplanes, eps=1e-4, momentum=0.03)
+        self.backbone["act1"] = nn.Mish(inplace=True)
 
-        dark_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
             planes = 64 * 2 ** i
             dilation = 1
@@ -234,35 +238,22 @@ class CSPDarkNet53(nn.Module):
                 stride=stride
             )
             self.inplanes = planes
-            dark_layers.append(layer)
-
-        self.dark_layers = nn.ModuleList(dark_layers)
-
-
-    def _make_stem_layer(self):
-        self.conv1 = nn.Conv2d(
-            3,
-            self.inplanes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            bias=False
-        )
-        self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-4, momentum=0.03)
-        self.act1 = nn.Mish(inplace=True)
+            layer_name = 'layer{}'.format(i + 1)
+            self.backbone[layer_name]=layer
+            self.layer_names.append(layer_name)
 
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.act1(x)
-        c1 = self.dark_layers[0](x)
-        c2 = self.dark_layers[1](c1)
-        c3 = self.dark_layers[2](c2)
-        c4 = self.dark_layers[3](c3)
-        c5 = self.dark_layers[4](c4)
+        outputs = []
+        x = self.backbone["conv1"](x)
+        x = self.backbone["bn1"](x)
+        x = self.backbone["act1"](x)
 
-        return c3, c4, c5
+        for i, layer_name in enumerate(self.layer_names):
+            layer = self.backbone[layer_name]
+            x = layer(x)
+            outputs.append(x)
+        return outputs[-3:]  # C3, C4, C5
 
 
 def cspdarknet53(pretrained=False):
@@ -273,17 +264,32 @@ def cspdarknet53(pretrained=False):
     if pretrained:
         print('Loading the pretrained model ...')
         path_to_weight = os.path.dirname(os.path.abspath(__file__)) + '/weights/cspdarknet53/cspdarknet53.pth'
-        model.load_state_dict(torch.load(path_to_weight, map_location='cpu'), strict=False)
+        checkpoint = torch.load(path_to_weight, map_location='cpu')
+        # checkpoint state dict
+        checkpoint_state_dict = checkpoint.pop("model")
+        # model state dict
+        model_state_dict = model.state_dict()
+        # check
+        for k in list(checkpoint_state_dict.keys()):
+            if k in model_state_dict:
+                shape_model = tuple(model_state_dict[k].shape)
+                shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
+                if shape_model != shape_checkpoint:
+                    checkpoint_state_dict.pop(k)
+            else:
+                print(k)
 
+        model.load_state_dict(checkpoint_state_dict, strict=False)
     return model
 
 
 if __name__=='__main__':
     img_size = 512
-    input = torch.randn(1, 3, img_size, img_size)
+    input = torch.ones(1, 3, img_size, img_size)
     
     model = cspdarknet53(pretrained=True)
     output = model(input)
     for y in output:
         print(y.size())
+    print(output[-1])
 

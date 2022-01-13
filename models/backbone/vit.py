@@ -371,5 +371,7 @@ def vit_base_patch16_224(img_size=224, pretrained=False, **kwargs):
 if __name__ == '__main__':
     x = torch.ones(2, 3, 224, 224)
     model = vit_base_patch16_224(pretrained=True)
-    y = model(x)
-    print(y.size())
+    outputs = model(x)
+    for y in outputs:
+        print(y.size())
+        print(y)
