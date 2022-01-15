@@ -38,7 +38,7 @@ class Criterion(nn.Module):
         self.loss_cls_weight = loss_cls_weight
         self.loss_reg_weight = loss_reg_weight
 
-        self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
+        self.obj_loss_f = MSEWithLogitsLoss(reduction='none') # nn.BCEWithLogitsLoss(reduction='none')
         self.cls_loss_f = nn.CrossEntropyLoss(reduction='none')
         self.reg_loss_f = None
 
