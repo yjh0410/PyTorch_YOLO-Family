@@ -328,10 +328,18 @@ class YOLOv4EXP(nn.Module):
             x1y1x2y2_pred = box_pred.view(-1, 4)
             x1y1x2y2_gt = targets[..., 2:6].view(-1, 4)
 
-            # giou: [B, HW,]
-            giou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
+            # iou: [B, HW,]
+            if self.cfg['loss_box'] == 'iou':
+                iou_pred = box_ops.iou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
+                obj_tgt = iou_pred[..., None].clone().detach().clamp(0.) # [0, 1]
+            elif self.cfg['loss_box'] == 'giou':
+                iou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
+                obj_tgt = 0.5 * (iou_pred[..., None].clone().detach() + 1.0) # [-1, 1] -> [0, 1]
+            elif self.cfg['loss_box'] == 'ciou':
+                iou_pred = box_ops.ciou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
+                obj_tgt = iou_pred[..., None].clone().detach().clamp(0.) # [0, 1]
 
-            # we set giou as the target of the objectness
-            targets = torch.cat([0.5 * (giou_pred[..., None].clone().detach() + 1.0), targets], dim=-1)
+            # we set iou as the target of the objectness
+            targets = torch.cat([obj_tgt, targets], dim=-1)
 
-            return obj_pred, cls_pred, giou_pred, targets
+            return obj_pred, cls_pred, iou_pred, targets

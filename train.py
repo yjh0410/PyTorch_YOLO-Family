@@ -162,7 +162,7 @@ def train():
     # dataloader
     dataloader = build_dataloader(args, dataset, detection_collate)
     # criterioin
-    criterion = build_criterion(args, num_classes)
+    criterion = build_criterion(args, cfg, num_classes)
     
     print('Training model on:', args.dataset)
     print('The dataset size:', len(dataset))
@@ -312,10 +312,10 @@ def train():
             targets = targets.to(device)
 
             # inference
-            pred_obj, pred_cls, pred_giou, targets = model(images, targets=targets)
+            pred_obj, pred_cls, pred_iou, targets = model(images, targets=targets)
 
             # compute loss
-            loss_obj, loss_cls, loss_reg, total_loss = criterion(pred_obj, pred_cls, pred_giou, targets)
+            loss_obj, loss_cls, loss_reg, total_loss = criterion(pred_obj, pred_cls, pred_iou, targets)
 
             loss_dict = dict(
                 loss_obj=loss_obj,

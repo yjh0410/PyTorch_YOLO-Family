@@ -61,6 +61,9 @@ yolo_config = {
                         [116, 90],  [156, 198], [373, 326]],
         # grid sensitive
         'gs': 1.0,
+        # loss
+        'loss_obj': 'mse',  # optional: mse, bce
+        'loss_box': 'giou'  # optional: iou, giou, ciou
     },
     'yolo_tiny': {
         # backbone

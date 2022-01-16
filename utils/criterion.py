@@ -27,7 +27,8 @@ class MSEWithLogitsLoss(nn.Module):
 
 
 class Criterion(nn.Module):
-    def __init__(self, 
+    def __init__(self,
+                 cfg,
                  loss_obj_weight=1.0, 
                  loss_cls_weight=1.0, 
                  loss_reg_weight=1.0, 
@@ -38,9 +39,16 @@ class Criterion(nn.Module):
         self.loss_cls_weight = loss_cls_weight
         self.loss_reg_weight = loss_reg_weight
 
-        self.obj_loss_f = MSEWithLogitsLoss(reduction='none') # nn.BCEWithLogitsLoss(reduction='none')
+        # objectness loss
+        try:
+            if cfg['loss_obj'] == 'mse':
+                self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
+            elif cfg['loss_obj'] == 'mse':
+                self.obj_loss_f = nn.BCEWithLogitsLoss(reduction='none')
+        except:
+            self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
+        # class loss
         self.cls_loss_f = nn.CrossEntropyLoss(reduction='none')
-        self.reg_loss_f = None
 
 
     def loss_objectness(self, pred_obj, target_obj, target_pos):
@@ -79,30 +87,30 @@ class Criterion(nn.Module):
         return loss_cls
 
 
-    def loss_bbox(self, pred_giou, target_pos, target_scale):
+    def loss_bbox(self, pred_iou, target_pos, target_scale):
         """
-            pred_giou: (FloatTensor) [B, HW, ]
+            pred_iou: (FloatTensor) [B, HW, ]
             target_pos: (FloatTensor) [B, HW,]
         """
 
-        # reg loss: [B, HW,]
-        loss_reg = 1. - pred_giou
+        # bbox loss: [B, HW,]
+        loss_reg = 1. - pred_iou
         loss_reg = loss_reg * target_scale
         # valid loss. Here we only compute the loss of positive samples
         loss_reg = loss_reg * target_pos
 
         # scale loss by batch size
-        batch_size = pred_giou.size(0)
+        batch_size = pred_iou.size(0)
         loss_reg = loss_reg.sum() / batch_size
 
         return loss_reg
 
 
-    def forward(self, pred_obj, pred_cls, pred_giou, targets):
+    def forward(self, pred_obj, pred_cls, pred_iou, targets):
         """
             pred_obj: (Tensor) [B, HW, 1]
             pred_cls: (Tensor) [B, HW, C]
-            pred_giou: (Tensor) [B, HW,]
+            pred_iou: (Tensor) [B, HW,]
             targets: (Tensor) [B, HW, 1+1+1+4+1]
         """
         # groundtruth
@@ -118,7 +126,7 @@ class Criterion(nn.Module):
         loss_cls = self.loss_class(pred_cls, target_cls, target_pos)
 
         # regression loss
-        loss_reg = self.loss_bbox(pred_giou, target_pos, target_scale)
+        loss_reg = self.loss_bbox(pred_iou, target_pos, target_scale)
 
         # total loss
         losses = self.loss_obj_weight * loss_obj + \
@@ -128,8 +136,9 @@ class Criterion(nn.Module):
         return loss_obj, loss_cls, loss_reg, losses
 
 
-def build_criterion(args, num_classes=80):
-    criterion = Criterion(loss_obj_weight=args.loss_obj_weight,
+def build_criterion(args, cfg, num_classes=80):
+    criterion = Criterion(cfg=cfg,
+                          loss_obj_weight=args.loss_obj_weight,
                           loss_cls_weight=args.loss_cls_weight,
                           loss_reg_weight=args.loss_reg_weight,
                           num_classes=num_classes)
