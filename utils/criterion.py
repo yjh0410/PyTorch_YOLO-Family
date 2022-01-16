@@ -79,7 +79,7 @@ class Criterion(nn.Module):
         return loss_cls
 
 
-    def loss_giou(self, pred_giou, target_pos, target_scale):
+    def loss_bbox(self, pred_giou, target_pos, target_scale):
         """
             pred_giou: (FloatTensor) [B, HW, ]
             target_pos: (FloatTensor) [B, HW,]
@@ -118,7 +118,7 @@ class Criterion(nn.Module):
         loss_cls = self.loss_class(pred_cls, target_cls, target_pos)
 
         # regression loss
-        loss_reg = self.loss_giou(pred_giou, target_pos, target_scale)
+        loss_reg = self.loss_bbox(pred_giou, target_pos, target_scale)
 
         # total loss
         losses = self.loss_obj_weight * loss_obj + \
