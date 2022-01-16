@@ -43,7 +43,7 @@ class Criterion(nn.Module):
         try:
             if cfg['loss_obj'] == 'mse':
                 self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
-            elif cfg['loss_obj'] == 'mse':
+            elif cfg['loss_obj'] == 'bce':
                 self.obj_loss_f = nn.BCEWithLogitsLoss(reduction='none')
         except:
             self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
