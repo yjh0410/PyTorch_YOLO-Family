@@ -266,7 +266,7 @@ For example:
 ```Shell
 python train.py --cuda \
                 -d coco \
-                -v yolov1 \
+                -m yolov1 \
                 -ms \
                 --ema \
                 --batch_size 16 \
@@ -282,7 +282,7 @@ If you have multi gpus like 8, and you put 4 images on each gpu:
 ```Shell
 python -m torch.distributed.launch --nproc_per_node=8 train.py -d coco \
                                                                --cuda \
-                                                               -v yolov1 \
+                                                               -m yolov1 \
                                                                -ms \
                                                                --ema \
                                                                -dist \
@@ -303,14 +303,12 @@ For example:
 ```Shell
 python test.py -d coco \
                --cuda \
-               -v yolov1 \
+               -m yolov4_exp \
                --weight path/to/weight \
                --img_size 640 \
                --root path/to/dataset/ \
                --show
 ```
-Note that if you try to run my YOLOv4-Exp, please add `--center_sample` because I use this trick in training phase.
-For more details, please check the code `models/yolo/yolov4_exp.py`.
 
 # Evaluation
 For example
@@ -318,7 +316,7 @@ For example
 ```Shell
 python eval.py -d coco-val \
                --cuda \
-               -v yolov1 \
+               -m yolov1 \
                --weight path/to/weight \
                --img_size 640 \
                --root path/to/dataset/
@@ -329,7 +327,7 @@ To run on COCO_test-dev(You must be sure that you have downloaded test2017):
 ```Shell
 python eval.py -d coco-test \
                --cuda \
-               -v yolov1 \
+               -m yolov1 \
                --weight path/to/weight \
                --img_size 640 \
                 --root path/to/dataset/
