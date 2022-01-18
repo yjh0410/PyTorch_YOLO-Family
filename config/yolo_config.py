@@ -52,7 +52,7 @@ yolo_config = {
     },
     'yolov4_exp': {
         # backbone
-        'backbone': 'cspd53',
+        'backbone': 'd53',
         # neck
         'neck': 'spp',
         # anchor size: P5-640
