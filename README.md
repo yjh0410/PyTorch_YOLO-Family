@@ -83,9 +83,9 @@ On the COCO-val:
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white>  15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td><td bgcolor=white>  42.10   </td><td bgcolor=white> 44.89M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3 </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3 </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white> 36.9 </td><td bgcolor=white> 59.0 </td><td bgcolor=white> 39.7 </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 41.6 </td><td bgcolor=white> 47.7 </td><td bgcolor=white> 78.30 </td><td bgcolor=white> 61.97M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-SPP </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-SPP </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 78.72 </td><td bgcolor=white> 63.01M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
 
@@ -178,7 +178,7 @@ Coming soon.
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-608</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>   </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-640</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>   </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-640</th><td bgcolor=white> </td><td bgcolor=white> 36.9 </td><td bgcolor=white> 59.0 </td><td bgcolor=white> 39.7 </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 41.6 </td><td bgcolor=white> 47.7 </td></tr>
 </table></tbody>
 
 ## YOLOv3 with SPP
