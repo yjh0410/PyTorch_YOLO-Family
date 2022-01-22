@@ -24,8 +24,8 @@ You can run following command to visualize positiva sample:
 python train.py \
         -d voc \
         --root path/to/your/dataset \
-        --batch_size 2 \
         -m yolov2 \
+        --batch_size 2 \
         --vis_targets
 ```
 
@@ -38,7 +38,7 @@ In this project, you can enjoy:
 - a new and stronger YOLOv1
 - a new and stronger YOLOv2
 - YOLOv3 with DilatedEncoder
-- YOLOv4-Exp ~ (I'm try to make it better)
+- YOLOv4-Exp ~ (I'm trying to make it better)
 - YOLO-Tiny
 - YOLO-Nano
 
@@ -69,36 +69,8 @@ Tricks in this project:
 - [x] Multiple positive samples(`--center_sample`) for my YOLOv4-Exp
 
 
-On the COCO-val:
-
-<table><tbody>
-<tr><th align="left" bgcolor=#f8f8f8>       </th><td bgcolor=white> Backbone </td><td bgcolor=white> Size </td><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano</th><td bgcolor=white> ShuffleNetv2-1.0x </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 40.0 </td><td bgcolor=white> 20.5 </td><td bgcolor=white> 7.4 </td><td bgcolor=white> 22.7 </td><td bgcolor=white> 32.3 </td><td bgcolor=white> 1.65 </td><td bgcolor=white> 1.86M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny</th><td bgcolor=white> CSPDarkNet-Tiny </td><td bgcolor=white> 512 </td><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR</th><td bgcolor=white> ViT-B </td><td bgcolor=white> 384 </td><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv1</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td><td bgcolor=white>  41.96   </td><td bgcolor=white> 44.54M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2</th><td bgcolor=white> ResNet50 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white>  15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td><td bgcolor=white>  42.10   </td><td bgcolor=white> 44.89M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3 </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white> 36.9 </td><td bgcolor=white> 59.0 </td><td bgcolor=white> 39.7 </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 41.6 </td><td bgcolor=white> 47.7 </td><td bgcolor=white> 78.30 </td><td bgcolor=white> 61.97M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-SPP </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 78.72 </td><td bgcolor=white> 63.01M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white>  76.41   </td><td bgcolor=white> 57.25M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-Exp </th><td bgcolor=white> DarkNet53 </td><td bgcolor=white> 640 </td><td bgcolor=white>  </td><td bgcolor=white> 41.8 </td><td bgcolor=white> 61.8 </td><td bgcolor=white> 44.9 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 46.6 </td><td bgcolor=white> 52.7 </td><td bgcolor=white> 82.83 </td><td bgcolor=white> 72.12M </td></tr>
-
-</table></tbody>
-
-The FPS of all YOLO detectors are measured on a one 2080ti GPU with 640 × 640 size.
-
-My CSPDarkNet53 is not good.
-
-# Visualization
-I will upload some visualization results:
+# Experiments
+All experiment results are evaluated on COCO val.
 
 ## YOLO-Nano
 <table><tbody>
@@ -147,19 +119,25 @@ I will upload some visualization results:
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv1-512</th><td bgcolor=white>     </td><td bgcolor=white> 33.1 </td><td bgcolor=white> 52.2 </td><td bgcolor=white> 34.0 </td><td bgcolor=white> 10.8  </td><td bgcolor=white> 35.9 </td><td bgcolor=white> 54.9 </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv1-640</th><td bgcolor=white>     </td><td bgcolor=white> 35.2 </td><td bgcolor=white> 54.7 </td><td bgcolor=white> 37.1 </td><td bgcolor=white>  14.3 </td><td bgcolor=white>  39.5 </td><td bgcolor=white>  53.4 </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv1-800 </th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+
 </table></tbody>
 
 ## YOLOv2
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-320</th><td bgcolor=white>     </td><td bgcolor=white> 26.8 </td><td bgcolor=white> 44.1 </td><td bgcolor=white> 27.1 </td><td bgcolor=white> 4.7  </td><td bgcolor=white> 27.6 </td><td bgcolor=white> 50.8 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-320 </th><td bgcolor=white>     </td><td bgcolor=white> 26.8 </td><td bgcolor=white> 44.1 </td><td bgcolor=white> 27.1 </td><td bgcolor=white> 4.7  </td><td bgcolor=white> 27.6 </td><td bgcolor=white> 50.8 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-416</th><td bgcolor=white>     </td><td bgcolor=white> 31.6 </td><td bgcolor=white> 50.3 </td><td bgcolor=white> 32.4 </td><td bgcolor=white> 9.1  </td><td bgcolor=white> 33.8 </td><td bgcolor=white> 54.0 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-416 </th><td bgcolor=white>     </td><td bgcolor=white> 31.6 </td><td bgcolor=white> 50.3 </td><td bgcolor=white> 32.4 </td><td bgcolor=white> 9.1  </td><td bgcolor=white> 33.8 </td><td bgcolor=white> 54.0 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-512</th><td bgcolor=white>     </td><td bgcolor=white> 34.3 </td><td bgcolor=white> 54.0 </td><td bgcolor=white> 35.4 </td><td bgcolor=white> 12.3 </td><td bgcolor=white> 37.8 </td><td bgcolor=white> 55.2 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-512 </th><td bgcolor=white>     </td><td bgcolor=white> 34.3 </td><td bgcolor=white> 54.0 </td><td bgcolor=white> 35.4 </td><td bgcolor=white> 12.3 </td><td bgcolor=white> 37.8 </td><td bgcolor=white> 55.2 </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-640</th><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white> 15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-640 </th><td bgcolor=white>     </td><td bgcolor=white> 36.3 </td><td bgcolor=white> 56.6 </td><td bgcolor=white> 37.7 </td><td bgcolor=white> 15.1 </td><td bgcolor=white>  41.1 </td><td bgcolor=white>  54.0 </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv2-800 </th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+
 </table></tbody>
 
 ## YOLOv3
@@ -208,11 +186,15 @@ The DilatedEncoder is proposed by YOLOF.
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-512</th><td bgcolor=white>     </td><td bgcolor=white> 37.7 </td><td bgcolor=white> 59.3 </td><td bgcolor=white> 39.6 </td><td bgcolor=white> 17.9 </td><td bgcolor=white> 40.4 </td><td bgcolor=white> 54.4 </td></tr>
 
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv3-608</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
+
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-640</th><td bgcolor=white>     </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td></tr>
 </table></tbody>
 
 ## YOLOv4-exp
 This is an experimental model, not the final version.
+
+Coming soon ...
 
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td></tr>
@@ -225,7 +207,6 @@ This is an experimental model, not the final version.
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4-608</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>   </td><td bgcolor=white>  </td><td bgcolor=white>   </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-640</th><td bgcolor=white> </td><td bgcolor=white> 41.8 </td><td bgcolor=white> 61.8 </td><td bgcolor=white> 44.9 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 46.6 </td><td bgcolor=white> 52.7 </td></tr>
 </table></tbody>
 
 # Dataset
