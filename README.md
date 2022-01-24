@@ -97,11 +97,11 @@ All experiment results are evaluated on COCO val.
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white>     </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 42.4 </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 8.9 </td><td bgcolor=white> 26.1 </td><td bgcolor=white> 38.8 </td><td bgcolor=white> 2.16 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 0.55 </td><td bgcolor=white> 1.27M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white> 25.7 </td><td bgcolor=white> 44.4 </td><td bgcolor=white> 25.9 </td><td bgcolor=white> 11.7 </td><td bgcolor=white> 27.8 </td><td bgcolor=white> 36.7 </td><td bgcolor=white> 3.64 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 0.94 </td><td bgcolor=white> 1.27M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white> 26.6 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.9 </td><td bgcolor=white> 13.5 </td><td bgcolor=white> 30.0 </td><td bgcolor=white> 35.0 </td><td bgcolor=white> 5.52 </td><td bgcolor=white> 7.66M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 1.42 </td><td bgcolor=white> 1.27M </td></tr>
 
 </table></tbody>
 
