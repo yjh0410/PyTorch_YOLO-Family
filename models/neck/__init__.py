@@ -10,7 +10,7 @@ def build_neck(model, in_ch, out_ch, act='lrelu'):
     elif model == 'spp':
         print("Neck: SPP")
         neck = SPPBlock(c1=in_ch, c2=out_ch, act=act)
-    elif model == 'spp_csp':
+    elif model == 'spp-csp':
         print("Neck: SPP-CSP")
         neck = SPPBlockCSP(c1=in_ch, c2=out_ch, act=act)
     elif model == 'dilated_encoder':
