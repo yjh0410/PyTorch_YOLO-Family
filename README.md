@@ -65,7 +65,7 @@ You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and
 - YOLOv3-DE: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolov3_de_38.7_60.2.pth
 - YOLOv4: Coming soon ...
 - YOLO-Tiny: Coming soon ...
-- YOLO-Nano: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolo_nano_21.6_40.0.pth
+- YOLO-Nano: Coming soon ...
 
 
 # Experiments
@@ -85,11 +85,11 @@ All experiment results are evaluated on COCO val.
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-320</th><td bgcolor=white>     </td><td bgcolor=white> 17.2 </td><td bgcolor=white> 32.9 </td><td bgcolor=white> 15.8 </td><td bgcolor=white> 3.5 </td><td bgcolor=white> 15.7 </td><td bgcolor=white> 31.4 </td><td bgcolor=white> 0.64 </td><td bgcolor=white> 1.86M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-416</th><td bgcolor=white>     </td><td bgcolor=white> 20.2 </td><td bgcolor=white> 37.7 </td><td bgcolor=white> 19.3 </td><td bgcolor=white> 5.5 </td><td bgcolor=white> 19.7 </td><td bgcolor=white> 33.5 </td><td bgcolor=white> 1.09 </td><td bgcolor=white> 1.86M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-512</th><td bgcolor=white>     </td><td bgcolor=white> 21.6 </td><td bgcolor=white> 40.0 </td><td bgcolor=white> 20.5 </td><td bgcolor=white> 7.4 </td><td bgcolor=white> 22.7 </td><td bgcolor=white> 32.3 </td><td bgcolor=white> 1.65 </td><td bgcolor=white> 1.86M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
 
 </table></tbody>
 
