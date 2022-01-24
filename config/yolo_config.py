@@ -69,7 +69,7 @@ yolo_config = {
         # backbone
         'backbone': 'cspd_tiny',
         # neck
-        'neck': 'dilated_encoder',
+        'neck': 'spp',
         # anchor size: P5-640
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
