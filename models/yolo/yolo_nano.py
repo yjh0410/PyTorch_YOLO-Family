@@ -41,9 +41,6 @@ class YOLONano(nn.Module):
         # build grid cell
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
-        # neck
-        self.neck = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5)
-
         # FPN+PAN
         self.conv1x1_0 = Conv(c3, 96, k=1)
         self.conv1x1_1 = Conv(c4, 96, k=1)
@@ -192,9 +189,7 @@ class YOLONano(nn.Module):
         # backbone
         c3, c4, c5 = self.backbone(x)
 
-        # neck
-        c5 = self.neck(c5)
-
+        # head
         p3 = self.conv1x1_0(c3)
         p4 = self.conv1x1_1(c4)
         p5 = self.conv1x1_2(c5)
