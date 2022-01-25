@@ -1,3 +1,4 @@
+import imghdr
 import numpy as np
 import torch
 
@@ -163,8 +164,8 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
 
     for s in strides:
         fmp_h, fmp_w = img_h // s, img_w // s
-        # [B, H, W, KA, obj+cls+box]
-        gt_tensor.append(np.zeros([batch_size, fmp_h, fmp_w, KA, 1+1+4]))
+        # [B, H, W, KA, obj+cls+box+scale]
+        gt_tensor.append(np.zeros([batch_size, fmp_h, fmp_w, KA, 1+1+4+1]))
         
     # generate gt datas  
     for bi in range(batch_size):
@@ -179,6 +180,8 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
             bw = (x2 - x1) * img_w
             bh = (y2 - y1) * img_h
             target_boxes = [xc, yc, bw, bh]
+            box_scale = 1.0 # 2.0 - (bw / img_w) * (bh / img_h)
+
             # check label
             if bw < 1. or bh < 1.:
                 # print('A dirty data !!!')
@@ -211,14 +214,16 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
                                 gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
                                 gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
                                 gt_tensor[scale_ind][bi, j, i, anchor_ind, 2:6] = np.array([x1, y1, x2, y2])
+                                gt_tensor[scale_ind][bi, j, i, anchor_ind, 6] = box_scale
                 else:
                     # We ongly consider top-left grid point near the center point
                     if (grid_y >= 0 and grid_y < gt_tensor[scale_ind].shape[1]) and (grid_x >= 0 and grid_x < gt_tensor[scale_ind].shape[2]):
                         gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 0] = 1.0
                         gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 1] = cls_id
                         gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 2:6] = np.array([x1, y1, x2, y2])
+                        gt_tensor[scale_ind][bi, grid_y, grid_x, anchor_ind, 6] = box_scale
 
-    gt_tensor = [gt.reshape(batch_size, -1, 1+1+4) for gt in gt_tensor]
+    gt_tensor = [gt.reshape(batch_size, -1, 1+1+4+1) for gt in gt_tensor]
     gt_tensor = np.concatenate(gt_tensor, axis=1)
     
     return torch.from_numpy(gt_tensor).float()
