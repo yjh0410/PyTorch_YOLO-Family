@@ -7,7 +7,7 @@ python train.py \
         --lr 0.001 \
         --img_size 512 \
         --max_epoch 200 \
-        --lr_epoch 100 150
+        --lr_epoch 100 150 \
         --multi_scale \
         --multi_scale_range 10 16 \
         --mosaic \
