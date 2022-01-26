@@ -79,7 +79,7 @@ Tricks in this project:
 
 
 # Experiments
-All experiment results are evaluated on COCO val. All FPS results expect YOLO-Nano's are measured on a 2080ti GPU. 
+All experiment results are evaluated on COCO val. All FPS results except YOLO-Nano's are measured on a 2080ti GPU. 
 We will measure the speed of YOLO-Nano on a CPU.
 
 ## YOLO-Nano
