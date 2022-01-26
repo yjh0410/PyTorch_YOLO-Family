@@ -180,7 +180,7 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
             bw = (x2 - x1) * img_w
             bh = (y2 - y1) * img_h
             target_boxes = [xc, yc, bw, bh]
-            box_scale = 1.0 # 2.0 - (bw / img_w) * (bh / img_h)
+            box_scale = 2.0 - (bw / img_w) * (bh / img_h)
 
             # check label
             if bw < 1. or bh < 1.:
