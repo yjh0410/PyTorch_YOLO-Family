@@ -71,11 +71,13 @@ You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and
 # Experiments
 ## Tricks
 Tricks in this project:
-- [x] Augmentations: Flip + Color jitter + RandomCrop + Multi-scale
+- [x] Augmentations: Flip + Color jitter + RandomCrop
 - [x] Model EMA
-- [x] GIoU
-- [x] Mosaic Augmentation for my YOLOv4-Exp
+- [x] Mosaic Augmentation
 - [x] Multi Scale training
+- [ ] Gird Sensitive
+- [ ] MixUp Augmentation
+- [ ] Cosine annealing learning schedule
 
 
 # Experiments
