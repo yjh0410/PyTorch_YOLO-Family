@@ -10,7 +10,7 @@ python train.py \
         --lr_epoch 130 180 \
         --multi_scale \
         --multi_scale_range 10 19 \
-        --accumulate 4 \
+        --accumulate 1 \
         --mosaic \
         --multi_anchor \
         --ema
