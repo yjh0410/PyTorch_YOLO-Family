@@ -303,9 +303,9 @@ class YOLOv4EXP(nn.Module):
                 reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
                 # txty -> xy
                 if self.center_sample:     
-                    xy_pred_i = (self.grid_cell[i] + (reg_pred_i[..., :2].sigmoid() * self.gs - (self.gs - 1.0) / 2.0) * 2.0 - 1.0) * self.stride[i]
+                    xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
                 else:
-                    xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * self.gs - (self.gs - 1.0) / 2.0) * self.stride[i]
+                    xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid()) * self.stride[i]
                 # twth -> wh
                 wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
                 # xywh -> x1y1x2y2
