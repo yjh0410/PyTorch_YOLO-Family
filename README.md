@@ -175,7 +175,7 @@ This is an experimental model, not the final version. I'm still trying to make i
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white>     </td><td bgcolor=white> 42.9 </td><td bgcolor=white> 63.1 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 48.3 </td><td bgcolor=white> 56.5 </td><td bgcolor=white> 41.94 </td><td bgcolor=white> 58.14M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-608</th><td bgcolor=white>     </td><td bgcolor=white> 43.0 </td><td bgcolor=white> 63.4 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.7 </td><td bgcolor=white> 48.6 </td><td bgcolor=white> 53.9 </td><td bgcolor=white> 65.53 </td><td bgcolor=white> 58.14M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-608</th><td bgcolor=white>     </td><td bgcolor=white> 43.0 </td><td bgcolor=white> 63.4 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.7 </td><td bgcolor=white> 48.6 </td><td bgcolor=white> 53.9 </td><td bgcolor=white> 59.14 </td><td bgcolor=white> 58.14M </td></tr>
 
 </table></tbody>
 
