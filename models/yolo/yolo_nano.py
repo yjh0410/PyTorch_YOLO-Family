@@ -266,8 +266,6 @@ class YOLONano(nn.Module):
             c3, c4, c5 = self.backbone(x)
 
             # neck
-            c5 = self.neck(c5)
-
             p3 = self.conv1x1_0(c3)
             p4 = self.conv1x1_1(c4)
             p5 = self.conv1x1_2(c5)
