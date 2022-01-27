@@ -75,6 +75,7 @@ Tricks in this project:
 - [x] Model EMA
 - [x] Mosaic Augmentation
 - [x] Multi Scale training
+- [ ] Gradient accumulation
 - [ ] MixUp Augmentation
 - [ ] Cosine annealing learning schedule
 
