@@ -1,7 +1,6 @@
 from .resnet import resnet18, resnet50, resnet101
 from .darknet import darknet53
-from .cspdarknet import cspdarknet_tiny
-# from .cspdarknet import cspdarknet53
+from .cspdarknet_tiny import cspdarknet_tiny
 from .cspdarknet53 import cspdarknet53
 from .shufflenetv2 import shufflenetv2
 from .vit import vit_base_patch16_224

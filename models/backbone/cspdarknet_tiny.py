@@ -61,47 +61,6 @@ class CSPStage(nn.Module):
         return self.cv3(torch.cat([y1, y2], dim=1))
 
 
-# CSPDarknet
-class CSPDarknet53(nn.Module):
-    """
-    CSPDarknet_53.
-    """
-    def __init__(self):
-        super(CSPDarknet53, self).__init__()
-            
-        self.layer_1 = nn.Sequential(
-            Conv(3, 32, k=3, p=1),      
-            Conv(32, 64, k=3, p=1, s=2),
-            CSPStage(c1=64, n=1)                       # p1/2
-        )
-        self.layer_2 = nn.Sequential(   
-            Conv(64, 128, k=3, p=1, s=2),             
-            CSPStage(c1=128, n=2)                      # P2/4
-        )
-        self.layer_3 = nn.Sequential(
-            Conv(128, 256, k=3, p=1, s=2),             
-            CSPStage(c1=256, n=8)                      # P3/8
-        )
-        self.layer_4 = nn.Sequential(
-            Conv(256, 512, k=3, p=1, s=2),             
-            CSPStage(c1=512, n=8)                      # P4/16
-        )
-        self.layer_5 = nn.Sequential(
-            Conv(512, 1024, k=3, p=1, s=2),             
-            CSPStage(c1=1024, n=4)                     # P5/32
-        )
-
-
-    def forward(self, x):
-        c1 = self.layer_1(x)
-        c2 = self.layer_2(c1)
-        c3 = self.layer_3(c2)
-        c4 = self.layer_4(c3)
-        c5 = self.layer_5(c4)
-
-        return c3, c4, c5
-
-
 # CSPDarkNet-Tiny
 class CSPDarknetTiny(nn.Module):
     """
@@ -141,25 +100,6 @@ class CSPDarknetTiny(nn.Module):
         c5 = self.layer_5(c4)
 
         return c3, c4, c5
-
-
-def cspdarknet53(pretrained=False, **kwargs):
-    """Constructs a CSPDarknet53 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = CSPDarknet53()
-    if pretrained:
-        try:
-            print('Loading the pretrained model ...')
-            path_to_dir = os.path.dirname(os.path.abspath(__file__))
-            checkpoint = torch.load(path_to_dir + '/weights/cspdarknet/cspdarknet53.pth', map_location='cpu')
-            model.load_state_dict(checkpoint, strict=False)
-        except:
-            print('The pretrained weight can not be found ...')
-            pass
-    return model
 
 
 def cspdarknet_tiny(pretrained=False, **kwargs):
