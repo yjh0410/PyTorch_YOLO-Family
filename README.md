@@ -64,7 +64,7 @@ You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and
 - YOLOv3-SPP: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolov3_spp_38.2_60.1.pth
 - YOLOv3-DE: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolov3_de_38.7_60.2.pth
 - YOLOv4: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolov4_exp_43.0_63.4.pth
-- YOLO-Tiny: Coming soon ...
+- YOLO-Tiny: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolo_tiny_28.8_48.6.pth
 - YOLO-Nano: Coming soon ...
 
 
@@ -171,13 +171,25 @@ This is an experimental model, not the final version. I'm still trying to make i
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-320</th><td bgcolor=white>     </td><td bgcolor=white> 39.2 </td><td bgcolor=white> 58.6 </td><td bgcolor=white> 40.9 </td><td bgcolor=white> 16.9 </td><td bgcolor=white> 44.1 </td><td bgcolor=white> 59.2 </td><td bgcolor=white> 16.38 </td><td bgcolor=white> 58.14M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-320</th><td bgcolor=white> 89 </td><td bgcolor=white> 39.2 </td><td bgcolor=white> 58.6 </td><td bgcolor=white> 40.9 </td><td bgcolor=white> 16.9 </td><td bgcolor=white> 44.1 </td><td bgcolor=white> 59.2 </td><td bgcolor=white> 16.38 </td><td bgcolor=white> 58.14M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-416</th><td bgcolor=white>     </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 61.6 </td><td bgcolor=white> 44.2 </td><td bgcolor=white> 22.0 </td><td bgcolor=white> 46.6 </td><td bgcolor=white> 57.7 </td><td bgcolor=white> 27.69 </td><td bgcolor=white> 58.14M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-416</th><td bgcolor=white> 84 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 61.6 </td><td bgcolor=white> 44.2 </td><td bgcolor=white> 22.0 </td><td bgcolor=white> 46.6 </td><td bgcolor=white> 57.7 </td><td bgcolor=white> 27.69 </td><td bgcolor=white> 58.14M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white>     </td><td bgcolor=white> 42.9 </td><td bgcolor=white> 63.1 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 48.3 </td><td bgcolor=white> 56.5 </td><td bgcolor=white> 41.94 </td><td bgcolor=white> 58.14M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-512</th><td bgcolor=white> 70 </td><td bgcolor=white> 42.9 </td><td bgcolor=white> 63.1 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 24.5 </td><td bgcolor=white> 48.3 </td><td bgcolor=white> 56.5 </td><td bgcolor=white> 41.94 </td><td bgcolor=white> 58.14M </td></tr>
 
-<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-608</th><td bgcolor=white>     </td><td bgcolor=white> 43.0 </td><td bgcolor=white> 63.4 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.7 </td><td bgcolor=white> 48.6 </td><td bgcolor=white> 53.9 </td><td bgcolor=white> 59.14 </td><td bgcolor=white> 58.14M </td></tr>
+<tr><th align="left" bgcolor=#f8f8f8> YOLOv4-608</th><td bgcolor=white> 51 </td><td bgcolor=white> 43.0 </td><td bgcolor=white> 63.4 </td><td bgcolor=white> 46.1 </td><td bgcolor=white> 26.7 </td><td bgcolor=white> 48.6 </td><td bgcolor=white> 53.9 </td><td bgcolor=white> 59.14 </td><td bgcolor=white> 58.14M </td></tr>
+
+</table></tbody>
+
+## YOLO-Tiny
+<table><tbody>
+<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white> 143 </td><td bgcolor=white> 26.4 </td><td bgcolor=white> 44.5 </td><td bgcolor=white> 26.8 </td><td bgcolor=white> 8.8 </td><td bgcolor=white> 28.2 </td><td bgcolor=white> 42.4 </td><td bgcolor=white> 2.17 </td><td bgcolor=white> 7.66M </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white> 130 </td><td bgcolor=white> 28.2 </td><td bgcolor=white> 47.6 </td><td bgcolor=white> 28.8 </td><td bgcolor=white> 11.6 </td><td bgcolor=white> 31.5 </td><td bgcolor=white> 41.4 </td><td bgcolor=white> 3.67 </td><td bgcolor=white> 7.82M </td></tr>
+
+<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white> 118 </td><td bgcolor=white> 28.8 </td><td bgcolor=white> 48.6 </td><td bgcolor=white> 29.4 </td><td bgcolor=white> 13.3 </td><td bgcolor=white> 33.4 </td><td bgcolor=white> 38.3 </td><td bgcolor=white> 5.57 </td><td bgcolor=white> 7.82M </td></tr>
 
 </table></tbody>
 
@@ -190,18 +202,6 @@ This is an experimental model, not the final version. I'm still trying to make i
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 0.99 </td><td bgcolor=white> 1.32M </td></tr>
 
 <tr><th align="left" bgcolor=#f8f8f8> YOLO-Nano-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 1.47 </td><td bgcolor=white> 1.32M </td></tr>
-
-</table></tbody>
-
-## YOLO-Tiny
-<table><tbody>
-<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 2.17 </td><td bgcolor=white> 7.66M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-416</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 3.67 </td><td bgcolor=white> 7.82M </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-Tiny-512</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white> 5.57 </td><td bgcolor=white> 7.82M </td></tr>
 
 </table></tbody>
 
