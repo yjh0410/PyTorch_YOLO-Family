@@ -2,7 +2,7 @@ python train.py \
         --cuda \
         -d coco \
         -m yolo_tiny \
-        --root /mnt/share/ssd2/dataset \
+        --root /home/jxk/object-detection/dataset \
         --batch_size 16 \
         --lr 0.001 \
         --img_size 512 \
