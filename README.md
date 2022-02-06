@@ -78,6 +78,8 @@ Tricks in this project:
 - [ ] Gradient accumulation
 - [ ] MixUp Augmentation
 - [ ] Cosine annealing learning schedule
+- [ ] AdamW
+- [ ] Scale loss by number of positive samples
 
 
 # Experiments
