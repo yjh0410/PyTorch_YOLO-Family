@@ -10,6 +10,7 @@ python train.py \
         --lr_epoch 130 180 \
         --multi_scale \
         --multi_scale_range 10 19 \
+        --scale_loss batch \
         --accumulate 4 \
         --mosaic \
         --multi_anchor \
