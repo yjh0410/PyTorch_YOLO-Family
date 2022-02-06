@@ -98,6 +98,8 @@ def parse_args():
                         help='weight of cls loss')
     parser.add_argument('--loss_reg_weight', default=1.0, type=float,
                         help='weight of reg loss')
+    parser.add_argument('--scale_loss', default='batch', type=str,
+                        help='scale loss: batch or positive samples')
 
     # train trick
     parser.add_argument('--no_warmup', action='store_true', default=False,
@@ -233,6 +235,8 @@ def train():
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
     best_map = -100.
     warmup = not args.no_warmup
+    total_loss_sum = 0.
+    total_pos_sum = 0.
 
     t0 = time.time()
     # start training loop
@@ -317,28 +321,55 @@ def train():
             # compute loss
             loss_obj, loss_cls, loss_reg, total_loss = criterion(pred_obj, pred_cls, pred_iou, targets)
 
-            loss_dict = dict(
-                loss_obj=loss_obj,
-                loss_cls=loss_cls,
-                loss_reg=loss_reg,
-                total_loss=total_loss
-            )
-            loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
-
             # check loss
             if torch.isnan(total_loss):
                 continue
 
-            total_loss = total_loss / args.accumulate
-            # Backward and Optimize
-            total_loss.backward()
-            if ni % args.accumulate == 0:
-                optimizer.step()
-                optimizer.zero_grad()
+            if args.scale_loss == 'batch':
+                loss_dict = dict(
+                    loss_obj=loss_obj.clone().detach(),
+                    loss_cls=loss_cls.clone().detach(),
+                    loss_reg=loss_reg.clone().detach(),
+                    total_loss=total_loss.clone().detach()
+                )
+                loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
 
-                # ema
-                if args.ema:
-                    ema.update(model)
+                total_loss = total_loss / args.accumulate
+                # Backward and Optimize
+                total_loss.backward()
+                if ni % args.accumulate == 0:
+                    optimizer.step()
+                    optimizer.zero_grad()
+
+                    # ema
+                    if args.ema:
+                        ema.update(model)
+
+            elif args.scale_loss == 'positive':
+                cur_batch_size = images.size(0)
+                cur_pos_num = targets[..., 1].sum()
+                loss_dict = dict(
+                    loss_obj=loss_obj.clone().detach() * cur_batch_size / cur_pos_num.clamp(1.0),
+                    loss_cls=loss_cls.clone().detach() * cur_batch_size / cur_pos_num.clamp(1.0),
+                    loss_reg=loss_reg.clone().detach() * cur_batch_size / cur_pos_num.clamp(1.0),
+                    total_loss=total_loss.clone().detach() * cur_batch_size / cur_pos_num.clamp(1.0)
+                )
+                loss_dict_reduced = distributed_utils.reduce_loss_dict(loss_dict)
+
+                total_loss_sum += total_loss * cur_batch_size
+                total_pos_sum += cur_pos_num
+                # Backward and Optimize
+                if ni % args.accumulate == 0:
+                    total_loss_sum = total_loss_sum / total_pos_sum.clamp(1.0)
+                    total_loss_sum.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    total_loss_sum = 0.
+                    total_pos_sum = 0.
+
+                    # ema
+                    if args.ema:
+                        ema.update(model)
 
             # display
             if iter_i % 10 == 0:
