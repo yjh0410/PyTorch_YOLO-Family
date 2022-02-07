@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from ..backbone import build_backbone
-from ..neck import build_neck
+from ..neck.spp import SPP
 from ..basic.conv import Conv
 from utils import box_ops
 
@@ -42,7 +42,7 @@ class YOLONano(nn.Module):
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
         # neck
-        self.neck = build_neck(model=cfg['neck'], in_ch=c5, out_ch=c5)
+        self.neck = SPP(c5, c5)
 
         # FPN+PAN
         self.conv1x1_0 = Conv(c3, 96, k=1)
