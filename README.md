@@ -37,10 +37,10 @@ My better YOLO family
 In this project, you can enjoy: 
 - a new and stronger YOLOv1
 - a new and stronger YOLOv2
-- YOLOv3
-- YOLOv3 with SPP
-- YOLOv3 with DilatedEncoder
-- YOLOv4-Exp ~ (I'm trying to make it better)
+- a stronger YOLOv3
+- a stronger YOLOv3 with SPP
+- a stronger YOLOv3 with DilatedEncoder
+- YOLOv4 (I'm trying to make it better)
 - YOLO-Tiny
 - YOLO-Nano
 
@@ -167,8 +167,8 @@ The DilatedEncoder is proposed by YOLOF.
 <tr><th align="left" bgcolor=#f8f8f8> YOLOv3-DE-640</th><td bgcolor=white> 48 </td><td bgcolor=white> 38.7 </td><td bgcolor=white> 60.2 </td><td bgcolor=white> 40.7 </td><td bgcolor=white>  21.3 </td><td bgcolor=white> 41.7 </td><td bgcolor=white> 51.7  </td><td bgcolor=white> 76.41 </td><td bgcolor=white> 57.25M </td></tr>
 </table></tbody>
 
-## YOLOv4-exp
-This is an experimental model, not the final version. I'm still trying to make it better.
+## YOLOv4
+I'm still trying to make it better.
 
 <table><tbody>
 <tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
@@ -298,7 +298,7 @@ For example:
 ```Shell
 python test.py -d coco \
                --cuda \
-               -m yolov4_exp \
+               -m yolov4 \
                --weight path/to/weight \
                --img_size 640 \
                --root path/to/dataset/ \

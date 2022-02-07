@@ -9,13 +9,7 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
         c_ = int(c2 * e)  # hidden channels            
         self.cv1 = Conv(c1, c_, k=1, act=act)
-        if depthwise:
-            self.cv2 = nn.Sequential(
-                Conv(c_, c_, k=3, p=d, g=c_, d=d, act=act),
-                Conv(c_, c2, k=1, act=act)
-            )
-        else:
-            self.cv2 = Conv(c_, c2, k=3, p=d, d=d, act=act)
+        self.cv2 = Conv(c_, c2, k=3, p=d, d=d, act=act, depthwise=depthwise)
         self.add = shortcut and c1 == c2
 
     def forward(self, x):

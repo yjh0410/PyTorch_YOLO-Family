@@ -3,15 +3,12 @@ import torch
 import torch.nn as nn
 
 from utils import box_ops
-
 from ..backbone import build_backbone
-from ..neck import build_neck
-from ..basic.conv import Conv 
-from ..basic.upsample import UpSample
-from ..basic.bottleneck_csp import BottleneckCSP
+from ..head.fpn import build_fpn
+from ..head.decoupled_head import DecoupledHead
 
 
-class YOLOv4EXP(nn.Module):
+class YOLOv5(nn.Module):
     def __init__(self, 
                  cfg=None,
                  device=None, 
@@ -22,7 +19,7 @@ class YOLOv4EXP(nn.Module):
                  nms_thresh=0.60, 
                  center_sample=False):
 
-        super(YOLOv4EXP, self).__init__()
+        super(YOLOv5, self).__init__()
         self.cfg = cfg
         self.device = device
         self.img_size = img_size
@@ -31,7 +28,6 @@ class YOLOv4EXP(nn.Module):
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
-        self.gs = cfg["gs"]  # grid sensitive
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
@@ -45,41 +41,22 @@ class YOLOv4EXP(nn.Module):
         # build grid cell
         self.grid_cell, self.anchors_wh = self.create_grid(img_size)
 
-        # head
-        self.head_conv_0 = build_neck(model=cfg["neck"], in_ch=c5, out_ch=c5//2)  # 10
-        self.head_upsample_0 = UpSample(scale_factor=2)
-        self.head_csp_0 = BottleneckCSP(c4 + c5//2, c4, n=3, shortcut=False)
+        # neck
+        self.neck = build_fpn(model_name=cfg['neck'], 
+                              in_dim=[c3, c4, c5],
+                              depth=cfg['depth'],
+                              depthwise=cfg['depthwise'],
+                              act='silu')
 
-        # P3/8-small
-        self.head_conv_1 = Conv(c4, c4//2, k=1)  # 14
-        self.head_upsample_1 = UpSample(scale_factor=2)
-        self.head_csp_1 = BottleneckCSP(c3 + c4//2, c3, n=3, shortcut=False)
-
-        # P4/16-medium
-        self.head_conv_2 = Conv(c3, c3, k=3, p=1, s=2)
-        self.head_csp_2 = BottleneckCSP(c3 + c4//2, c4, n=3, shortcut=False)
-
-        # P8/32-large
-        self.head_conv_3 = Conv(c4, c4, k=3, p=1, s=2)
-        self.head_csp_3 = BottleneckCSP(c4 + c5//2, c5, n=3, shortcut=False)
-
-        # det conv
-        self.head_det_1 = nn.Conv2d(c3, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_2 = nn.Conv2d(c4, self.num_anchors * (1 + self.num_classes + 4), 1)
-        self.head_det_3 = nn.Conv2d(c5, self.num_anchors * (1 + self.num_classes + 4), 1)
-
-        if self.trainable:
-            # init bias
-            self.init_bias()
-
-
-    def init_bias(self):               
-        # init bias
-        init_prob = 0.01
-        bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
-        nn.init.constant_(self.head_det_1.bias[..., :self.num_anchors], bias_value)
-        nn.init.constant_(self.head_det_2.bias[..., :self.num_anchors], bias_value)
-        nn.init.constant_(self.head_det_3.bias[..., :self.num_anchors], bias_value)
+        # decoupled head
+        self.head = DecoupledHead(in_dim=[c3, c4, c5],
+                                  head_dim=cfg['head_dim'],
+                                  width=cfg['width'],
+                                  num_classes=self.num_classes,
+                                  num_anchors=self.num_anchors,
+                                  act='silu',
+                                  depthwise=cfg['depthwise'],
+                                  init_bias=trainable)
 
 
     def create_grid(self, img_size):
@@ -176,67 +153,35 @@ class YOLOv4EXP(nn.Module):
 
     @torch.no_grad()
     def inference_single_image(self, x):
-        KA = self.num_anchors
-        C = self.num_classes
         # backbone
         c3, c4, c5 = self.backbone(x)
 
-        # FPN + PAN
+        # neck
+        p3, p4, p5 = self.neck([c3, c4, c5])
+
         # head
-        c6 = self.head_conv_0(c5)
-        c7 = self.head_upsample_0(c6)   # s32->s16
-        c8 = torch.cat([c7, c4], dim=1)
-        c9 = self.head_csp_0(c8)
-        # P3/8
-        c10 = self.head_conv_1(c9)
-        c11 = self.head_upsample_1(c10)   # s16->s8
-        c12 = torch.cat([c11, c3], dim=1)
-        c13 = self.head_csp_1(c12)  # to det
-        # p4/16
-        c14 = self.head_conv_2(c13)
-        c15 = torch.cat([c14, c10], dim=1)
-        c16 = self.head_csp_2(c15)  # to det
-        # p5/32
-        c17 = self.head_conv_3(c16)
-        c18 = torch.cat([c17, c6], dim=1)
-        c19 = self.head_csp_3(c18)  # to det
+        obj_pred, cls_pred, reg_pred = self.head([p3, p4, p5])
 
-        # det
-        pred_s = self.head_det_1(c13)[0]
-        pred_m = self.head_det_2(c16)[0]
-        pred_l = self.head_det_3(c19)[0]
-
-        preds = [pred_s, pred_m, pred_l]
-        obj_pred_list = []
-        cls_pred_list = []
-        box_pred_list = []
-
-        for i, pred in enumerate(preds):
-            # [KA*(1 + C + 4), H, W] -> [KA*1, H, W] -> [H, W, KA*1] -> [HW*KA, 1]
-            obj_pred_i = pred[:KA, :, :].permute(1, 2, 0).contiguous().view(-1, 1)
-            # [KA*(1 + C + 4), H, W] -> [KA*C, H, W] -> [H, W, KA*C] -> [HW*KA, C]
-            cls_pred_i = pred[KA:KA*(1+C), :, :].permute(1, 2, 0).contiguous().view(-1, C)
-            # [KA*(1 + C + 4), H, W] -> [KA*4, H, W] -> [H, W, KA*4] -> [HW, KA, 4]
-            reg_pred_i = pred[KA*(1+C):, :, :].permute(1, 2, 0).contiguous().view(-1, KA, 4)
+        # decode box
+        box_pred = []
+        for i, reg_pred_i in enumerate(reg_pred):
             # txty -> xy
-            if self.center_sample:
-                xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() * 2.0 - 1.0 + self.grid_cell[i]) * self.stride[i]
+            if self.center_sample:     
+                xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
             else:
-                xy_pred_i = (reg_pred_i[None, ..., :2].sigmoid() + self.grid_cell[i]) * self.stride[i]
+                xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid()) * self.stride[i]
             # twth -> wh
-            wh_pred_i = reg_pred_i[None, ..., 2:].exp() * self.anchors_wh[i]
-            # xywh -> x1y1x2y2           
+            wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
+            # xywh -> x1y1x2y2
             x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
             x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
-            box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1)[0].view(-1, 4)
+            box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1).view(1, -1, 4)
 
-            obj_pred_list.append(obj_pred_i)
-            cls_pred_list.append(cls_pred_i)
-            box_pred_list.append(box_pred_i)
+            box_pred.append(box_pred_i)
         
-        obj_pred = torch.cat(obj_pred_list, dim=0)
-        cls_pred = torch.cat(cls_pred_list, dim=0)
-        box_pred = torch.cat(box_pred_list, dim=0)
+        obj_pred = torch.cat(obj_pred, dim=1)[0]  # [N, 1]
+        cls_pred = torch.cat(cls_pred, dim=1)[0]  # [N, C]
+        box_pred = torch.cat(box_pred, dim=1)[0]  # [N, 4]
         
         # normalize bbox
         bboxes = torch.clamp(box_pred / self.img_size, 0., 1.)
@@ -259,48 +204,18 @@ class YOLOv4EXP(nn.Module):
             return self.inference_single_image(x)
         else:
             B = x.size(0)
-            KA = self.num_anchors
-            C = self.num_classes
             # backbone
             c3, c4, c5 = self.backbone(x)
 
-            # FPN + PAN
+            # neck
+            p3, p4, p5 = self.neck([c3, c4, c5])
+
             # head
-            c6 = self.head_conv_0(c5)
-            c7 = self.head_upsample_0(c6)   # s32->s16
-            c8 = torch.cat([c7, c4], dim=1)
-            c9 = self.head_csp_0(c8)
-            # P3/8
-            c10 = self.head_conv_1(c9)
-            c11 = self.head_upsample_1(c10)   # s16->s8
-            c12 = torch.cat([c11, c3], dim=1)
-            c13 = self.head_csp_1(c12)  # to det
-            # p4/16
-            c14 = self.head_conv_2(c13)
-            c15 = torch.cat([c14, c10], dim=1)
-            c16 = self.head_csp_2(c15)  # to det
-            # p5/32
-            c17 = self.head_conv_3(c16)
-            c18 = torch.cat([c17, c6], dim=1)
-            c19 = self.head_csp_3(c18)  # to det
+            obj_pred, cls_pred, reg_pred = self.head([p3, p4, p5])
 
-            # det
-            pred_s = self.head_det_1(c13)
-            pred_m = self.head_det_2(c16)
-            pred_l = self.head_det_3(c19)
-
-            preds = [pred_s, pred_m, pred_l]
-            obj_pred_list = []
-            cls_pred_list = []
-            box_pred_list = []
-
-            for i, pred in enumerate(preds):
-                # [B, KA*(1 + C + 4), H, W] -> [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
-                obj_pred_i = pred[:, :KA, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, 1)
-                # [B, KA*(1 + C + 4), H, W] -> [B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
-                cls_pred_i = pred[:, KA:KA*(1+C), :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, C)
-                # [B, KA*(1 + C + 4), H, W] -> [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
-                reg_pred_i = pred[:, KA*(1+C):, :, :].permute(0, 2, 3, 1).contiguous().view(B, -1, KA, 4)
+            # decode box
+            box_pred = []
+            for i, reg_pred_i in enumerate(reg_pred):
                 # txty -> xy
                 if self.center_sample:     
                     xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
@@ -313,13 +228,11 @@ class YOLOv4EXP(nn.Module):
                 x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
                 box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1).view(B, -1, 4)
 
-                obj_pred_list.append(obj_pred_i)
-                cls_pred_list.append(cls_pred_i)
-                box_pred_list.append(box_pred_i)
+                box_pred.append(box_pred_i)
             
-            obj_pred = torch.cat(obj_pred_list, dim=1)
-            cls_pred = torch.cat(cls_pred_list, dim=1)
-            box_pred = torch.cat(box_pred_list, dim=1)
+            obj_pred = torch.cat(obj_pred, dim=1)  # [B, N, 1]
+            cls_pred = torch.cat(cls_pred, dim=1)  # [B, N, C]
+            box_pred = torch.cat(box_pred, dim=1)  # [B, N, 4]
             
             # normalize bbox
             box_pred = box_pred / self.img_size

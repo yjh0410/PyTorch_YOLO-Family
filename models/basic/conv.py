@@ -16,18 +16,23 @@ def get_activation(name="lrelu", inplace=True):
 
 # Basic conv layer
 class Conv(nn.Module):
-    def __init__(self, c1, c2, k=1, p=0, s=1, d=1, g=1, act='lrelu', bias=False):
+    def __init__(self, c1, c2, k=1, p=0, s=1, d=1, g=1, act='lrelu', depthwise=False, bias=False):
         super(Conv, self).__init__()
-        if act is not None:
+        if depthwise:
+            assert c1 == c2
             self.convs = nn.Sequential(
-                nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
+                nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=c1, bias=bias),
+                nn.BatchNorm2d(c2),
+                get_activation(name=act),
+                nn.Conv2d(c2, c2, kernel_size=1, bias=bias),
                 nn.BatchNorm2d(c2),
                 get_activation(name=act)
             )
         else:
             self.convs = nn.Sequential(
                 nn.Conv2d(c1, c2, k, stride=s, padding=p, dilation=d, groups=g, bias=bias),
-                nn.BatchNorm2d(c2)
+                nn.BatchNorm2d(c2),
+                get_activation(name=act)
             )
 
     def forward(self, x):
