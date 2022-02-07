@@ -235,8 +235,6 @@ def train():
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
     best_map = -100.
     warmup = not args.no_warmup
-    total_loss_sum = 0.
-    total_pos_sum = 0.
 
     t0 = time.time()
     # start training loop
