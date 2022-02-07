@@ -28,12 +28,14 @@ class MSEWithLogitsLoss(nn.Module):
 
 class Criterion(nn.Module):
     def __init__(self,
+                 args,
                  cfg,
                  loss_obj_weight=1.0, 
                  loss_cls_weight=1.0, 
                  loss_reg_weight=1.0, 
                  num_classes=80):
         super().__init__()
+        self.args = args
         self.num_classes = num_classes
         self.loss_obj_weight = loss_obj_weight
         self.loss_cls_weight = loss_cls_weight
@@ -60,9 +62,14 @@ class Criterion(nn.Module):
         # obj loss: [B, HW,]
         loss_obj = self.obj_loss_f(pred_obj[..., 0], target_obj, target_pos)
 
-        # scale loss by batch size
-        batch_size = pred_obj.size(0)
-        loss_obj = loss_obj.sum() / batch_size
+        if self.args.scale_loss == 'batch':
+            # scale loss by batch size
+            batch_size = pred_obj.size(0)
+            loss_obj = loss_obj.sum() / batch_size
+        elif self.args.scale_loss == 'positive':
+            # scale loss by number of positive samples
+            num_pos = target_pos.sum()
+            loss_obj = loss_obj.sum() / num_pos
 
         return loss_obj
 
@@ -80,9 +87,14 @@ class Criterion(nn.Module):
         # valid loss. Here we only compute the loss of positive samples
         loss_cls = loss_cls * target_pos
 
-        # scale loss by batch size
-        batch_size = pred_cls.size(0)
-        loss_cls = loss_cls.sum() / batch_size
+        if self.args.scale_loss == 'batch':
+            # scale loss by batch size
+            batch_size = pred_cls.size(0)
+            loss_cls = loss_cls.sum() / batch_size
+        elif self.args.scale_loss == 'positive':
+            # scale loss by number of positive samples
+            num_pos = target_pos.sum()
+            loss_cls = loss_cls.sum() / num_pos
 
         return loss_cls
 
@@ -100,9 +112,14 @@ class Criterion(nn.Module):
         # valid loss. Here we only compute the loss of positive samples
         loss_reg = loss_reg * target_pos
 
-        # scale loss by batch size
-        batch_size = pred_iou.size(0)
-        loss_reg = loss_reg.sum() / batch_size
+        if self.args.scale_loss == 'batch':
+            # scale loss by batch size
+            batch_size = pred_iou.size(0)
+            loss_reg = loss_reg.sum() / batch_size
+        elif self.args.scale_loss == 'positive':
+            # scale loss by number of positive samples
+            num_pos = target_pos.sum()
+            loss_reg = loss_reg.sum() / num_pos
 
         return loss_reg
 
@@ -138,7 +155,8 @@ class Criterion(nn.Module):
 
 
 def build_criterion(args, cfg, num_classes=80):
-    criterion = Criterion(cfg=cfg,
+    criterion = Criterion(args=args,
+                          cfg=cfg,
                           loss_obj_weight=args.loss_obj_weight,
                           loss_cls_weight=args.loss_cls_weight,
                           loss_reg_weight=args.loss_reg_weight,
