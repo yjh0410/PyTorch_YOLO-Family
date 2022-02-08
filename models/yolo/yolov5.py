@@ -173,8 +173,8 @@ class YOLOv5(nn.Module):
         scores = torch.sigmoid(obj_pred) * torch.softmax(cls_pred, dim=-1)
 
         # to cpu
-        scores = scores[0].to('cpu').numpy()
-        bboxes = bboxes[0].to('cpu').numpy()
+        scores = scores[0].to('cpu').numpy() # [N, C]
+        bboxes = bboxes[0].to('cpu').numpy() # [N, 4]
 
         # post-process
         bboxes, scores, cls_inds = self.postprocess(bboxes, scores)

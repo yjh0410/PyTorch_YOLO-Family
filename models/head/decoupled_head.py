@@ -98,18 +98,21 @@ class DecoupledHead(nn.Module):
             # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
             reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_anchors, 4)
 
+            # decode box
+            ## txty -> xy
+            if self.center_sample:     
+                xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
+            else:
+                xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
+            ## twth -> wh
             if self.anchors_wh is not None:
-                # txty -> xy
-                if self.center_sample:     
-                    xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
-                else:
-                    xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
-                # twth -> wh
                 wh_pred = reg_pred[..., 2:].exp() * self.anchors_wh[i]
-                # xywh -> x1y1x2y2
-                x1y1_pred = xy_pred - wh_pred * 0.5
-                x2y2_pred = xy_pred + wh_pred * 0.5
-                box_preds.append(torch.cat([x1y1_pred, x2y2_pred], dim=-1).view(B, -1, 4))
+            else:
+                wh_pred = reg_pred[..., 2:].exp() * self.stride[i]
+            ## xywh -> x1y1x2y2
+            x1y1_pred = xy_pred - wh_pred * 0.5
+            x2y2_pred = xy_pred + wh_pred * 0.5
+            box_preds.append(torch.cat([x1y1_pred, x2y2_pred], dim=-1).view(B, -1, 4))
 
         obj_preds = torch.cat(obj_preds, dim=1)  # [B, N, 1]
         cls_preds = torch.cat(cls_preds, dim=1)  # [B, N, C]
