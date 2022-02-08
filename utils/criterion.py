@@ -68,7 +68,7 @@ class Criterion(nn.Module):
             loss_obj = loss_obj.sum() / batch_size
         elif self.args.scale_loss == 'positive':
             # scale loss by number of positive samples
-            num_pos = target_pos.sum()
+            num_pos = target_pos.sum().clamp(1.0)
             loss_obj = loss_obj.sum() / num_pos
 
         return loss_obj
@@ -93,7 +93,7 @@ class Criterion(nn.Module):
             loss_cls = loss_cls.sum() / batch_size
         elif self.args.scale_loss == 'positive':
             # scale loss by number of positive samples
-            num_pos = target_pos.sum()
+            num_pos = target_pos.sum().clamp(1.0)
             loss_cls = loss_cls.sum() / num_pos
 
         return loss_cls
@@ -118,7 +118,7 @@ class Criterion(nn.Module):
             loss_reg = loss_reg.sum() / batch_size
         elif self.args.scale_loss == 'positive':
             # scale loss by number of positive samples
-            num_pos = target_pos.sum()
+            num_pos = target_pos.sum().clamp(1.0)
             loss_reg = loss_reg.sum() / num_pos
 
         return loss_reg
