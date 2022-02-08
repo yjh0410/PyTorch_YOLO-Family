@@ -53,9 +53,18 @@ In this project, you can enjoy:
 You can download all weights including my DarkNet-53, CSPDarkNet-53, MAE-ViT and YOLO weights from the following links.
 
 ## Backbone
+My Backbone:
 - DarkNet53: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/darknet53.pth
 - CSPDarkNet-53: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/cspdarknet53.pth
 - CSPDarkNet-Tiny: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/cspdarknet_tiny.pth
+
+YOLOX-Backbone:
+- CSPDarkNet-S: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_s.pth
+- CSPDarkNet-M: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_m.pth
+- CSPDarkNet-L: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_l.pth
+- CSPDarkNet-X: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_x.pth
+- CSPDarkNet-Tiny: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_tiny.pth
+- CSPDarkNet-Nano: https://github.com/yjh0410/YOLOX-Backbone/releases/download/YOLOX-Backbone/yolox_cspdarknet_nano.pth
 
 ## YOLO
 - YOLOv1: https://github.com/yjh0410/PyTorch_YOLO-Family/releases/download/yolo-weight/yolov1_35.22_54.7.pth
