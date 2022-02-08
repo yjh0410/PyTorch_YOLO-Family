@@ -162,7 +162,7 @@ class YOLOv5(nn.Module):
         p3, p4, p5 = self.neck([c3, c4, c5])
 
         # head
-        obj_pred, cls_pred, box_pred = self.head([p3, p4, p5])
+        obj_pred, cls_pred, box_pred = self.head([p3, p4, p5], self.grid_cell, self.anchors_wh)
         
         # normalize bbox
         bboxes = torch.clamp(box_pred / self.img_size, 0., 1.)
