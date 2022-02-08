@@ -56,8 +56,6 @@ class YOLOv5(nn.Module):
                                   num_classes=self.num_classes,
                                   num_anchors=self.num_anchors,
                                   depthwise=cfg['depthwise'],
-                                  grid_cell=self.grid_cell,
-                                  anchors_wh=self.anchors_wh,
                                   act='silu',
                                   init_bias=trainable,
                                   center_sample=self.center_sample)
@@ -194,7 +192,7 @@ class YOLOv5(nn.Module):
             p3, p4, p5 = self.neck([c3, c4, c5])
 
             # head
-            obj_pred, cls_pred, box_pred = self.head([p3, p4, p5])
+            obj_pred, cls_pred, box_pred = self.head([p3, p4, p5], self.grid_cell, self.anchors_wh)
                         
             # normalize bbox
             box_pred = box_pred / self.img_size

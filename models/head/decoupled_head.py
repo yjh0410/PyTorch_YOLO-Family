@@ -13,8 +13,6 @@ class DecoupledHead(nn.Module):
                  num_classes=80, 
                  num_anchors=3,
                  depthwise=False,
-                 grid_cell=None,
-                 anchors_wh=None,
                  act='silu', 
                  init_bias=True,
                  center_sample=False):
@@ -24,8 +22,6 @@ class DecoupledHead(nn.Module):
         self.head_dim = int(head_dim * width)
         self.width = width
         self.stride = stride
-        self.grid_cell = grid_cell
-        self.anchors_wh = anchors_wh
         self.center_sample = center_sample
 
         self.input_proj = nn.ModuleList()
@@ -74,7 +70,7 @@ class DecoupledHead(nn.Module):
             nn.init.constant_(obj_pred.bias, bias_value)
 
 
-    def forward(self, features):
+    def forward(self, features, grid_cell=None, anchors_wh=None):
         """
             features: (List of Tensor) of multiple feature maps
         """
@@ -101,12 +97,12 @@ class DecoupledHead(nn.Module):
             # decode box
             ## txty -> xy
             if self.center_sample:     
-                xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
+                xy_pred = (grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
             else:
-                xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
+                xy_pred = (grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
             ## twth -> wh
-            if self.anchors_wh is not None:
-                wh_pred = reg_pred[..., 2:].exp() * self.anchors_wh[i]
+            if anchors_wh is not None:
+                wh_pred = reg_pred[..., 2:].exp() * anchors_wh[i]
             else:
                 wh_pred = reg_pred[..., 2:].exp() * self.stride[i]
             ## xywh -> x1y1x2y2
