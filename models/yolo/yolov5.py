@@ -50,13 +50,17 @@ class YOLOv5(nn.Module):
 
         # decoupled head
         self.head = DecoupledHead(in_dim=[c3, c4, c5],
+                                  stride=self.stride,
                                   head_dim=cfg['head_dim'],
                                   width=cfg['width'],
                                   num_classes=self.num_classes,
                                   num_anchors=self.num_anchors,
-                                  act='silu',
                                   depthwise=cfg['depthwise'],
-                                  init_bias=trainable)
+                                  grid_cell=self.grid_cell,
+                                  anchors_wh=self.anchors_wh,
+                                  act='silu',
+                                  init_bias=trainable,
+                                  center_sample=self.center_sample)
 
 
     def create_grid(self, img_size):
@@ -160,28 +164,7 @@ class YOLOv5(nn.Module):
         p3, p4, p5 = self.neck([c3, c4, c5])
 
         # head
-        obj_pred, cls_pred, reg_pred = self.head([p3, p4, p5])
-
-        # decode box
-        box_pred = []
-        for i, reg_pred_i in enumerate(reg_pred):
-            # txty -> xy
-            if self.center_sample:     
-                xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
-            else:
-                xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid()) * self.stride[i]
-            # twth -> wh
-            wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
-            # xywh -> x1y1x2y2
-            x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
-            x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
-            box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1).view(1, -1, 4)
-
-            box_pred.append(box_pred_i)
-        
-        obj_pred = torch.cat(obj_pred, dim=1)[0]  # [N, 1]
-        cls_pred = torch.cat(cls_pred, dim=1)[0]  # [N, C]
-        box_pred = torch.cat(box_pred, dim=1)[0]  # [N, 4]
+        obj_pred, cls_pred, box_pred = self.head([p3, p4, p5])
         
         # normalize bbox
         bboxes = torch.clamp(box_pred / self.img_size, 0., 1.)
@@ -190,8 +173,8 @@ class YOLOv5(nn.Module):
         scores = torch.sigmoid(obj_pred) * torch.softmax(cls_pred, dim=-1)
 
         # to cpu
-        scores = scores.to('cpu').numpy()
-        bboxes = bboxes.to('cpu').numpy()
+        scores = scores[0].to('cpu').numpy()
+        bboxes = bboxes[0].to('cpu').numpy()
 
         # post-process
         bboxes, scores, cls_inds = self.postprocess(bboxes, scores)
@@ -211,29 +194,8 @@ class YOLOv5(nn.Module):
             p3, p4, p5 = self.neck([c3, c4, c5])
 
             # head
-            obj_pred, cls_pred, reg_pred = self.head([p3, p4, p5])
-
-            # decode box
-            box_pred = []
-            for i, reg_pred_i in enumerate(reg_pred):
-                # txty -> xy
-                if self.center_sample:     
-                    xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
-                else:
-                    xy_pred_i = (self.grid_cell[i] + reg_pred_i[..., :2].sigmoid()) * self.stride[i]
-                # twth -> wh
-                wh_pred_i = reg_pred_i[..., 2:].exp() * self.anchors_wh[i]
-                # xywh -> x1y1x2y2
-                x1y1_pred_i = xy_pred_i - wh_pred_i * 0.5
-                x2y2_pred_i = xy_pred_i + wh_pred_i * 0.5
-                box_pred_i = torch.cat([x1y1_pred_i, x2y2_pred_i], dim=-1).view(B, -1, 4)
-
-                box_pred.append(box_pred_i)
-            
-            obj_pred = torch.cat(obj_pred, dim=1)  # [B, N, 1]
-            cls_pred = torch.cat(cls_pred, dim=1)  # [B, N, C]
-            box_pred = torch.cat(box_pred, dim=1)  # [B, N, 4]
-            
+            obj_pred, cls_pred, box_pred = self.head([p3, p4, p5])
+                        
             # normalize bbox
             box_pred = box_pred / self.img_size
 

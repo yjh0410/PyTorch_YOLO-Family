@@ -7,18 +7,26 @@ from ..basic.conv import Conv
 class DecoupledHead(nn.Module):
     def __init__(self, 
                  in_dim=[256, 512, 1024], 
+                 stride=[8, 16, 32],
                  head_dim=256, 
                  width=1.0, 
                  num_classes=80, 
                  num_anchors=3,
                  depthwise=False,
+                 grid_cell=None,
+                 anchors_wh=None,
                  act='silu', 
-                 init_bias=True):
+                 init_bias=True,
+                 center_sample=False):
         super().__init__()
         self.num_classes = num_classes
         self.num_anchors = num_anchors
         self.head_dim = int(head_dim * width)
         self.width = width
+        self.stride = stride
+        self.grid_cell = grid_cell
+        self.anchors_wh = anchors_wh
+        self.center_sample = center_sample
 
         self.input_proj = nn.ModuleList()
         self.cls_feat = nn.ModuleList()
@@ -73,7 +81,7 @@ class DecoupledHead(nn.Module):
         B = features[0].size(0)
         obj_preds = []
         cls_preds = []
-        reg_preds = []
+        box_preds = []
         for i in range(len(features)):
             feat = features[i]
             feat = self.input_proj[i](feat)
@@ -88,6 +96,23 @@ class DecoupledHead(nn.Module):
             # [[B, KA*C, H, W] -> [B, H, W, KA*C] -> [B, H*W*KA, C]
             cls_preds.append(cls_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_classes))
             # [B, KA*4, H, W] -> [B, H, W, KA*4] -> [B, HW, KA, 4]
-            reg_preds.append(reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_anchors, 4))
+            reg_pred = reg_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, self.num_anchors, 4)
 
-        return obj_preds, cls_preds, reg_preds
+            if self.anchors_wh is not None:
+                # txty -> xy
+                if self.center_sample:     
+                    xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
+                else:
+                    xy_pred = (self.grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
+                # twth -> wh
+                wh_pred = reg_pred[..., 2:].exp() * self.anchors_wh[i]
+                # xywh -> x1y1x2y2
+                x1y1_pred = xy_pred - wh_pred * 0.5
+                x2y2_pred = xy_pred + wh_pred * 0.5
+                box_preds.append(torch.cat([x1y1_pred, x2y2_pred], dim=-1).view(B, -1, 4))
+
+        obj_preds = torch.cat(obj_preds, dim=1)  # [B, N, 1]
+        cls_preds = torch.cat(cls_preds, dim=1)  # [B, N, C]
+        box_preds = torch.cat(box_preds, dim=1)  # [B, N, 4]
+
+        return obj_preds, cls_preds, box_preds
