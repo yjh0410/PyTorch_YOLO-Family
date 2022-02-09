@@ -87,7 +87,7 @@ yolo_config = {
     },
     'yolov5_m': {
         # backbone
-        'backbone': 'csp_s',
+        'backbone': 'csp_m',
         'width': 0.75,
         'depth': 0.67,
         'depthwise': False,
@@ -127,7 +127,7 @@ yolo_config = {
     },
     'yolov5_x': {
         # backbone
-        'backbone': 'csp_s',
+        'backbone': 'csp_x',
         'width': 1.25,
         'depth': 1.33,
         'depthwise': False,
