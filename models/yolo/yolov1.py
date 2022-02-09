@@ -93,7 +93,7 @@ class YOLOv1(nn.Module):
         """reg_pred: [B, N, 4]"""
         # txty -> xy
         if self.center_sample:
-            xy_pred = reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy
+            xy_pred = reg_pred[..., :2].sigmoid() * 3.0 - 1.0 + self.grid_xy
         else:
             xy_pred = reg_pred[..., :2].sigmoid() + self.grid_xy
         # twth -> wh

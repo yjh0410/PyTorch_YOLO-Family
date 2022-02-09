@@ -97,7 +97,7 @@ class DecoupledHead(nn.Module):
             # decode box
             ## txty -> xy
             if self.center_sample:     
-                xy_pred = (grid_cell[i] + reg_pred[..., :2].sigmoid() * 2.0 - 1.0) * self.stride[i]
+                xy_pred = (grid_cell[i] + reg_pred[..., :2].sigmoid() * 3.0 - 1.0) * self.stride[i]
             else:
                 xy_pred = (grid_cell[i] + reg_pred[..., :2].sigmoid()) * self.stride[i]
             ## twth -> wh
