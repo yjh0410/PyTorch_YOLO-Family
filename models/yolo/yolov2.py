@@ -167,7 +167,7 @@ class YOLOv2(nn.Module):
         B = reg_pred.size(0)
         # txty -> cxcy
         if self.center_sample:
-            xy_pred = (reg_pred[..., :2].sigmoid() * 3.0 - 1.0 + self.grid_xy) * self.stride[0]
+            xy_pred = (reg_pred[..., :2].sigmoid() * 2.0 - 1.0 + self.grid_xy) * self.stride[0]
         else:
             xy_pred = (reg_pred[..., :2].sigmoid() + self.grid_xy) * self.stride[0]
         # twth -> wh
