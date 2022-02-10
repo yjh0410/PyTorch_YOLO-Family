@@ -71,8 +71,8 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         conf_thresh=args.conf_thresh,
                         nms_thresh=args.nms_thresh,
                         center_sample=args.center_sample)
-    elif args.model == 'yolov5_s':
-        print('Build YOLOv5-S ...')
+    elif args.model in ['yolov5_s', 'yolov5_m', 'yolov5_l', 'yolov5_x', 'yolov5_t', 'yolov5_n']:
+        print('Build YOLOv5-{} ...'.format(args.model[-1].upper()))
         model = YOLOv5(cfg=cfg,
                         device=device, 
                         img_size=args.img_size, 
@@ -81,56 +81,6 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         conf_thresh=args.conf_thresh,
                         nms_thresh=args.nms_thresh,
                         center_sample=args.center_sample)
-    elif args.model == 'yolov5_m':
-        print('Build YOLOv5-M ...')
-        model = YOLOv5(cfg=cfg,
-                        device=device, 
-                        img_size=args.img_size, 
-                        num_classes=num_classes, 
-                        trainable=trainable,
-                        conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh,
-                        center_sample=args.center_sample)
-    elif args.model == 'yolov5_l':
-        print('Build YOLOv5-L ...')
-        model = YOLOv5(cfg=cfg,
-                        device=device, 
-                        img_size=args.img_size, 
-                        num_classes=num_classes, 
-                        trainable=trainable,
-                        conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh,
-                        center_sample=args.center_sample)
-    elif args.model == 'yolov5_x':
-        print('Build YOLOv5-X ...')
-        model = YOLOv5(cfg=cfg,
-                        device=device, 
-                        img_size=args.img_size, 
-                        num_classes=num_classes, 
-                        trainable=trainable,
-                        conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh,
-                        center_sample=args.center_sample)
-    elif args.model == 'yolov5_t':
-        print('Build YOLOv5-Tiny ...')
-        model = YOLOv5(cfg=cfg,
-                        device=device, 
-                        img_size=args.img_size, 
-                        num_classes=num_classes, 
-                        trainable=trainable,
-                        conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh,
-                        center_sample=args.center_sample)
-    elif args.model == 'yolov5_n':
-        print('Build YOLOv5-Nano ...')
-        model = YOLOv5(cfg=cfg,
-                        device=device, 
-                        img_size=args.img_size, 
-                        num_classes=num_classes, 
-                        trainable=trainable,
-                        conf_thresh=args.conf_thresh,
-                        nms_thresh=args.nms_thresh,
-                        center_sample=args.center_sample)    
     elif args.model == 'yolo_tiny':
         print('Build YOLO-Tiny ...')
         model = YOLOTiny(cfg=cfg,
