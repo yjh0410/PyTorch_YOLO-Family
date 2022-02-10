@@ -136,7 +136,7 @@ def train():
     print("----------------------------------------------------------")
 
     # path to save model
-    path_to_save = os.path.join(args.save_folder, args.dataset, args.model, 'cos')
+    path_to_save = os.path.join(args.save_folder, args.dataset, args.model)
     os.makedirs(path_to_save, exist_ok=True)
 
     # set distributed
