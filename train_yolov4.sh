@@ -11,8 +11,9 @@ python train.py \
         --multi_scale \
         --multi_scale_range 10 19 \
         --scale_loss batch \
-        --accumulate 4 \
+        --accumulate 1 \
         --mosaic \
+        --mixup \
         --multi_anchor \
         --ema
                 
