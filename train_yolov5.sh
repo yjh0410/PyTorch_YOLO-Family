@@ -9,7 +9,7 @@ python train.py \
         --max_epoch 150 \
         --lr_epoch 90 120 \
         --multi_scale \
-        --multi_scale_range 10 20 \
+        --multi_scale_range 10 19 \
         --scale_loss batch \
         --accumulate 1 \
         --mosaic \
