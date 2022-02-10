@@ -8,6 +8,7 @@ Updated by: Ellis Brown, Max deGroot
 import os.path as osp
 import torch.utils.data as data
 import cv2
+import random
 import numpy as np
 import xml.etree.ElementTree as ET
 
@@ -236,7 +237,7 @@ class VOCDetection(data.Dataset):
             img, target, height, width = self.load_mosaic(index)
 
             # MixUp https://arxiv.org/pdf/1710.09412.pdf
-            if self.mixup: # and np.random.randint(2):
+            if self.mixup and np.random.randint(2):
                 img2, target2, height, width = self.load_mosaic(np.random.randint(0, len(self.ids)))
                 r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
                 img = (img * r + img2 * (1 - r)).astype(np.uint8)
