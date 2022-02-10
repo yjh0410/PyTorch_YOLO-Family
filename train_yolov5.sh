@@ -8,8 +8,6 @@ python train.py \
         --img_size 640 \
         --max_epoch 150 \
         --lr_epoch 90 120 \
-        --multi_scale \
-        --multi_scale_range 10 20 \
         --scale_loss batch \
         --accumulate 1 \
         --mosaic \
