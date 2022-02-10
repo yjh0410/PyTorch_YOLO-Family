@@ -3,7 +3,7 @@ python train.py \
         -d coco \
         -m yolov5_l \
         --root /mnt/share/ssd2/dataset \
-        --batch_size 8 \
+        --batch_size 16 \
         --lr 0.001 \
         --img_size 640 \
         --max_epoch 150 \
