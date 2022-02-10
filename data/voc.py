@@ -6,11 +6,9 @@ https://github.com/fmassa/vision/blob/voc_dataset/torchvision/datasets/voc.py
 Updated by: Ellis Brown, Max deGroot
 """
 import os.path as osp
-import torch
 import torch.utils.data as data
 import cv2
 import numpy as np
-import random
 import xml.etree.ElementTree as ET
 
 
@@ -238,8 +236,8 @@ class VOCDetection(data.Dataset):
             img, target, height, width = self.load_mosaic(index)
 
             # MixUp https://arxiv.org/pdf/1710.09412.pdf
-            if self.mixup and np.random.randint(2):
-                img2, target2, height, width = self.load_mosaic(random.randint(0, len(self.ids)))
+            if self.mixup: # and np.random.randint(2):
+                img2, target2, height, width = self.load_mosaic(np.random.randint(0, len(self.ids)))
                 r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
                 img = (img * r + img2 * (1 - r)).astype(np.uint8)
                 target = np.concatenate((target, target2), 0)
@@ -318,7 +316,7 @@ if __name__ == "__main__":
                      np.random.randint(255),
                      np.random.randint(255)) for _ in range(20)]
     print('Data length: ', len(dataset))
-    for i in range(1000):
+    for i in range(len(dataset)):
         image, target, _, _, _, _ = dataset.pull_item(i)
         image = image.permute(1, 2, 0).numpy()[:, :, (2, 1, 0)]
         image = ((image * std + mean)*255).astype(np.uint8)

@@ -224,7 +224,7 @@ class COCODataset(Dataset):
 
             # MixUp https://arxiv.org/pdf/1710.09412.pdf
             if self.mixup and np.random.randint(2):
-                img2, target2, height, width = self.load_mosaic(random.randint(0, len(self.ids)))
+                img2, target2, height, width = self.load_mosaic(np.random.randint(0, len(self.ids)))
                 r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
                 img = (img * r + img2 * (1 - r)).astype(np.uint8)
                 target = np.concatenate((target, target2), 0)
