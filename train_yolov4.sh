@@ -11,7 +11,6 @@ python train.py \
         --multi_scale \
         --multi_scale_range 10 19 \
         --scale_loss batch \
-        --lr_schedule cos \
         --accumulate 1 \
         --mosaic \
         --mixup \
