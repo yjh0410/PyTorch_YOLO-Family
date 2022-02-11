@@ -75,6 +75,8 @@ def parse_args():
                         help='sgd, adamw')
     parser.add_argument('--lr_schedule', default='step', type=str,
                         help='step, cos')
+    parser.add_argument('--grad_clip', default=None, type=float,
+                        help='clip gradient')
 
     # model
     parser.add_argument('-m', '--model', default='yolov1',
@@ -335,6 +337,8 @@ def train():
             # Backward and Optimize
             total_loss.backward()
             if ni % args.accumulate == 0:
+                if args.grad_clip is not None:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
                 optimizer.step()
                 optimizer.zero_grad()
 
