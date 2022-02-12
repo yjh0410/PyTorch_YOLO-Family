@@ -5,6 +5,7 @@ from .yolov4 import YOLOv4
 from .yolov5 import YOLOv5
 from .yolo_tiny import YOLOTiny
 from .yolo_nano import YOLONano
+from .yolo_nano_plus import YOLONanoPlus
 from .yolo_tr import YOLOTR
 
 
@@ -101,6 +102,16 @@ def build_model(args, cfg, device, num_classes=80, trainable=False):
                         conf_thresh=args.conf_thresh,
                         nms_thresh=args.nms_thresh,
                         center_sample=args.center_sample)
+    elif args.model == 'yolo_nano_plus':
+        print('Build YOLO-Nano-Plus ...')
+        model = YOLONanoPlus(cfg=cfg,
+                            device=device, 
+                            img_size=args.img_size, 
+                            num_classes=num_classes, 
+                            trainable=trainable,
+                            conf_thresh=args.conf_thresh,
+                            nms_thresh=args.nms_thresh,
+                            center_sample=args.center_sample)
     elif args.model == 'yolo_tr':
         print('Build YOLO-TR ...')
         model = YOLOTR(cfg=cfg,

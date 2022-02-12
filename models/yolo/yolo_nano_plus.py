@@ -1,14 +1,17 @@
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 
-from utils import box_ops
 from ..backbone import build_backbone
+from ..neck.spp import SPP
 from ..head.fpn import build_fpn
-from ..head.decoupled_head import DecoupledHead
+from ..head.coupled_head import CoupledHead
+from ..basic.conv import Conv
+from utils import box_ops
 
 
-class YOLOv5(nn.Module):
+class YOLONanoPlus(nn.Module):
     def __init__(self, 
                  cfg=None,
                  device=None, 
@@ -18,8 +21,7 @@ class YOLOv5(nn.Module):
                  conf_thresh=0.001, 
                  nms_thresh=0.60, 
                  center_sample=False):
-
-        super(YOLOv5, self).__init__()
+        super(YOLONanoPlus, self).__init__()
         self.cfg = cfg
         self.device = device
         self.img_size = img_size
@@ -44,23 +46,23 @@ class YOLOv5(nn.Module):
         # neck
         self.neck = build_fpn(model_name=cfg['neck'], 
                               in_dim=[c3, c4, c5],
-                              depth=cfg['depth'],
+                              depth=0.33,
                               depthwise=cfg['depthwise'],
-                              act='silu')
+                              act='lrelu')
 
-        # decoupled head
-        self.head = DecoupledHead(in_dim=[c3, c4, c5],
-                                  stride=self.stride,
-                                  head_dim=cfg['head_dim'],
-                                  kernel_size=3,
-                                  padding=1,
-                                  width=cfg['width'],
-                                  num_classes=self.num_classes,
-                                  num_anchors=self.num_anchors,
-                                  depthwise=cfg['depthwise'],
-                                  act='silu',
-                                  init_bias=trainable,
-                                  center_sample=self.center_sample)
+        # head
+        self.head = CoupledHead(in_dim=[c3, c4, c5],
+                                stride=self.stride,
+                                head_dim=cfg['head_dim'],
+                                kernel_size=5,
+                                padding=2,
+                                width=1.0,
+                                num_classes=self.num_classes,
+                                num_anchors=self.num_anchors,
+                                depthwise=cfg['depthwise'],
+                                act='lrelu',
+                                init_bias=trainable,
+                                center_sample=self.center_sample)
 
 
     def create_grid(self, img_size):
@@ -90,7 +92,7 @@ class YOLOv5(nn.Module):
 
 
     def nms(self, dets, scores):
-        """"Pure Python NMS."""
+        """"Pure Python NMS YOLOv4."""
         x1 = dets[:, 0]  #xmin
         y1 = dets[:, 1]  #ymin
         x2 = dets[:, 2]  #xmax
@@ -123,8 +125,8 @@ class YOLOv5(nn.Module):
 
     def postprocess(self, bboxes, scores):
         """
-        bboxes: (HxW, 4), bsize = 1
-        scores: (HxW, num_classes), bsize = 1
+        bboxes: (N, 4), bsize = 1
+        scores: (N, C), bsize = 1
         """
 
         cls_inds = np.argmax(scores, axis=1)
@@ -159,10 +161,10 @@ class YOLOv5(nn.Module):
     def inference_single_image(self, x):
         # backbone
         c3, c4, c5 = self.backbone(x)
-
+   
         # neck
         p3, p4, p5 = self.neck([c3, c4, c5])
-
+            
         # head
         obj_pred, cls_pred, box_pred = self.head([p3, p4, p5], self.grid_cell, self.anchors_wh)
         
@@ -204,15 +206,8 @@ class YOLOv5(nn.Module):
             x1y1x2y2_gt = targets[..., 2:6].view(-1, 4)
 
             # iou: [B, HW,]
-            if self.cfg['loss_box'] == 'iou':
-                iou_pred = box_ops.iou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
-                obj_tgt = iou_pred[..., None].clone().detach().clamp(0.) # [0, 1]
-            elif self.cfg['loss_box'] == 'giou':
-                iou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
-                obj_tgt = 0.5 * (iou_pred[..., None].clone().detach() + 1.0) # [-1, 1] -> [0, 1]
-            elif self.cfg['loss_box'] == 'ciou':
-                iou_pred = box_ops.ciou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
-                obj_tgt = iou_pred[..., None].clone().detach().clamp(0.) # [0, 1]
+            iou_pred = box_ops.giou_score(x1y1x2y2_pred, x1y1x2y2_gt, batch_size=B)
+            obj_tgt = 0.5 * (iou_pred[..., None].clone().detach() + 1.0) # [-1, 1] -> [0, 1]
 
             # we set iou as the target of the objectness
             targets = torch.cat([obj_tgt, targets], dim=-1)

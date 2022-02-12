@@ -4,7 +4,7 @@ import torch.nn as nn
 from ..basic.conv import Conv
 
 
-class DecoupledHead(nn.Module):
+class CoupledHead(nn.Module):
     def __init__(self, 
                  in_dim=[256, 512, 1024], 
                  stride=[8, 16, 32],
@@ -27,36 +27,21 @@ class DecoupledHead(nn.Module):
         self.center_sample = center_sample
 
         self.input_proj = nn.ModuleList()
-        self.cls_feat = nn.ModuleList()
-        self.reg_feat = nn.ModuleList()
-        self.obj_pred = nn.ModuleList()
-        self.cls_pred = nn.ModuleList()
-        self.reg_pred = nn.ModuleList()
+        self.head_feat = nn.ModuleList()
+        self.head_pred = nn.ModuleList()
 
         for c in in_dim:
             self.input_proj.append(
                 Conv(c, self.head_dim, k=1, act=act)
             )
-            self.cls_feat.append(
+            self.head_feat.append(
                 nn.Sequential(
                     Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
-                    Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise)
-                )
-            )
-            self.reg_feat.append(
-                nn.Sequential(
                     Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
-                    Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise)
                 )
             )
-            self.obj_pred.append(
-                nn.Conv2d(self.head_dim, num_anchors * 1, kernel_size=1)
-            )
-            self.cls_pred.append(
-                nn.Conv2d(self.head_dim, num_anchors * num_classes, kernel_size=1)
-            )
-            self.reg_pred.append(
-                nn.Conv2d(self.head_dim, num_anchors * 4, kernel_size=1)
+            self.head_pred.append(
+                nn.Conv2d(self.head_dim, num_anchors * (1 + num_classes + 4), kernel_size=1)
             )
 
         if init_bias:
@@ -64,12 +49,12 @@ class DecoupledHead(nn.Module):
             self.init_bias()
 
 
-    def init_bias(self):               
+    def init_bias(self):
         # init bias
         init_prob = 0.01
         bias_value = -torch.log(torch.tensor((1. - init_prob) / init_prob))
-        for obj_pred in self.obj_pred:
-            nn.init.constant_(obj_pred.bias, bias_value)
+        for head_pred in self.head_pred:
+            nn.init.constant_(head_pred.bias[..., :self.num_anchors], bias_value)
 
 
     def forward(self, features, grid_cell=None, anchors_wh=None):
@@ -83,11 +68,12 @@ class DecoupledHead(nn.Module):
         for i in range(len(features)):
             feat = features[i]
             feat = self.input_proj[i](feat)
-            cls_feat = self.cls_feat[i](feat)
-            reg_feat = self.reg_feat[i](feat)
-            obj_pred = self.obj_pred[i](reg_feat)
-            cls_pred = self.cls_pred[i](cls_feat)
-            reg_pred = self.reg_pred[i](reg_feat)
+            head_feat = self.head_feat[i](feat)
+            head_pred = self.head_pred[i](head_feat)
+            # obj_pred / cls_pred / reg_pred
+            obj_pred = head_pred[:, :self.num_anchors, :, :]
+            cls_pred = head_pred[:, self.num_anchors:self.num_anchors*(1+self.num_classes), :, :]
+            reg_pred = head_pred[:, self.num_anchors*(1+self.num_classes):, :, :]
 
             # [B, KA, H, W] -> [B, H, W, KA] ->  [B, HW*KA, 1]
             obj_preds.append(obj_pred.permute(0, 2, 3, 1).contiguous().view(B, -1, 1))
