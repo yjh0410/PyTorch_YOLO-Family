@@ -207,7 +207,7 @@ yolo_config = {
     },
     'yolo_nano_plus': {
         # backbone
-        'backbone': 'sfnet_v2',
+        'backbone': 'csp_n',
         'depthwise': True,
         # neck
         'neck': 'yolopafpn',

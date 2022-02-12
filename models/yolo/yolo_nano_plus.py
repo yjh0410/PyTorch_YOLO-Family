@@ -1,13 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import numpy as np
 
 from ..backbone import build_backbone
-from ..neck.spp import SPP
 from ..head.fpn import build_fpn
 from ..head.coupled_head import CoupledHead
-from ..basic.conv import Conv
 from utils import box_ops
 
 
@@ -54,8 +51,8 @@ class YOLONanoPlus(nn.Module):
         self.head = CoupledHead(in_dim=[c3, c4, c5],
                                 stride=self.stride,
                                 head_dim=cfg['head_dim'],
-                                kernel_size=5,
-                                padding=2,
+                                kernel_size=3,
+                                padding=1,
                                 width=1.0,
                                 num_classes=self.num_classes,
                                 num_anchors=self.num_anchors,
