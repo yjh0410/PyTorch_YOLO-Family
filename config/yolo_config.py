@@ -211,8 +211,6 @@ yolo_config = {
         'depthwise': True,
         # neck
         'neck': 'yolopafpn',
-        # head
-        'head_dim': 96,
         # anchor size: P5-640
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],

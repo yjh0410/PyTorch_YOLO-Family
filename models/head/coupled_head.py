@@ -8,7 +8,6 @@ class CoupledHead(nn.Module):
     def __init__(self, 
                  in_dim=[256, 512, 1024], 
                  stride=[8, 16, 32],
-                 head_dim=256,
                  kernel_size=3,
                  padding=1,
                  width=1.0, 
@@ -21,27 +20,23 @@ class CoupledHead(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.num_anchors = num_anchors
-        self.head_dim = int(head_dim * width)
         self.width = width
         self.stride = stride
         self.center_sample = center_sample
 
-        self.input_proj = nn.ModuleList()
         self.head_feat = nn.ModuleList()
         self.head_pred = nn.ModuleList()
 
         for c in in_dim:
-            self.input_proj.append(
-                Conv(c, self.head_dim, k=1, act=act)
-            )
+            head_dim = int(c * width)
             self.head_feat.append(
                 nn.Sequential(
-                    Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
-                    Conv(self.head_dim, self.head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
+                    Conv(head_dim, head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
+                    Conv(head_dim, head_dim, k=kernel_size, p=padding, act=act, depthwise=depthwise),
                 )
             )
             self.head_pred.append(
-                nn.Conv2d(self.head_dim, num_anchors * (1 + num_classes + 4), kernel_size=1)
+                nn.Conv2d(head_dim, num_anchors * (1 + num_classes + 4), kernel_size=1)
             )
 
         if init_bias:
@@ -67,7 +62,6 @@ class CoupledHead(nn.Module):
         box_preds = []
         for i in range(len(features)):
             feat = features[i]
-            feat = self.input_proj[i](feat)
             head_feat = self.head_feat[i](feat)
             head_pred = self.head_pred[i](head_feat)
             # obj_pred / cls_pred / reg_pred

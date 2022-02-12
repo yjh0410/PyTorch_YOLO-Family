@@ -50,7 +50,6 @@ class YOLONanoPlus(nn.Module):
         # head
         self.head = CoupledHead(in_dim=[c3, c4, c5],
                                 stride=self.stride,
-                                head_dim=cfg['head_dim'],
                                 kernel_size=3,
                                 padding=1,
                                 width=1.0,
