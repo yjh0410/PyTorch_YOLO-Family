@@ -10,6 +10,7 @@ python train.py \
         --optimizer adamw \
         --grad_clip 35 \
         --lr_schedule cos \
+        --eval_epoch 2 \
         --multi_scale \
         --multi_scale_range 10 16 \
         --multi_anchor \
