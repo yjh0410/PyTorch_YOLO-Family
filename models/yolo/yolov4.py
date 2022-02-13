@@ -31,7 +31,6 @@ class YOLOv4(nn.Module):
         self.conf_thresh = conf_thresh
         self.nms_thresh = nms_thresh
         self.center_sample = center_sample
-        self.gs = cfg["gs"]  # grid sensitive
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 

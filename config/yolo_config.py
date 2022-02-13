@@ -59,10 +59,8 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
-        'loss_obj': 'mse',  # optional: mse, bce
+        'loss_obj': 'mse',  # optional: mse, qfl
         'loss_box': 'giou'  # optional: iou, giou, ciou
     },
     'yolov5_s': {
@@ -79,8 +77,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -99,8 +95,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -119,8 +113,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -139,8 +131,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -159,8 +149,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -179,8 +167,6 @@ yolo_config = {
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
-        # grid sensitive
-        'gs': 1.0,
         # loss
         'loss_obj': 'mse',  # optional: mse, bce
         'loss_box': 'giou'  # optional: iou, giou, ciou
@@ -203,7 +189,10 @@ yolo_config = {
         # anchor size: P5-640
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
-                        [116, 90],  [156, 198], [373, 326]]
+                        [116, 90],  [156, 198], [373, 326]],
+        # loss
+        'loss_obj': 'mse',  # optional: mse, qfl
+        'loss_box': 'giou'  # optional: iou, giou, ciou
     },
     'yolo_nano_plus': {
         # backbone
@@ -214,7 +203,10 @@ yolo_config = {
         # anchor size: P5-640
         'anchor_size': [[10, 13],   [16, 30],   [33, 23],
                         [30, 61],   [62, 45],   [59, 119],
-                        [116, 90],  [156, 198], [373, 326]]
+                        [116, 90],  [156, 198], [373, 326]],
+        # loss
+        'loss_obj': 'mse',  # optional: mse, qfl
+        'loss_box': 'giou'  # optional: iou, giou, ciou
     },
     'yolotr': {
         # backbone
