@@ -8,7 +8,6 @@ python train.py \
         --img_size 512 \
         --max_epoch 160 \
         --optimizer adamw \
-        --grad_clip 1 \
         --lr_schedule cos \
         --eval_epoch 2 \
         --multi_scale \
