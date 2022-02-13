@@ -231,7 +231,7 @@ def train():
         print('use AdamW ...')
         optimizer = optim.AdamW(model.parameters(), 
                                 lr=tmp_lr, 
-                                weight_decay=1e-2)
+                                weight_decay=5e-2)
 
     batch_size = args.batch_size
     epoch_size = len(dataset) // (batch_size * args.num_gpu)
