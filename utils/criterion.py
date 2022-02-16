@@ -26,6 +26,29 @@ class MSEWithLogitsLoss(nn.Module):
         return loss
 
 
+class BCEWithLogitsLoss(nn.Module):
+    def __init__(self, pos_weight=1.0, neg_weight=0.25, reduction='mean'):
+        super().__init__()
+        self.pos_weight = pos_weight
+        self.neg_weight = neg_weight
+        self.reduction = reduction
+
+    def forward(self, logits, targets, target_pos):
+        # bce loss
+        loss = F.binary_cross_entropy_with_logits(input=logits, target=targets, reduction="none")
+        pos_loss = loss * target_pos * self.pos_weight
+        neg_loss = loss * (1.0 - target_pos) * self.neg_weight
+        loss = pos_loss + neg_loss
+
+        if self.reduction == 'mean':
+            loss = loss.mean()
+
+        elif self.reduction == 'sum':
+            loss = loss.sum()
+
+        return loss
+
+
 class QualityFocalLoss(nn.Module):
     def __init__(self, beta=2.0, reduction='none'):
         super().__init__()
@@ -78,6 +101,8 @@ class Criterion(nn.Module):
                 self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
             elif cfg['loss_obj'] == 'qfl':
                 self.obj_loss_f = QualityFocalLoss(reduction='none')
+            elif cfg['loss_obj'] == 'bce':
+                self.obj_loss_f = BCEWithLogitsLoss(reduction='none')
         except:
             self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
         # class loss
