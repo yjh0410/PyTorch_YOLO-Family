@@ -191,7 +191,7 @@ yolo_config = {
                         [30, 61],   [62, 45],   [59, 119],
                         [116, 90],  [156, 198], [373, 326]],
         # loss
-        'loss_obj': 'mse',  # optional: mse, qfl
+        'loss_obj': 'qfl',  # optional: mse, qfl
         'loss_box': 'giou'  # optional: iou, giou, ciou
     },
     'yolo_nano_plus': {

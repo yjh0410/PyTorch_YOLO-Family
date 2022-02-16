@@ -8,7 +8,7 @@ python train.py \
         --img_size 512 \
         --max_epoch 160 \
         --optimizer sgd \
-        --lr_schedule cos \
+        --lr_epoch 100 130 \
         --multi_scale \
         --multi_scale_range 10 16 \
         --multi_anchor \
