@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from utils import box_ops
 from ..backbone import build_backbone
-from ..head.fpn import build_fpn
+from ..neck.fpn import build_fpn
 from ..head.decoupled_head import DecoupledHead
 
 

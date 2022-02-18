@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 from ..backbone import build_backbone
-from ..head.fpn import build_fpn
+from ..neck.fpn import build_fpn
 from ..head.coupled_head import CoupledHead
 from utils import box_ops
 
