@@ -31,7 +31,8 @@ class YOLOv5(nn.Module):
 
         # backbone
         self.backbone, feature_channels, strides = build_backbone(model_name=cfg["backbone"], 
-                                                                  pretrained=trainable)
+                                                                  pretrained=trainable,
+                                                                  freeze_at=cfg['freeze_at'])
         self.stride = strides
         anchor_size = cfg["anchor_size"]
         self.anchor_size = torch.tensor(anchor_size).reshape(len(self.stride), len(anchor_size) // 3, 2).float()

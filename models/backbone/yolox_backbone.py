@@ -263,6 +263,16 @@ class CSPDarknet(nn.Module):
             ),
         )
 
+
+    def freeze_stage(self, freeze_at=5):
+        all_stage = [self.stem, self.dark2, self.dark3, self.dark4, self.dark5]
+        for i in range(freeze_at):
+            print('freeze stage-{}'.format(i+1))
+            stage = all_stage[i]
+            for m in stage.parameters():
+                m.requires_grad = False
+        
+
     def forward(self, x):
         outputs = {}
         c1 = self.stem(x)
@@ -274,7 +284,7 @@ class CSPDarknet(nn.Module):
         return c3, c4, c5
 
 
-def yolox_cspdarknet_s(pretrained=False):
+def yolox_cspdarknet_s(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=0.33, wid_mul=0.5, depthwise=False, act='silu')
 
@@ -286,10 +296,14 @@ def yolox_cspdarknet_s(pretrained=False):
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
 
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
+
     return backbone
 
 
-def yolox_cspdarknet_m(pretrained=False):
+def yolox_cspdarknet_m(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=0.67, wid_mul=0.75, depthwise=False, act='silu')
 
@@ -301,10 +315,14 @@ def yolox_cspdarknet_m(pretrained=False):
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
 
-    return backbone  
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
+
+    return backbone
 
 
-def yolox_cspdarknet_l(pretrained=False):
+def yolox_cspdarknet_l(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=1.0, wid_mul=1.0, depthwise=False, act='silu')
 
@@ -316,10 +334,14 @@ def yolox_cspdarknet_l(pretrained=False):
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
 
-    return backbone 
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
+
+    return backbone
 
 
-def yolox_cspdarknet_x(pretrained=False):
+def yolox_cspdarknet_x(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=1.33, wid_mul=1.25, depthwise=False, act='silu')
 
@@ -331,10 +353,14 @@ def yolox_cspdarknet_x(pretrained=False):
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
 
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
+
     return backbone
 
 
-def yolox_cspdarknet_tiny(pretrained=False):
+def yolox_cspdarknet_tiny(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=0.33, wid_mul=0.375, depthwise=False, act='silu')
 
@@ -346,10 +372,14 @@ def yolox_cspdarknet_tiny(pretrained=False):
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
 
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
+
     return backbone
 
 
-def yolox_cspdarknet_nano(pretrained=False):
+def yolox_cspdarknet_nano(pretrained=False, freeze_at=None):
     # build backbone
     backbone = CSPDarknet(dep_mul=0.33, wid_mul=0.25, depthwise=True, act='silu')
 
@@ -360,6 +390,10 @@ def yolox_cspdarknet_nano(pretrained=False):
         path_to_weight = path_to_dir + '/weights/yolox_backbone/yolox_cspdarknet_nano.pth'
         checkpoint = torch.load(path_to_weight, map_location='cpu')
         backbone.load_state_dict(checkpoint)
+
+    # freeze stage
+    if freeze_at is not None:
+        backbone.freeze_stage(freeze_at=freeze_at)
 
     return backbone
 

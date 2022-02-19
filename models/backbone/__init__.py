@@ -8,7 +8,7 @@ from .shufflenetv2 import shufflenetv2
 from .vit import vit_base_patch16_224
 
 
-def build_backbone(model_name='r18', pretrained=False, img_size=224):
+def build_backbone(model_name='r18', pretrained=False, freeze_at=None, img_size=224):
     if model_name == 'r18':
         print('Backbone: ResNet-18 ...')
         model = resnet18(pretrained=pretrained)
@@ -52,32 +52,32 @@ def build_backbone(model_name='r18', pretrained=False, img_size=224):
     # YOLOX backbone
     elif model_name == 'csp_s':
         print('Backbone: YOLOX-CSPDarkNet-S ...')
-        model = yolox_cspdarknet_s(pretrained=pretrained)
+        model = yolox_cspdarknet_s(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [128, 256, 512]
         strides = [8, 16, 32]
     elif model_name == 'csp_m':
         print('Backbone: YOLOX-CSPDarkNet-M ...')
-        model = yolox_cspdarknet_m(pretrained=pretrained)
+        model = yolox_cspdarknet_m(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [192, 384, 768]
         strides = [8, 16, 32]
     elif model_name == 'csp_l':
         print('Backbone: YOLOX-CSPDarkNet-L ...')
-        model = yolox_cspdarknet_l(pretrained=pretrained)
+        model = yolox_cspdarknet_l(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [256, 512, 1024]
         strides = [8, 16, 32]
     elif model_name == 'csp_x':
         print('Backbone: YOLOX-CSPDarkNet-X ...')
-        model = yolox_cspdarknet_x(pretrained=pretrained)
+        model = yolox_cspdarknet_x(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [320, 640, 1280]
         strides = [8, 16, 32]
     elif model_name == 'csp_t':
         print('Backbone: YOLOX-CSPDarkNet-Tiny ...')
-        model = yolox_cspdarknet_tiny(pretrained=pretrained)
+        model = yolox_cspdarknet_tiny(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [96, 192, 384]
         strides = [8, 16, 32]
     elif model_name == 'csp_n':
         print('Backbone: YOLOX-CSPDarkNet-Nano ...')
-        model = yolox_cspdarknet_nano(pretrained=pretrained)
+        model = yolox_cspdarknet_nano(pretrained=pretrained, freeze_at=freeze_at)
         feature_channels = [64, 128, 256]
         strides = [8, 16, 32]
     
