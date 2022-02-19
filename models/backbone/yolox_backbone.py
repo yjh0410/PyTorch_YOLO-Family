@@ -266,11 +266,11 @@ class CSPDarknet(nn.Module):
 
     def freeze_stage(self, freeze_at=5):
         all_stage = [self.stem, self.dark2, self.dark3, self.dark4, self.dark5]
-        for i in range(freeze_at):
-            print('freeze stage-{}'.format(i+1))
-            stage = all_stage[i]
-            for m in stage.parameters():
-                m.requires_grad = False
+        # for i in range(freeze_at):
+        #     print('freeze stage-{}'.format(i+1))
+        #     stage = all_stage[i]
+        for m in self.parameters():
+            m.requires_grad = False
         
 
     def forward(self, x):
