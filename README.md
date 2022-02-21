@@ -235,16 +235,8 @@ I am currently not very satisfied with this YOLO-Nano, and will continue to opti
 # Dataset
 
 ## VOC Dataset
-I copy the download files from the following excellent project:
-https://github.com/amdegroot/ssd.pytorch
-
-I have uploaded the VOC2007 and VOC2012 to BaiDuYunDisk, so for researchers in China, you can download them from BaiDuYunDisk:
-
-Link：https://pan.baidu.com/s/1tYPGCYGyC0wjpC97H-zzMQ 
-
-Password：4la9
-
-You will get a ```VOCdevkit.zip```, then what you need to do is just to unzip it and put it into ```data/```. After that, the whole path to VOC dataset is ```data/VOCdevkit/VOC2007``` and ```data/VOCdevkit/VOC2012```.
+### My BaiduYunDisk
+- BaiduYunDisk: https://pan.baidu.com/s/1tYPGCYGyC0wjpC97H-zzMQ Password：4la9
 
 ### Download VOC2007 trainval & test
 
@@ -258,8 +250,14 @@ sh data/scripts/VOC2007.sh # <directory>
 # specify a directory for dataset to be downloaded into, else default is ~/data/
 sh data/scripts/VOC2012.sh # <directory>
 ```
+### My BaiduYunDisk
+- BaiduYunDisk: https://pan.baidu.com/s/1xAPk8fnaWMMov1VEjr8-zA Password：6vhp
+
+On Ubuntu system, you might use the command `jar xvf xxx.zip` to unzip the `train2017.zip` and `test2017.zip` files
+since they are larger than 2G (As far as I know, `unzip` operation can't process the zip file which is larger than 2G.).
 
 ## MSCOCO Dataset
+
 ### Download MSCOCO 2017 dataset
 Just run ```sh data/scripts/COCO2017.sh```. You will get COCO train2017, val2017, test2017.
 
