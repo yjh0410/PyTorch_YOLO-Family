@@ -208,8 +208,8 @@ def gt_creator(img_size, strides, label_lists, anchor_size=None, multi_anchor=Fa
                 
                 if center_sample:
                     # We consider four grid points near the center point
-                    for j in range(grid_y-1, grid_y+2):
-                        for i in range(grid_x-1, grid_x+2):
+                    for j in range(grid_y, grid_y+2):
+                        for i in range(grid_x, grid_x+2):
                             if (j >= 0 and j < gt_tensor[scale_ind].shape[1]) and (i >= 0 and i < gt_tensor[scale_ind].shape[2]):
                                 gt_tensor[scale_ind][bi, j, i, anchor_ind, 0] = 1.0
                                 gt_tensor[scale_ind][bi, j, i, anchor_ind, 1] = cls_id
