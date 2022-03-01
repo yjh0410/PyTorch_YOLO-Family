@@ -9,6 +9,8 @@ def get_activation(name="lrelu", inplace=True):
         module = nn.ReLU(inplace=inplace)
     elif name == "lrelu":
         module = nn.LeakyReLU(0.1, inplace=inplace)
+    elif name is None:
+        module = nn.Identity()
     else:
         raise AttributeError("Unsupported act type: {}".format(name))
     return module
