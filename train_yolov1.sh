@@ -10,5 +10,6 @@ python train.py \
         --lr_epoch 100 150 \
         --multi_scale \
         --multi_scale_range 10 20 \
-        --ema
+        --ema \
+        --center_sample
                 
