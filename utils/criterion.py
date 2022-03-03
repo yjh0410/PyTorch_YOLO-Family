@@ -49,37 +49,6 @@ class BCEWithLogitsLoss(nn.Module):
         return loss
 
 
-class QualityFocalLoss(nn.Module):
-    def __init__(self, beta=2.0, reduction='none'):
-        super().__init__()
-        self.beta = beta
-        self.reduction = reduction
-
-    def forward(self, logits, targets, targets_pos):
-        loss = F.binary_cross_entropy_with_logits(input=logits, 
-                                                  target=targets, 
-                                                  reduction='none')
-
-        p = logits.sigmoid()
-        pos_idx = (targets_pos == 1.0).float()
-        neg_idx = (targets_pos == 0.0).float()
-        pos_scale_factor = (p - targets).pow(self.beta).abs() * pos_idx  # (y_pos_pred - y_tgt)^{beta}
-        neg_scale_factor = p.pow(self.beta).abs() * neg_idx              # (y_neg_pred)^{beta}
-
-        # positive loss
-        pos_loss = loss * pos_scale_factor * pos_idx
-        neg_loss = loss * neg_scale_factor * neg_idx
-
-        loss = pos_loss + neg_loss
-
-        if self.reduction == 'mean':
-            return loss.mean()
-        elif self.reduction == 'sum':
-            return loss.sum()
-
-        return loss
-
-
 class Criterion(nn.Module):
     def __init__(self,
                  args,
@@ -99,8 +68,6 @@ class Criterion(nn.Module):
         try:
             if cfg['loss_obj'] == 'mse':
                 self.obj_loss_f = MSEWithLogitsLoss(reduction='none')
-            elif cfg['loss_obj'] == 'qfl':
-                self.obj_loss_f = QualityFocalLoss(reduction='none')
             elif cfg['loss_obj'] == 'bce':
                 self.obj_loss_f = BCEWithLogitsLoss(reduction='none')
         except:
