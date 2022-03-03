@@ -2,7 +2,7 @@ python train.py \
         --cuda \
         -d coco \
         -m yolov5_l \
-        --root /home/jxk/object-detection/dataset \
+        --root /mnt/share/ssd2/dataset \
         --batch_size 16 \
         --lr 0.001 \
         --img_size 608 \
@@ -10,7 +10,7 @@ python train.py \
         --lr_epoch 100 130 \
         --multi_scale \
         --multi_scale_range 10 19 \
-        --scale_loss batch \
+        --scale_loss positive \
         --accumulate 4 \
         --mosaic \
         --multi_anchor \
