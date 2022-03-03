@@ -69,7 +69,7 @@ yolo_config = {
         'width': 0.5,
         'depth': 0.33,
         'depthwise': False,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
@@ -88,7 +88,7 @@ yolo_config = {
         'width': 0.75,
         'depth': 0.67,
         'depthwise': False,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
@@ -107,7 +107,7 @@ yolo_config = {
         'width': 1.0,
         'depth': 1.0,
         'depthwise': False,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
@@ -126,7 +126,7 @@ yolo_config = {
         'width': 1.25,
         'depth': 1.33,
         'depthwise': False,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
@@ -145,7 +145,7 @@ yolo_config = {
         'width': 0.375,
         'depth': 0.33,
         'depthwise': False,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
@@ -164,7 +164,7 @@ yolo_config = {
         'width': 0.25,
         'depth': 0.33,
         'depthwise': True,
-        'freeze': True,
+        'freeze': False,
         # neck
         'neck': 'yolopafpn',
         # head
