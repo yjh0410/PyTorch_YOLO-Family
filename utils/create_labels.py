@@ -1,4 +1,3 @@
-import imghdr
 import numpy as np
 import torch
 

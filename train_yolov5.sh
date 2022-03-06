@@ -6,8 +6,8 @@ python train.py \
         --batch_size 16 \
         --lr 0.001 \
         --img_size 608 \
-        --max_epoch 160 \
-        --lr_epoch 100 130 \
+        --max_epoch 200 \
+        --lr_epoch 100 150 \
         --multi_scale \
         --multi_scale_range 10 19 \
         --scale_loss batch \
