@@ -36,7 +36,8 @@ def giou_score(bboxes_a, bboxes_b, batch_size):
 
     en = (tl < br).type(tl.type()).prod(dim=1)
     area_i = torch.prod(br - tl, 1) * en  # * ((tl < br).all())
-    iou = (area_i / (area_a + area_b - area_i + 1e-14)).clamp(0)
+    area_u = area_a + area_b - area_i
+    iou = (area_i / (area_u + 1e-14)).clamp(0)
     
     # giou
     tl = torch.min(bboxes_a[:, :2], bboxes_b[:, :2])
@@ -44,7 +45,7 @@ def giou_score(bboxes_a, bboxes_b, batch_size):
     en = (tl < br).type(tl.type()).prod(dim=1)
     area_c = torch.prod(br - tl, 1) * en  # * ((tl < br).all())
 
-    giou = (iou - (area_c - area_i) / (area_c + 1e-14))
+    giou = (iou - (area_c - area_u) / (area_c + 1e-14))
 
     return giou.view(batch_size, -1)
 
@@ -88,10 +89,10 @@ def ciou_score(bboxes_a, bboxes_b, batch_size):
 
 if __name__ == '__main__':
     bboxes_a = torch.tensor([[10, 10, 20, 20]])
-    bboxes_b = torch.tensor([[12, 15, 25, 25]])
+    bboxes_b = torch.tensor([[13, 15, 27, 25]])
     iou = iou_score(bboxes_a, bboxes_b, 1)
     print(iou)
     giou = giou_score(bboxes_a, bboxes_b, 1)
-    print((giou + 1.)*0.5)
+    print(giou)
     ciou = ciou_score(bboxes_a, bboxes_b, 1)
     print(ciou)
