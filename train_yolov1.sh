@@ -8,6 +8,7 @@ python train.py \
         --img_size 640 \
         --max_epoch 200 \
         --lr_epoch 100 150 \
+        --scale_loss positive \
         --multi_scale \
         --multi_scale_range 10 20 \
         --ema
