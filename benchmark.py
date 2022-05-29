@@ -3,7 +3,6 @@ import numpy as np
 import time
 import os
 import torch
-import torch.backends.cudnn as cudnn
 
 from config.yolo_config import yolo_config
 from data.transforms import ValTransforms
@@ -92,7 +91,6 @@ if __name__ == '__main__':
     # get device
     if args.cuda:
         print('use cuda')
-        cudnn.benchmark = True
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
