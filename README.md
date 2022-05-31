@@ -1,3 +1,8 @@
+# Update: 2022-05-31
+Recently, I have released a anchor-free YOLO:
+
+https://github.com/yjh0410/FreeYOLO
+
 # A new and strong YOLO family
 Recently, I rebuild my YOLO-Family project !!
 
