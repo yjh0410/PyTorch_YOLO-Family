@@ -1,5 +1,5 @@
 # Update: 2022-05-31
-Recently, I have released a anchor-free YOLO:
+Recently, I have released an anchor-free YOLO:
 
 https://github.com/yjh0410/FreeYOLO
 
