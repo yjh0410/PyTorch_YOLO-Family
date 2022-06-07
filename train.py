@@ -5,6 +5,7 @@ import argparse
 import time
 import math
 import random
+from copy import deepcopy
 
 import torch
 import torch.optim as optim
@@ -188,11 +189,13 @@ def train():
     model = model.to(device).train()
     # compute FLOPs and Params
     if local_rank == 0:
-        model.trainable = False
-        model.eval()
-        FLOPs_and_Params(model=model, size=train_size)
-        model.trainable = True
-        model.train()
+        model_copy = deepcopy(model)
+        model_copy.trainable = False
+        model_copy.eval()
+        FLOPs_and_Params(model=model_copy, size=train_size)
+        model_copy.trainable = True
+        model_copy.train()
+        
 
     # DDP
     if args.distributed and args.num_gpu > 1:
