@@ -223,19 +223,6 @@ The FPS is measured on i5-1135G& CPU. Any accelerated deployments that would hel
 
 </table></tbody>
 
-I am currently not very satisfied with this YOLO-Nano, and will continue to optimize it later.
-
-## YOLO-TR
-<table><tbody>
-<tr><th align="left" bgcolor=#f8f8f8>           </th><td bgcolor=white> FPS </td><td bgcolor=white> AP   </td><td bgcolor=white> AP50 </td><td bgcolor=white> AP75 </td><td bgcolor=white>  APs  </td><td bgcolor=white>  APm  </td><td bgcolor=white>  APl  </td><td bgcolor=white>  GFLOPs  </td><td bgcolor=white>  Params  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-224</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-320</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-<tr><th align="left" bgcolor=#f8f8f8> YOLO-TR-384</th><td bgcolor=white>     </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td><td bgcolor=white>  </td></tr>
-
-</table></tbody>
 
 # Dataset
 

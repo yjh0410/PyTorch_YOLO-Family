@@ -1,7 +1,7 @@
 python train.py \
         --cuda \
         -d coco \
-        -m yolo_nano_plus \
+        -m yolo_nano \
         --root /home/jxk/object-detection/dataset \
         --batch_size 64 \
         --lr 0.001 \
