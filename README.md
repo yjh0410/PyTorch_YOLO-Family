@@ -3,6 +3,12 @@ Recently, I have released an anchor-free YOLO:
 
 https://github.com/yjh0410/FreeYOLO
 
+In this new project, you can enjoy a stronger anchor-free YOLO (YOLOv7-style)
+and a stronger anchor-based YOLO (YOLOv4-style). I also provide a single-level
+YOLO detector, YOLO-SL in this new project. I recommend everyone to use my **FreeYOLO**.
+
+**This YOLO-Family project has been discontinued for updates and maintenance.**
+
 # A new and strong YOLO family
 Recently, I rebuild my YOLO-Family project !!
 
