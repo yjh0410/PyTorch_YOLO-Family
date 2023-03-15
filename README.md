@@ -1,11 +1,7 @@
 # Update: 2022-05-31
-Recently, I have released an anchor-free YOLO:
+Recently, I have released an anchor-free YOLO, inspired by YOLOX & YOLOv7:
 
 https://github.com/yjh0410/FreeYOLO
-
-In this new project, you can enjoy a stronger anchor-free YOLO (YOLOv7-style)
-and a stronger anchor-based YOLO (YOLOv4-style). I also provide a single-level
-YOLO detector, YOLO-SL in this new project. I recommend everyone to use my **FreeYOLO**.
 
 **This YOLO-Family project has been discontinued for updates and maintenance.**
 
